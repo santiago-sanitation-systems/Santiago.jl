@@ -11,10 +11,10 @@ export writedotfile
 # define types
 
 immutable Tech
-    inputs::Array
-    outputs::Array
+    inputs::Array{Symbol}
+    outputs::Array{Symbol}
     name::ASCIIString
-    tech_group::ASCIIString
+    tech_group::Symbol
     n_inputs::Int
 end
 
@@ -22,7 +22,14 @@ end
 The `Tech` type represents Technolgies.
     It consist of `inputs`, `outputs`, a `name` and a `tech_group`.
     """
-Tech(inputs, outputs, name, tech_group) = Tech(inputs, outputs, name, tech_group, size(inputs,1))
+function Tech{T<:ASCIIString}(inputs::Array, outputs::Array, name::T, tech_group::T)
+    Tech(Symbol[symbol(x) for x in inputs],
+	 Symbol[symbol(x) for x in outputs],
+	 name,
+	 symbol(tech_group),
+	 size(inputs,1))
+end
+
 
 "System is simply an Array of Arrays of Technologies"
 type System
@@ -51,7 +58,7 @@ end
 
 # Return a vector of Systems
 function build_system!(sys::System, completesystems::Array{System}, techs::Array{Tech},
-                       resultfile::IO, errorfile::IO)
+		       resultfile::IO, errorfile::IO)
     next = get_matching(sys.techs[end], techs)
 
     if length(next)==0
@@ -79,7 +86,7 @@ end
 """
     Returns an Array of all possible `System`s starting with `source`. A source can be any technology with a least one output."""
 function build_all_systems(source::Tech, techs::Array{Tech};
-                           resultfile::IO=STDOUT, errorfile::IO=STDERR)
+			   resultfile::IO=STDOUT, errorfile::IO=STDERR)
     completesystems = System[]
     build_system!(System(Array[[source]]), completesystems, techs, resultfile, errorfile)
     return completesystems
@@ -130,7 +137,7 @@ function get_outputs(s::Array{Tech})
 end
 
 function get_tech_group(s::System)
-    names = ASCIIString[]
+    names = Symbol[]
     for t in vcat(s.techs...)
         push!(names, t.tech_group)
     end
@@ -139,7 +146,7 @@ end
 
 
 function get_tech_group(s::Array{Tech})
-    names = ASCIIString[]
+    names = Symbol[]
     for t in s
         push!(names, t.tech_group)
     end
@@ -183,7 +190,7 @@ function writedotfile(sys::System, file::AbstractString)
             for t in sys.techs[g]
                 for out in t.outputs
                     n = filter(x -> length(findin([out], convert(Array{ASCIIString}, x.inputs)))>0,
-                               sys.techs[g+1])
+	                       sys.techs[g+1])
                     println(f, replace("$(t.name) -> $(n[1].name) [label=\"$(out)\"];", ".", "_"))
                 end
             end
