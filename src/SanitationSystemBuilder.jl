@@ -188,9 +188,6 @@ function writedotfile(sys::System, file::AbstractString)
         # edges
         for g in 1:size(sys.techs, 1)-1
             for t in sys.techs[g]
-                # println("===---===")
-                # println(typeof(sys.techs))
-                # println(typeof(t))
                 for out in t.outputs
                     n = filter(x -> length(findin([out], x.inputs))>0,
 	                       sys.techs[g+1])
