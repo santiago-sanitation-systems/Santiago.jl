@@ -1,6 +1,6 @@
 module SanitationSystemBuilder
 
-
+import Combinatorics
 import Base.show
 
 export Tech, System
@@ -13,7 +13,7 @@ export writedotfile
 immutable Tech
     inputs::Array{Symbol}
     outputs::Array{Symbol}
-    name::ASCIIString
+    name::String
     tech_group::Symbol
     n_inputs::Int
 end
@@ -22,11 +22,11 @@ end
 The `Tech` type represents Technolgies.
     It consist of `inputs`, `outputs`, a `name` and a `tech_group`.
     """
-function Tech{T<:ASCIIString}(inputs::Array, outputs::Array, name::T, tech_group::T)
-    Tech(Symbol[symbol(x) for x in inputs],
-	 Symbol[symbol(x) for x in outputs],
+function Tech{T<:String}(inputs::Array, outputs::Array, name::T, tech_group::T)
+    Tech(Symbol[Symbol(x) for x in inputs],
+	 Symbol[Symbol(x) for x in outputs],
 	 name,
-	 symbol(tech_group),
+	 Symbol(tech_group),
 	 size(inputs,1))
 end
 
@@ -101,7 +101,7 @@ function get_matching(s::Array{Tech}, techs::Array{Tech})
     n_out = length(outs)
     ## get matching combinations
     for k in 1:n_out
-        for c in combinations(get_candidates(techs, outs, k), k) # try all combination of lenght k (in R: combn())
+        for c in Combinatorics.combinations(get_candidates(techs, outs, k), k) # try all combination of lenght k (in R: combn())
             inputs = get_inputs(c)
             if is_compatible(outs, inputs)
                 push!(matches, c)
