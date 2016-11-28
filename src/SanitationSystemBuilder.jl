@@ -2,6 +2,7 @@ module SanitationSystemBuilder
 
 import Combinatorics
 import Base.show
+import Base.getindex
 
 export Tech, System
 export build_all_systems
@@ -19,9 +20,9 @@ immutable Tech
 end
 
 """
-The `Tech` type represents Technolgies.
-    It consist of `inputs`, `outputs`, a `name` and a `tech_group`.
-    """
+    The `Tech` type represents Technolgies.
+        It consist of `inputs`, `outputs`, a `name` and a `tech_group`.
+        """
 function Tech{T<:String}(inputs::Array, outputs::Array, name::T, tech_group::T)
     Tech(Symbol[Symbol(x) for x in inputs],
 	 Symbol[Symbol(x) for x in outputs],
@@ -30,11 +31,14 @@ function Tech{T<:String}(inputs::Array, outputs::Array, name::T, tech_group::T)
 	 size(inputs,1))
 end
 
-
-"System is simply an Array of Arrays of Technologies"
+"""
+    The `System` is simply an Array of Arrays of `Tech`s.
+        """
 type System
     techs::Array{Array{Tech}}
 end
+
+getindex(s::System, i::Int) = s.techs[i]
 
 
 # Functions for pretty printing
@@ -84,7 +88,7 @@ function build_system!(sys::System, completesystems::Array{System}, techs::Array
 end
 
 """
-    Returns an Array of all possible `System`s starting with `source`. A source can be any technology with a least one output."""
+        Returns an Array of all possible `System`s starting with `source`. A source can be any technology with a least one output."""
 function build_all_systems(source::Tech, techs::Array{Tech};
 			   resultfile::IO=STDOUT, errorfile::IO=STDERR)
     completesystems = System[]
@@ -159,10 +163,10 @@ function get_candidates(s::Array{Tech}, outs, k)
 
     n_out = length(outs)
     n_in_min = k==1? n_out : 1
-    n_in_max = n_out - k +1
+    n_in_max = n_out - k + 1
 
     function condi(t::Tech)
-        issubset(t.inputs, outs) &&  (n_in_min <= t.n_inputs <= n_in_max)
+        issubset(t.inputs, outs) && (n_in_min <= t.n_inputs <= n_in_max)
     end
 
     filter(condi, s)
@@ -174,13 +178,16 @@ end
 # write dot file for visualisation with grapgviz
 
 "Writes a DOT file of a `System`. The resulting file can be visualized with GraphViz, e,g.:
-```
-dot -Tpng file.dot -o graph.png
-````
-"
-function writedotfile(sys::System, file::AbstractString)
+    ```
+    dot -Tpng file.dot -o graph.png
+    ````
+    "
+function writedotfile(sys::System, file::AbstractString, options::AbstractString="")
     open(file, "w") do f
         println(f, "digraph system {")
+        if options!=""
+            println(f, "$(options);")
+        end
         # define nodes
         for t in vcat(sys.techs...)
             println(f, replace("$(t.name) [shape=box, label=\"$(t.tech_group)\"];", ".", "_"))
