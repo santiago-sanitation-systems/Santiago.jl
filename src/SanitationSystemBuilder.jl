@@ -4,16 +4,24 @@ import Combinatorics
 import Base.show
 import Base.getindex
 
-export Tech, System
+export Tech, Product, System
 export build_all_systems
 export writedotfile
 
 # -----------
 # define types
 
+
+immutable Product
+    name::Symbol
+end
+
+Product(name::String) = Product(Symbol(name))
+show(io::Base.IO, p::Product) =  print("$(p.name)")
+
 immutable Tech
-    inputs::Array{Symbol}
-    outputs::Array{Symbol}
+    inputs::Array{Product}
+    outputs::Array{Product}
     name::String
     tech_group::Symbol
     n_inputs::Int
@@ -23,37 +31,57 @@ end
     The `Tech` type represents Technolgies.
         It consist of `inputs`, `outputs`, a `name` and a `tech_group`.
         """
-function Tech{T<:String}(inputs::Array, outputs::Array, name::T, tech_group::T)
-    Tech(Symbol[Symbol(x) for x in inputs],
-	 Symbol[Symbol(x) for x in outputs],
+function Tech{T<:String}(inputs::Array{T}, outputs::Array{T}, name::T, tech_group::T)
+    Tech([Product(x) for x in inputs],
+	 [Product(x) for x in outputs],
 	 name,
 	 Symbol(tech_group),
 	 size(inputs,1))
 end
 
-"""
-    The `System` is simply an Array of Arrays of `Tech`s.
-        """
-type System
-    techs::Array{Array{Tech}}
-end
-
-getindex(s::System, i::Int) = s.techs[i]
-
 
 # Functions for pretty printing
 function show(io::Base.IO, t::Tech)
-    instr = length(t.inputs) >0 ? t.inputs : ["Source"]
-    outstr = length(t.outputs) >0 ? t.outputs : ["Sink"]
-    print(io, "$(t.name): ($(join(instr, ", "))) -> ($(join(outstr, ", "))) ")
+    instr = ["$(ii.name)" for ii in t.inputs]
+    outstr = ["$(ii.name)" for ii in t.outputs]
+    instr = length(instr) >0 ? instr : ["Source"]
+    outstr = length(outstr) >0 ? outstr : ["Sink"]
+    print(io, "$(t.name): ($(join(instr, ", "))) -> ($(join(outstr, ", ")))")
 end
 
+
+"""
+    The `System` is an Array of Tuples{Product, Tech, Tech}.
+        """
+type System
+    techs::Set{Tech}
+    connections::Array{Tuple{Product, Tech, Tech}}
+    complete::Bool
+end
+
+System(techs::Array{Tech}, con::Array{Tuple{Product, Tech, Tech}}) = System(Set(techs), con, false)
+
+
+
 function show(io::Base.IO, s::System)
-    print(io, "System with $(length(vcat(s.techs...))) technologies: ")
-    for i in s.techs
-        show(io, i)
+    !s.complete ? print(io, "Incomplete ") : nothing
+    println(io, "System with $(length(s.techs)) technologies and $(length(s.connections)) connections: ")
+    for i in s.connections
+        println(io, "$(i[1]) | $(i[2]) | $(i[3])")
     end
 end
+
+# -----------
+# functions to find all systems
+
+# candidates = Dict{Product, Set{Tech}}()
+
+
+# for t in techs
+#     for i in t.inputs
+#         candidates[i] = t
+#     end
+# end
 
 
 
@@ -63,20 +91,26 @@ end
 # Return a vector of Systems
 function build_system!(sys::System, completesystems::Array{System}, techs::Array{Tech},
 		       resultfile::IO, errorfile::IO)
-    next = get_matching(sys.techs[end], techs)
 
-    if length(next)==0
-        print(errorfile, "dead end!: ")
-        println(errorfile, sys)
-        flush(errorfile)
-    end
+    # get matching Techs
+    candidates = get_candidates(sys, techs)
+
+    # if length(candidates)==0
+    #     print(errorfile, "dead end!: ")
+    #     println(errorfile, sys)
+    #     flush(errorfile)
+    # end
 
     sys_names = get_tech_group(sys)
-    for n in next
+
+    for candidate in candidates
         if length(findin(sys_names, get_tech_group(n)))==0 # check if no duplicates
             sysi = deepcopy(sys)
-            push!(sysi.techs, n)
-            if length(get_outputs(n))==0      # all sinks
+
+            # extend system
+            sysi = extend_system(sys, candidate)
+
+            if sysi.complete
                 push!(completesystems, sysi)
                 println(resultfile, sysi)
                 flush(resultfile)
@@ -88,12 +122,27 @@ function build_system!(sys::System, completesystems::Array{System}, techs::Array
 end
 
 """
-        Returns an Array of all possible `System`s starting with `source`. A source can be any technology with a least one output."""
+            Returns an Array of all possible `System`s starting with `source`. A source can be any technology with a least one output."""
 function build_all_systems(source::Tech, techs::Array{Tech};
 			   resultfile::IO=STDOUT, errorfile::IO=STDERR)
     completesystems = System[]
     build_system!(System(Array[[source]]), completesystems, techs, resultfile, errorfile)
     return completesystems
+end
+
+
+# Returns techs that fit to a system part
+function get_candidates(sys::System, techs::Array{Tech})
+    outs = get_outputs(sys)
+    open_inputs
+end
+
+function get_outputs(sys::System)
+    outs = []
+    for con in sys
+        append!(outs, con[1])
+    end
+    return outs
 end
 
 
@@ -132,13 +181,6 @@ function get_inputs(s::Array{Tech})
 end
 
 
-function get_outputs(s::Array{Tech})
-    outs = []
-    for t in s
-        append!(outs, t.outputs)
-    end
-    return outs
-end
 
 function get_tech_group(s::System)
     names = Symbol[]
@@ -178,10 +220,10 @@ end
 # write dot file for visualisation with grapgviz
 
 "Writes a DOT file of a `System`. The resulting file can be visualized with GraphViz, e,g.:
-    ```
-    dot -Tpng file.dot -o graph.png
-    ````
-    "
+          ```
+        dot -Tpng file.dot -o graph.png
+        ````
+        "
 function writedotfile(sys::System, file::AbstractString, options::AbstractString="")
     open(file, "w") do f
         println(f, "digraph system {")
