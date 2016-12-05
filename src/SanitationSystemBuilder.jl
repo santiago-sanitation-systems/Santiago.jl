@@ -1,5 +1,6 @@
 module SanitationSystemBuilder
 
+import DataStructures
 import Combinatorics
 import Base.show
 import Base.getindex
@@ -74,6 +75,57 @@ end
 # -----------
 # functions to find all systems
 
+function get_outputs{T<:Union{Array{Tech}, Set{Tech}}}(techs::T)
+    outs = Product[]
+    for t in techs
+        append!(outs, t.outputs)
+    end
+    return outs
+end
+
+"""
+return all "open" outputs of a system
+"""
+function get_outputs(sys::System)
+    # all outs
+    outs = DataStructures.counter(get_outputs(sys.techs))
+
+    for c in sys.connections
+        if haskey(outs, c[1])
+            pop!(outs, c[1])
+        end
+    end
+    return collect(keys(outs))
+end
+
+
+function get_inputs{T<:Union{Array{Tech}, Set{Tech}}}(techs::T)
+    ins = Product[]
+    for t in techs
+        append!(ins, t.inputs)
+    end
+    return ins
+end
+
+"""
+return all "open" inputs of a system
+"""
+function get_inputs(sys::System)
+    # all outs
+    ins = DataStructures.counter(get_inputs(sys.techs))
+
+    for c in sys.connections
+        if haskey(ins, c[1])
+            pop!(ins, c[1])
+        end
+    end
+    return collect(keys(ins))
+end
+
+
+# -----------
+# functions to find all systems
+
 # candidates = Dict{Product, Set{Tech}}()
 
 
@@ -90,7 +142,7 @@ end
 
 # Return a vector of Systems
 function build_system!(sys::System, completesystems::Array{System}, techs::Array{Tech},
-		       resultfile::IO, errorfile::IO)
+                       resultfile::IO, errorfile::IO)
 
     # get matching Techs
     candidates = get_candidates(sys, techs)
@@ -124,7 +176,7 @@ end
 """
             Returns an Array of all possible `System`s starting with `source`. A source can be any technology with a least one output."""
 function build_all_systems(source::Tech, techs::Array{Tech};
-			   resultfile::IO=STDOUT, errorfile::IO=STDERR)
+                           resultfile::IO=STDOUT, errorfile::IO=STDERR)
     completesystems = System[]
     build_system!(System(Array[[source]]), completesystems, techs, resultfile, errorfile)
     return completesystems
@@ -137,13 +189,7 @@ function get_candidates(sys::System, techs::Array{Tech})
     open_inputs
 end
 
-function get_outputs(sys::System)
-    outs = []
-    for con in sys
-        append!(outs, con[1])
-    end
-    return outs
-end
+
 
 
 # Returns techs that fit to a system part

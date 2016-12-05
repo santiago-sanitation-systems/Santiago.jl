@@ -31,10 +31,16 @@ techs2_2 = [
 ]
 
 
-# print
-println(techs2[1])
-println(techs2[2])
-println(techs2[4])
+# # print
+# println(techs2[1])
+# println(techs2[2])
+# println(techs2[4])
+
+@test length(SanitationSystemBuilder.get_outputs(techs1)) == 9
+@test length(SanitationSystemBuilder.get_outputs(techs2)) == 4
+
+@test length(SanitationSystemBuilder.get_inputs(techs1)) == 9
+@test length(SanitationSystemBuilder.get_inputs(techs2)) == 4
 
 # -----------
 # System
@@ -47,8 +53,32 @@ s2 = System(
      ]
 )
 
-println(s1)
+# complete system
+s3 = System(
+    techs2,
+    [(Product("aa"), techs2[1], techs2[2]),
+     (Product("bb"), techs2[2], techs2[3]),
+     (Product("cc"), techs2[3], techs2[4]),
+     (Product("dd"), techs2[3], techs2[2])
+     ]
+)
 
+@test length(SanitationSystemBuilder.get_outputs(s1.techs)) == 9
+@test length(SanitationSystemBuilder.get_outputs(s2.techs)) == 9
+@test length(SanitationSystemBuilder.get_inputs(s1.techs)) == 9
+@test length(SanitationSystemBuilder.get_inputs(s2.techs)) == 9
+
+@test length(SanitationSystemBuilder.get_outputs(s1)) == 9
+@test length(SanitationSystemBuilder.get_outputs(s2)) == 7
+@test length(SanitationSystemBuilder.get_inputs(s1)) == 9
+@test length(SanitationSystemBuilder.get_inputs(s2)) == 7
+
+# complete system
+@test SanitationSystemBuilder.get_outputs(s3) == Product[]
+@test SanitationSystemBuilder.get_inputs(s3) == Product[]
+
+
+println(s1)
 println(s2)
 
 
