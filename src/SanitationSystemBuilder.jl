@@ -1,5 +1,7 @@
 module SanitationSystemBuilder
 
+using AutoHashEquals
+
 import DataStructures
 import Combinatorics
 import Base.show
@@ -13,30 +15,30 @@ export writedotfile
 # define types
 
 
-immutable Product
+@auto_hash_equals immutable Product
     name::Symbol
 end
 
 Product(name::String) = Product(Symbol(name))
 show(io::Base.IO, p::Product) =  print("$(p.name)")
 
-immutable Tech
+@auto_hash_equals immutable Tech
     inputs::Array{Product}
     outputs::Array{Product}
     name::String
-    tech_group::Symbol
+    functional_group::Symbol
     n_inputs::Int
 end
 
 """
 The `Tech` type represents Technolgies.
-It consist of `inputs`, `outputs`, a `name` and a `tech_group`.
+It consist of `inputs`, `outputs`, a `name` and a `functional_group`.
 """
-function Tech{T<:String}(inputs::Array{T}, outputs::Array{T}, name::T, tech_group::T)
+function Tech{T<:String}(inputs::Array{T}, outputs::Array{T}, name::T, functional_group::T)
     Tech([Product(x) for x in inputs],
 	 [Product(x) for x in outputs],
 	 name,
-	 Symbol(tech_group),
+	 Symbol(functional_group),
 	 size(inputs,1))
 end
 
@@ -54,13 +56,14 @@ end
 """
 The `System` is an Array of Tuples{Product, Tech, Tech}.
 """
-type System
+@auto_hash_equals type System
     techs::Set{Tech}
     connections::Array{Tuple{Product, Tech, Tech}}
     complete::Bool
 end
 
 System(techs::Array{Tech}, con::Array{Tuple{Product, Tech, Tech}}) = System(Set(techs), con, false)
+System(tech::Tech) = System(Set([tech]), Tuple{Product, Tech, Tech}[], false)
 
 
 
@@ -95,7 +98,7 @@ function get_outputs(sys::System)
         if haskey(outs, c[1])
             pop!(outs, c[1])
         end
-    end
+        end
     return collect(keys(outs))
 end
 
@@ -123,10 +126,16 @@ function get_inputs(sys::System)
 end
 
 
+
+function is_complete(sys::System)
+    length(get_outputs(sys)) == 0 && length(get_inputs(sys)) == 0
+end
+
+
 """
 Return all technologies of the system that have an open `prod` output
 """
-function get_open_techs(sys::System, prod::Product)
+function get_openout_techs(sys::System, prod::Product)
 
     function is_connected(tech, sys)
         for c in sys.connections
@@ -141,6 +150,24 @@ function get_open_techs(sys::System, prod::Product)
     filter(t -> !is_connected(t, sys), matching_techs) # Techs open outputs
 end
 
+"""
+Return all technologies of the system that have an open `prod` input
+"""
+function get_openin_techs(sys::System, prod::Product)
+
+    function is_connected(tech, sys)
+        for c in sys.connections
+            if c[3] == tech && c[1] == prod
+                return true
+            end
+        end
+        return false
+    end
+
+    matching_techs = filter(t -> prod in t.inputs, sys.techs) # Techs with matching inputs
+    filter(t -> !is_connected(t, sys), matching_techs) # Techs open outputs
+end
+
 
 # -----------
 # functions to find all systems
@@ -151,7 +178,6 @@ function build_system!(sys::System, completesystems::Array{System}, techs::Array
 
     # get matching Techs
     candidates = get_candidates(sys, techs)
-
     # if length(candidates)==0
     #     print(errorfile, "dead end!: ")
     #     println(errorfile, sys)
@@ -159,35 +185,38 @@ function build_system!(sys::System, completesystems::Array{System}, techs::Array
     # end
 
     for candidate in candidates
-        sysi = deepcopy(sys)
 
-        # extend system
-        sysi = extend_system(sys, candidate)
-
-        if sysi.complete
-            push!(completesystems, sysi)
-            println(resultfile, sysi)
-            flush(resultfile)
-        else
-            build_system!(sysi, completesystems, techs, resultfile, errorfile)
+        # extend systems
+        sys_ext = extend_system(sys, candidate)
+        #length(sys_ext)== 0 || println("dead end!")
+        for sysi in sys_ext
+            # println(sysi)
+            if sysi.complete
+                push!(completesystems, sysi)
+                # println(resultfile, sysi)
+                # flush(resultfile)
+            else
+                build_system!(sysi, completesystems, techs, resultfile, errorfile)
+            end
         end
     end
 end
 
-
 """
-Returns an Array of all possible `System`s starting with `source`. A source can be any technology with a least one output.
-"""
+    Returns an Array of all possible `System`s starting with `source`. A source can be any technology with a least one output.
+    """
 function build_all_systems(source::Tech, techs::Array{Tech};
                            resultfile::IO=STDOUT, errorfile::IO=STDERR)
     completesystems = System[]
-    build_system!(System(Array[[source]]), completesystems, techs, resultfile, errorfile)
+    build_system!(System(source), completesystems, techs, resultfile, errorfile)
     return completesystems
 end
 
 
 # Returns techs that fit to an open system
 function get_candidates(sys::System, techs::Array{Tech})
+
+    techssub = filter(t -> !(t in sys.techs), techs)
     outs = get_outputs(sys)
 
     # is a match if any input matchs an open output
@@ -200,39 +229,66 @@ function get_candidates(sys::System, techs::Array{Tech})
         false
     end
 
-    filter(ff, techs)
+    filter(ff, techssub)
 end
 
 
 
 """
-Return an array of all possible estension of `sys` with the candidate technology
-"""
+    Return an array of all possible extension of `sys` with the candidate technology
+    """
 function extend_system(sys::System, tech::Tech)
 
     sysout = get_outputs(sys)
-    sysin = get_inputs(sys)
-
     push!(sys.techs, tech)
 
-    for techin in tech.inputs
-        if techin in sysout
-            for con in open_techs(sys, techin)
+    newsystems = System[]
+    # add new a Tech
+    for prodin in tech.inputs
+        if prodin in sysout
+            for last_tech in get_openout_techs(sys, prodin)
+                sysi = deepcopy(sys)
+                push!(sysi.connections, (prodin, last_tech, tech)) # add new connection
+
+                sysi.complete = is_complete(sysi)
+                push!(newsystems, sysi)
+
+                # close loops
+                for prodout in tech.outputs
+                    for open_tech in get_openin_techs(sysi, prodout)
+                        sysj = deepcopy(sysi)
+                        push!(sysj.connections, (prodout, tech, open_tech)) # add new connection
+                        sysj.complete = is_complete(sysj)
+                        push!(newsystems, sysj)
+                    end
+                end
 
             end
         end
     end
+    return newsystems
 end
 
+function close_loops(sys::System, prod::Product)
+    sysin = get_inputs(sys)
+    # close loops
+    if prodin in sysin
+        for open_tech in get_openin_techs(sysi, prodin)
+            sysi = deepcopy(sys)
+            sysi.complete = is_complete(sysi)
+            push!(sysi.connections, (prodin, last_tech, tech)) # add new connection
+        end
+    end
+end
 
 # ---------------------------------
 # write dot file for visualisation with grapgviz
 
 "Writes a DOT file of a `System`. The resulting file can be visualized with GraphViz, e,g.:
-              ```
-            dot -Tpng file.dot -o graph.png
-            ````
-            "
+                      ```
+                    dot -Tpng file.dot -o graph.png
+                    ````
+                    "
 function writedotfile(sys::System, file::AbstractString, options::AbstractString="")
     open(file, "w") do f
         println(f, "digraph system {")
@@ -241,7 +297,7 @@ function writedotfile(sys::System, file::AbstractString, options::AbstractString
         end
         # define nodes
         for t in vcat(sys.techs...)
-            println(f, replace("$(t.name) [shape=box, label=\"$(t.tech_group)\"];", ".", "_"))
+            println(f, replace("$(t.name) [shape=box, label=\"$(t.functional_group)\"];", ".", "_"))
         end
         # edges
         for g in 1:size(sys.techs, 1)-1
