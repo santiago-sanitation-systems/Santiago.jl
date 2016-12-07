@@ -29,9 +29,9 @@ immutable Tech
 end
 
 """
-    The `Tech` type represents Technolgies.
-        It consist of `inputs`, `outputs`, a `name` and a `tech_group`.
-        """
+The `Tech` type represents Technolgies.
+It consist of `inputs`, `outputs`, a `name` and a `tech_group`.
+"""
 function Tech{T<:String}(inputs::Array{T}, outputs::Array{T}, name::T, tech_group::T)
     Tech([Product(x) for x in inputs],
 	 [Product(x) for x in outputs],
@@ -52,8 +52,8 @@ end
 
 
 """
-    The `System` is an Array of Tuples{Product, Tech, Tech}.
-        """
+The `System` is an Array of Tuples{Product, Tech, Tech}.
+"""
 type System
     techs::Set{Tech}
     connections::Array{Tuple{Product, Tech, Tech}}
@@ -72,8 +72,9 @@ function show(io::Base.IO, s::System)
     end
 end
 
+
 # -----------
-# functions to find all systems
+# helper functions
 
 function get_outputs{T<:Union{Array{Tech}, Set{Tech}}}(techs::T)
     outs = Product[]
@@ -111,9 +112,8 @@ end
 return all "open" inputs of a system
 """
 function get_inputs(sys::System)
-    # all outs
+    # all ins
     ins = DataStructures.counter(get_inputs(sys.techs))
-
     for c in sys.connections
         if haskey(ins, c[1])
             pop!(ins, c[1])
@@ -123,18 +123,23 @@ function get_inputs(sys::System)
 end
 
 
-# -----------
-# functions to find all systems
+"""
+Return all technologies of the system that have an open `prod` output
+"""
+function get_open_techs(sys::System, prod::Product)
 
-# candidates = Dict{Product, Set{Tech}}()
+    function is_connected(tech, sys)
+        for c in sys.connections
+            if c[2] == tech && c[1] == prod
+                return true
+            end
+        end
+        return false
+    end
 
-
-# for t in techs
-#     for i in t.inputs
-#         candidates[i] = t
-#     end
-# end
-
+    matching_techs = filter(t -> prod in t.outputs, sys.techs) # Techs with matching outputs
+    filter(t -> !is_connected(t, sys), matching_techs) # Techs open outputs
+end
 
 
 # -----------
@@ -153,28 +158,26 @@ function build_system!(sys::System, completesystems::Array{System}, techs::Array
     #     flush(errorfile)
     # end
 
-    sys_names = get_tech_group(sys)
-
     for candidate in candidates
-        if length(findin(sys_names, get_tech_group(n)))==0 # check if no duplicates
-            sysi = deepcopy(sys)
+        sysi = deepcopy(sys)
 
-            # extend system
-            sysi = extend_system(sys, candidate)
+        # extend system
+        sysi = extend_system(sys, candidate)
 
-            if sysi.complete
-                push!(completesystems, sysi)
-                println(resultfile, sysi)
-                flush(resultfile)
-            else
-                build_system!(sysi, completesystems, techs, resultfile, errorfile)
-            end
+        if sysi.complete
+            push!(completesystems, sysi)
+            println(resultfile, sysi)
+            flush(resultfile)
+        else
+            build_system!(sysi, completesystems, techs, resultfile, errorfile)
         end
     end
 end
 
+
 """
-            Returns an Array of all possible `System`s starting with `source`. A source can be any technology with a least one output."""
+Returns an Array of all possible `System`s starting with `source`. A source can be any technology with a least one output.
+"""
 function build_all_systems(source::Tech, techs::Array{Tech};
                            resultfile::IO=STDOUT, errorfile::IO=STDERR)
     completesystems = System[]
@@ -183,93 +186,53 @@ function build_all_systems(source::Tech, techs::Array{Tech};
 end
 
 
-# Returns techs that fit to a system part
+# Returns techs that fit to an open system
 function get_candidates(sys::System, techs::Array{Tech})
     outs = get_outputs(sys)
-    open_inputs
+
+    # is a match if any input matchs an open output
+    function ff(t)
+        for i in t.inputs
+            if i in outs
+                return(true)
+            end
+        end
+        false
+    end
+
+    filter(ff, techs)
 end
 
 
 
+"""
+Return an array of all possible estension of `sys` with the candidate technology
+"""
+function extend_system(sys::System, tech::Tech)
 
-# Returns techs that fit to a system part
-function get_matching(s::Array{Tech}, techs::Array{Tech})
-    ## all outgoing streams
-    outs = get_outputs(s)
-    matches = Array{Array{Tech},1}()
-    n_out = length(outs)
-    ## get matching combinations
-    for k in 1:n_out
-        for c in Combinatorics.combinations(get_candidates(techs, outs, k), k) # try all combination of lenght k (in R: combn())
-            inputs = get_inputs(c)
-            if is_compatible(outs, inputs)
-                push!(matches, c)
+    sysout = get_outputs(sys)
+    sysin = get_inputs(sys)
+
+    push!(sys.techs, tech)
+
+    for techin in tech.inputs
+        if techin in sysout
+            for con in open_techs(sys, techin)
+
             end
-
         end
     end
-    return matches
 end
-
-# test if outputs are compatible with next inputs.
-function is_compatible(outputs, inputs)
-    sort(outputs) == sort(inputs)         # no empty inputs allowed
-    # sort(outputs) == sort(unique(inputs)) # empty inputs allowed possible
-end
-
-# little helpers
-function get_inputs(s::Array{Tech})
-    inputs = []
-    for t in s
-        append!(inputs, t.inputs)
-    end
-    return inputs
-end
-
-
-
-function get_tech_group(s::System)
-    names = Symbol[]
-    for t in vcat(s.techs...)
-        push!(names, t.tech_group)
-    end
-    return names
-end
-
-
-function get_tech_group(s::Array{Tech})
-    names = Symbol[]
-    for t in s
-        push!(names, t.tech_group)
-    end
-    return names
-end
-
-
-# pre filter the tech list
-function get_candidates(s::Array{Tech}, outs, k)
-
-    n_out = length(outs)
-    n_in_min = k==1? n_out : 1
-    n_in_max = n_out - k + 1
-
-    function condi(t::Tech)
-        issubset(t.inputs, outs) && (n_in_min <= t.n_inputs <= n_in_max)
-    end
-
-    filter(condi, s)
-end
-
 
 
 # ---------------------------------
 # write dot file for visualisation with grapgviz
 
 "Writes a DOT file of a `System`. The resulting file can be visualized with GraphViz, e,g.:
-          ```
-        dot -Tpng file.dot -o graph.png
-        ````
-        "
+              ```
+            dot -Tpng file.dot -o graph.png
+            ````
+            "
 function writedotfile(sys::System, file::AbstractString, options::AbstractString="")
     open(file, "w") do f
         println(f, "digraph system {")

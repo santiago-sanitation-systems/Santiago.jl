@@ -1,6 +1,8 @@
 using SanitationSystemBuilder
 using Base.Test
 
+SSB = SanitationSystemBuilder
+
 # -----------
 # techs
 
@@ -36,20 +38,21 @@ techs2_2 = [
 # println(techs2[2])
 # println(techs2[4])
 
-@test length(SanitationSystemBuilder.get_outputs(techs1)) == 9
-@test length(SanitationSystemBuilder.get_outputs(techs2)) == 4
+@test length(SSB.get_outputs(techs1)) == 9
+@test length(SSB.get_outputs(techs2)) == 4
 
-@test length(SanitationSystemBuilder.get_inputs(techs1)) == 9
-@test length(SanitationSystemBuilder.get_inputs(techs2)) == 4
+@test length(SSB.get_inputs(techs1)) == 9
+@test length(SSB.get_inputs(techs2)) == 4
 
 # -----------
 # System
 
 s1 = System(techs1, Tuple{Product, Tech, Tech}[])
+
 s2 = System(
-    techs1,
-    [(Product("aa"), techs1[1], techs1[2]),
-     (Product("dd"), techs1[2], techs1[4])
+    techs2,
+    [(Product("aa"), techs2[1], techs2[2]),
+     (Product("bb"), techs2[2], techs2[3])
      ]
 )
 
@@ -63,36 +66,21 @@ s3 = System(
      ]
 )
 
-@test length(SanitationSystemBuilder.get_outputs(s1.techs)) == 9
-@test length(SanitationSystemBuilder.get_outputs(s2.techs)) == 9
-@test length(SanitationSystemBuilder.get_inputs(s1.techs)) == 9
-@test length(SanitationSystemBuilder.get_inputs(s2.techs)) == 9
+@test length(SSB.get_outputs(s1.techs)) == 9
+@test length(SSB.get_outputs(s2.techs)) == 4
+@test length(SSB.get_inputs(s1.techs)) == 9
+@test length(SSB.get_inputs(s2.techs)) == 4
 
-@test length(SanitationSystemBuilder.get_outputs(s1)) == 9
-@test length(SanitationSystemBuilder.get_outputs(s2)) == 7
-@test length(SanitationSystemBuilder.get_inputs(s1)) == 9
-@test length(SanitationSystemBuilder.get_inputs(s2)) == 7
+@test length(SSB.get_outputs(s1)) == 9
+@test length(SSB.get_outputs(s2)) == 2
+@test length(SSB.get_inputs(s1)) == 9
+@test length(SSB.get_inputs(s2)) == 2
 
 # complete system
-@test SanitationSystemBuilder.get_outputs(s3) == Product[]
-@test SanitationSystemBuilder.get_inputs(s3) == Product[]
+@test SSB.get_outputs(s3) == Product[]
+@test SSB.get_inputs(s3) == Product[]
 
-
-println(s1)
-println(s2)
-
-
-# tech_list = [
-#     Tech(["brown"], [], "A1", "A"),
-#     Tech(["black"], ["brown"], "B1", "B"),
-#     ## transport technologies
-#     Tech(["brown"], ["brown"], "C1", "C"),
-#     Tech(["brown"], ["brown"], "C2", "C"),
-#     Tech(["yellow"], ["yellow"], "D1", "D")
-# ]
-
-# source = Tech([], ["black"], "s1", "S")
-
-# sys = build_all_systems(source, tech_list)
-
-# @test size(sys, 1) == 3
+# find open technologies
+@test length(SSB.get_open_techs(s2, Product("aa"))) == 0
+@test length(SSB.get_open_techs(s2, Product("cc"))) == 1
+@test length(SSB.get_open_techs(s2, Product("dd"))) == 1
