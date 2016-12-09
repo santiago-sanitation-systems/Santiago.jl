@@ -92,6 +92,9 @@ s3 = System(
 @test length(SSB.get_openin_techs(s2, Product("dd"))) == 1
 @test length(SSB.get_openin_techs(s2, Product("cc"))) == 1
 
+
+# println(SSB.close_loops(s2, techs2[3]))
+
 # system extension
 
 # println( SSB.extend_system(s2, techs2[4]) )
@@ -101,10 +104,19 @@ s3 = System(
 # t2 = deepcopy(techs1)[1]
 # println(Set([t1, t2]))
 
+println("---- ss1 ----")
 ss1 = build_all_systems(techs1[1], techs1)
-ss2 = build_all_systems(techs2[1], techs2)
 
+for s in ss1
+    println("--- s1 ---")
+    println(s)
+end
+
+println("---- ss2 ----")
+ss2 = build_all_systems(techs2[1], techs2)
 for s in ss2
     println("--- s2 ---")
     println(s)
 end
+
+# writedotfile(ss1[1], "test.dot")

@@ -247,17 +247,33 @@ function extend_system(sys::System, tech::Tech)
     for prodin in tech.inputs
         if prodin in sysout
             for last_tech in get_openout_techs(sys, prodin)
+                # --- connection to new tech
                 sysi = deepcopy(sys)
                 push!(sysi.connections, (prodin, last_tech, tech)) # add new connection
 
                 sysi.complete = is_complete(sysi)
                 push!(newsystems, sysi)
 
-                # close loops
+                # --- all possible connections
+                connections = Tuple{Product,Tech, Tech}[]
+                # loops originating at tech
                 for prodout in tech.outputs
-                    for open_tech in get_openin_techs(sysi, prodout)
-                        sysj = deepcopy(sysi)
-                        push!(sysj.connections, (prodout, tech, open_tech)) # add new connection
+                    techins = get_openin_techs(sys, prodout)
+                    x = [(prodout, tech, t) for t in techins]
+                    append!(connections, x)
+                end
+                # loops ending at tech
+                for prodinopen in filter(x -> x!=prodin, tech.inputs)
+                    techouts = get_openout_techs(sysi, prodinopen)
+                    x = [(prodinopen, t, tech) for t in techouts]
+                    append!(connections, x)
+                end
+
+                # add all combinations of connections
+                for con in Combinatorics.combinations(connections)
+                    sysj = deepcopy(sysi)
+                    for c in con
+                        push!(sysj.connections, c)
                         sysj.complete = is_complete(sysj)
                         push!(newsystems, sysj)
                     end
@@ -269,14 +285,23 @@ function extend_system(sys::System, tech::Tech)
     return newsystems
 end
 
-function close_loops(sys::System, prod::Product)
-    sysin = get_inputs(sys)
-    # close loops
-    if prodin in sysin
-        for open_tech in get_openin_techs(sysi, prodin)
-            sysi = deepcopy(sys)
-            sysi.complete = is_complete(sysi)
-            push!(sysi.connections, (prodin, last_tech, tech)) # add new connection
+function close_loops(sys::System, tech::Tech)
+    open_prod = tech.outputs
+
+    # all possible connections
+    connections = Tuple{Product,Tech, Tech}[]
+    for prodout in tech.outputs
+        techins = get_openin_techs(sys, prodout)
+        x = [(prodout, tech, t) for t in techins]
+        append!(connections, x )
+    end
+
+    # add connections
+    for con in Combinatorics.combinations(connections)
+        sysi = deepcopy(sys)
+        for c in con
+            push!(sysi.connections, c)
+            push!(newsystems, sysi)
         end
     end
 end
@@ -284,12 +309,12 @@ end
 # ---------------------------------
 # write dot file for visualisation with grapgviz
 
-"Writes a DOT file of a `System`. The resulting file can be visualized with GraphViz, e,g.:
-                      ```
-                    dot -Tpng file.dot -o graph.png
-                    ````
-                    "
-function writedotfile(sys::System, file::AbstractString, options::AbstractString="")
+"""Writes a DOT file of a `System`. The resulting file can be visualized with GraphViz, e,g.:
+        ```
+        dot -Tpng file.dot -o graph.png
+        ```
+        """
+function writedotfile(sys::System, file::String, options::String="")
     open(file, "w") do f
         println(f, "digraph system {")
         if options!=""
@@ -297,17 +322,11 @@ function writedotfile(sys::System, file::AbstractString, options::AbstractString
         end
         # define nodes
         for t in vcat(sys.techs...)
-            println(f, replace("$(t.name) [shape=box, label=\"$(t.functional_group)\"];", ".", "_"))
+            println(f, replace("$(t.name) [shape=box, label=\"$(t.name)\"];", ".", "_"))
         end
         # edges
-        for g in 1:size(sys.techs, 1)-1
-            for t in sys.techs[g]
-                for out in t.outputs
-                    n = filter(x -> length(findin([out], x.inputs))>0,
-	                       sys.techs[g+1])
-                    println(f, replace("$(t.name) -> $(n[1].name) [label=\"$(out)\"];", ".", "_"))
-                end
-            end
+        for c in sys.connections
+            println(f, replace("$(c[2].name) -> $(c[3].name) [label=\"$(c[1].name)\"];", ".", "_"))
         end
         println(f, "}")
     end
