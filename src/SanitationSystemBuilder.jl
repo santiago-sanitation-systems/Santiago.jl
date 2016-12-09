@@ -101,7 +101,8 @@ function get_outputs(sys::System)
     outs = DataStructures.counter(get_outputs(sys.techs))
 
     for c in sys.connections
-        if haskey(outs, c[1])
+        num = push!(outs, c[1], -1) # not very elegant...
+        if num == 0
             pop!(outs, c[1])
         end
     end
@@ -124,7 +125,8 @@ function get_inputs(sys::System)
     # all ins
     ins = DataStructures.counter(get_inputs(sys.techs))
     for c in sys.connections
-        if haskey(ins, c[1])
+        num = push!(ins, c[1], -1) # not very elegant...
+        if num == 0
             pop!(ins, c[1])
         end
     end
@@ -267,6 +269,7 @@ function extend_system(sys::System, tech::Tech)
                     append!(connections, x)
                 end
                 # loops ending at tech
+                # for prodinopen in tech.inputs
                 for prodinopen in filter(x -> x!=prodin, tech.inputs)
                     techouts = get_openout_techs(sysi, prodinopen)
                     x = [(prodinopen, t, tech) for t in techouts]
