@@ -34,11 +34,6 @@ techs2_2 = [
 ]
 
 
-# # print
-# println(techs2[1])
-# println(techs2[2])
-# println(techs2[4])
-
 @test length(SSB.get_outputs(techs1)) == 9
 @test length(SSB.get_outputs(techs2)) == 4
 
@@ -92,14 +87,15 @@ s3 = System(
 @test length(SSB.get_openin_techs(s2, Product("dd"))) == 1
 @test length(SSB.get_openin_techs(s2, Product("cc"))) == 1
 
+
 # find systems
 
-ss1 = build_all_systems(techs1[1], techs1)
+ss1 = build_all_systems(techs1[1], techs1[2:end])
 @test length(ss1) == 1
 @test length(ss1[1].techs) == 8
 @test length(ss1[1].connections) == 9
 
-ss2 = build_all_systems(techs2[1], techs2)
+ss2 = build_all_systems(techs2[1], techs2[2:end])
 @test length(ss2) == 1
 @test length(ss2[1].techs) == 4
 @test length(ss2[1].connections) == 4

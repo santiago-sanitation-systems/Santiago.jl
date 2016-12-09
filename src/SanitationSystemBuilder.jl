@@ -207,7 +207,7 @@ end
 
 """
     Returns an Array of all possible `System`s starting with `source`. A source can be any technology with a least one output.
-    """
+"""
 function build_all_systems(source::Tech, techs::Array{Tech};
                            resultfile::IO=STDOUT, errorfile::IO=STDERR)
     completesystems = System[]
@@ -238,12 +238,12 @@ end
 
 
 """
-    Return an array of all possible extension of `sys` with the candidate technology
-    """
+Return an array of all possible extension of `sys` with the candidate technology
+"""
 function extend_system(sys::System, tech::Tech)
 
     sysout = get_outputs(sys)
-    push!(sys.techs, tech)
+    # push!(sys.techs, tech)
 
     newsystems = System[]
     # add new a Tech
@@ -254,14 +254,15 @@ function extend_system(sys::System, tech::Tech)
                 sysi = deepcopy(sys)
                 push!(sysi.connections, (prodin, last_tech, tech)) # add new connection
 
+                push!(sysi.techs, tech)
                 sysi.complete = is_complete(sysi)
                 push!(newsystems, sysi)
 
                 # --- all possible connections
-                connections = Tuple{Product,Tech, Tech}[]
+                connections = Connection[]
                 # loops originating at tech
                 for prodout in tech.outputs
-                    techins = get_openin_techs(sys, prodout)
+                    techins = get_openin_techs(sysi, prodout)
                     x = [(prodout, tech, t) for t in techins]
                     append!(connections, x)
                 end
@@ -288,35 +289,15 @@ function extend_system(sys::System, tech::Tech)
     return newsystems
 end
 
-function close_loops(sys::System, tech::Tech)
-    open_prod = tech.outputs
-
-    # all possible connections
-    connections = Tuple{Product,Tech, Tech}[]
-    for prodout in tech.outputs
-        techins = get_openin_techs(sys, prodout)
-        x = [(prodout, tech, t) for t in techins]
-        append!(connections, x )
-    end
-
-    # add connections
-    for con in Combinatorics.combinations(connections)
-        sysi = deepcopy(sys)
-        for c in con
-            push!(sysi.connections, c)
-            push!(newsystems, sysi)
-        end
-    end
-end
 
 # ---------------------------------
 # write dot file for visualisation with grapgviz
 
 """Writes a DOT file of a `System`. The resulting file can be visualized with GraphViz, e,g.:
-        ```
-        dot -Tpng file.dot -o graph.png
-        ```
-        """
+```
+ dot -Tpng file.dot -o graph.png
+```
+"""
 function writedotfile(sys::System, file::String, options::String="")
     open(file, "w") do f
         println(f, "digraph system {")
@@ -325,7 +306,7 @@ function writedotfile(sys::System, file::String, options::String="")
         end
         # define nodes
         for t in vcat(sys.techs...)
-            println(f, replace("$(t.name) [shape=box, label=\"$(t.name)\"];", ".", "_"))
+            println(f, replace("$(t.name) [shape=box, label=\"$(t.name)\n($(t.functional_group))\"];", ".", "_"))
         end
         # edges
         for c in sys.connections
