@@ -54,16 +54,22 @@ end
 
 
 """
+A `Connection`is a Tuples{Product, sourceTech, sinkTech}.
+"""
+typealias Connection Tuple{Product, Tech, Tech}
+
+
+"""
 The `System` is an Array of Tuples{Product, Tech, Tech}.
 """
 @auto_hash_equals type System
     techs::Set{Tech}
-    connections::Array{Tuple{Product, Tech, Tech}}
+    connections::Set{Connection}
     complete::Bool
 end
 
-System(techs::Array{Tech}, con::Array{Tuple{Product, Tech, Tech}}) = System(Set(techs), con, false)
-System(tech::Tech) = System(Set([tech]), Tuple{Product, Tech, Tech}[], false)
+System(techs::Array{Tech}, con::Array{Connection}) = System(Set(techs), Set(con), false)
+System(tech::Tech) = System(Set([tech]), Set(Connection[]), false)
 
 
 
@@ -185,12 +191,9 @@ function build_system!(sys::System, completesystems::Array{System}, techs::Array
     # end
 
     for candidate in candidates
-
         # extend systems
         sys_ext = extend_system(sys, candidate)
-        #length(sys_ext)== 0 || println("dead end!")
         for sysi in sys_ext
-            # println(sysi)
             if sysi.complete
                 push!(completesystems, sysi)
                 # println(resultfile, sysi)
@@ -209,7 +212,7 @@ function build_all_systems(source::Tech, techs::Array{Tech};
                            resultfile::IO=STDOUT, errorfile::IO=STDERR)
     completesystems = System[]
     build_system!(System(source), completesystems, techs, resultfile, errorfile)
-    return completesystems
+    return unique(completesystems)
 end
 
 
