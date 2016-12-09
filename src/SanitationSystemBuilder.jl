@@ -98,7 +98,7 @@ function get_outputs(sys::System)
         if haskey(outs, c[1])
             pop!(outs, c[1])
         end
-        end
+    end
     return collect(keys(outs))
 end
 
