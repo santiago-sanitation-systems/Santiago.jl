@@ -83,7 +83,7 @@ s3 = System(
 @test length(SSB.get_openout_techs(s2, Product("aa"))) == 0
 @test length(SSB.get_openout_techs(s2, Product("cc"))) == 1
 @test length(SSB.get_openout_techs(s2, Product("dd"))) == 1
-@test length(SSB.get_openin_techs(s2, Product("bb"))) == 0
+@test length(SSB.get_openin_techs(s2, Product("bb"))) == 1
 @test length(SSB.get_openin_techs(s2, Product("dd"))) == 1
 @test length(SSB.get_openin_techs(s2, Product("cc"))) == 1
 

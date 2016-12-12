@@ -173,7 +173,8 @@ function get_openin_techs(sys::System, prod::Product)
     end
 
     matching_techs = filter(t -> prod in t.inputs, sys.techs) # Techs with matching inputs
-    filter(t -> !is_connected(t, sys), matching_techs) # Techs open outputs
+    # filter(t -> !is_connected(t, sys), matching_techs) # Techs open inputs
+    matching_techs
 end
 
 
