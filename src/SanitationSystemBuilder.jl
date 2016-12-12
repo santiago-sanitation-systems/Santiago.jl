@@ -136,7 +136,9 @@ end
 
 
 function is_complete(sys::System)
-    length(get_outputs(sys)) == 0 && length(get_inputs(sys)) == 0
+    length(get_outputs(sys)) == 0 &&
+        length(get_inputs(sys)) == 0 &&
+        any(length(t.outputs) == 0 for t in sys.techs) # check if a sink exist
 end
 
 

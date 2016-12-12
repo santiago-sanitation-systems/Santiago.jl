@@ -89,7 +89,6 @@ s3 = System(
 
 
 # find systems
-
 ss1 = build_all_systems(techs1[1], techs1[2:end])
 @test length(ss1) == 1
 @test length(ss1[1].techs) == 8
