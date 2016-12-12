@@ -301,20 +301,32 @@ end
  dot -Tpng file.dot -o graph.png
 ```
 """
-function writedotfile(sys::System, file::String, options::String="")
+function writedotfile(sys::System, file::String, group=true, options::String="")
     open(file, "w") do f
         println(f, "digraph system {")
+        println(f, "rankdir=LR;")
         if options!=""
             println(f, "$(options);")
         end
         # define nodes
         for t in vcat(sys.techs...)
-            println(f, replace("$(t.name) [shape=box, label=\"$(t.name)\n($(t.functional_group))\"];", ".", "_"))
+            println(f, replace("$(t.name) [shape=box, style=filled fillcolor=\"azure3\" label=\"$(t.name)\n($(t.functional_group))\"];", ".", "_"))
         end
         # edges
         for c in sys.connections
             println(f, replace("$(c[2].name) -> $(c[3].name) [label=\"$(c[1].name)\"];", ".", "_"))
         end
+
+        # group according to functional groups
+        if group
+            fgroups = unique(t.functional_group for t in sys.techs)
+
+            for fg in fgroups
+                names = [t.name for t in sys.techs if t.functional_group==fg]
+                println(f, "{ rank=same $(join(names, ' ')) }")
+            end
+        end
+
         println(f, "}")
     end
 end
