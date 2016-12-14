@@ -308,12 +308,17 @@ function writedotfile(sys::System, file::String, group=true, options::String="")
     open(file, "w") do f
         println(f, "digraph system {")
         println(f, "rankdir=LR;")
+        println(f, "node[style=filled colorscheme=pastel15];") # accent5
         if options!=""
             println(f, "$(options);")
         end
+        # define colors for function groups
+        fgroups = unique(t.functional_group for t in sys.techs)
+        colors = Dict(fgroups[i] => mod(i,5)+1 for i in 1:length(fgroups))
+
         # define nodes
         for t in vcat(sys.techs...)
-            println(f, replace("$(t.name) [shape=box, style=filled fillcolor=\"azure3\" label=\"$(t.name)\n($(t.functional_group))\"];", ".", "_"))
+            println(f, replace("$(t.name) [shape=box, fillcolor=$(colors[t.functional_group]) label=\"$(t.name)\n($(t.functional_group))\"];", ".", "_"))
         end
         # edges
         for c in sys.connections
@@ -322,8 +327,6 @@ function writedotfile(sys::System, file::String, group=true, options::String="")
 
         # group according to functional groups
         if group
-            fgroups = unique(t.functional_group for t in sys.techs)
-
             for fg in fgroups
                 names = [t.name for t in sys.techs if t.functional_group==fg]
                 println(f, "{ rank=same $(join(names, ' ')) }")
