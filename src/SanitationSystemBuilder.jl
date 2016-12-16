@@ -184,40 +184,42 @@ end
 # functions to find all systems
 
 # Return a vector of Systems
-function build_system!(sys::System, completesystems::Array{System}, techs::Array{Tech},
-                       resultfile::IO, errorfile::IO)
+function build_system!(sys::System, completesystems::Array{System}, deadendsystems::Array{System},
+                       techs::Array{Tech}, n_tech_max::Int, resultfile::IO)
 
-    # get matching Techs
-    candidates = get_candidates(sys, techs)
-    # if length(candidates)==0
-    #     print(errorfile, "dead end!: ")
-    #     println(errorfile, sys)
-    #     flush(errorfile)
-    # end
+    if length(sys.techs) <= n_tech_max
+        # get matching Techs
+        candidates = get_candidates(sys, techs)
+        if length(candidates)==0
+            push!(deadendsystems, sys)
+        end
 
-    for candidate in candidates
-        # extend systems
-        sys_ext = extend_system(sys, candidate)
-        for sysi in sys_ext
-            if sysi.complete
-                push!(completesystems, sysi)
-                # println(resultfile, sysi)
-                # flush(resultfile)
-            else
-                build_system!(sysi, completesystems, techs, resultfile, errorfile)
+        for candidate in candidates
+            # extend systems
+            sys_ext = extend_system(sys, candidate)
+            for sysi in sys_ext
+                if sysi.complete
+                    push!(completesystems, sysi)
+                    # println(resultfile, sysi)
+                    # flush(resultfile)
+                else
+                    build_system!(sysi, completesystems, deadendsystems,
+                                  techs, n_tech_max, resultfile)
+                end
             end
         end
     end
 end
 
 """
-        Returns an Array of all possible `System`s starting with `source`. A source can be any technology with a least one output.
+Returns an Array of all possible `System`s starting with `source`. A source can be any technology with a least one output.
     """
-function build_all_systems(source::Tech, techs::Array{Tech};
-                           resultfile::IO=STDOUT, errorfile::IO=STDERR)
+function build_all_systems(source::Tech, techs::Array{Tech}, n_tech_max;
+                           resultfile::IO=STDOUT)
     completesystems = System[]
-    build_system!(System(source), completesystems, techs, resultfile, errorfile)
-    return unique(completesystems)
+    deadendsystems = System[]
+    build_system!(System(source), completesystems, deadendsystems, techs, n_tech_max, resultfile)
+    return unique(completesystems), deadendsystems
 end
 
 
@@ -243,8 +245,8 @@ end
 
 
 """
-    Return an array of all possible extension of `sys` with the candidate technology
-    """
+Return an array of all possible extension of `sys` with the candidate technology
+"""
 function extend_system(sys::System, tech::Tech)
 
     sysout = get_outputs(sys)
@@ -271,11 +273,11 @@ function extend_system(sys::System, tech::Tech)
                     x = [(prodout, tech, t) for t in techins]
                     append!(connections, x)
                 end
+
                 # loops ending at tech
-                # for prodinopen in tech.inputs
-                for prodinopen in filter(x -> x!=prodin, tech.inputs)
+                for prodinopen in tech.inputs
                     techouts = get_openout_techs(sysi, prodinopen)
-                    x = [(prodinopen, t, tech) for t in techouts]
+                    x = [(prodinopen, t, tech) for t in techouts if t !=tech]
                     append!(connections, x)
                 end
 
@@ -300,13 +302,13 @@ end
 # write dot file for visualisation with grapgviz
 
 """Writes a DOT file of a `System`. The resulting file can be visualized with GraphViz, e,g.:
-    ```
-     dot -Tpng file.dot -o graph.png
-    ```
-## Arguments
-nogroup    Array of functional groups which should not be grouped in the plot
+            ```
+             dot -Tpng file.dot -o graph.png
+            ```
+        ## Arguments
+        nogroup    Array of functional groups which should not be grouped in the plot
 
-    """
+            """
 function writedotfile(sys::System, file::String, no_group::Array{String}=[""], options::String="")
     open(file, "w") do f
         println(f, "digraph system {")
@@ -332,6 +334,7 @@ function writedotfile(sys::System, file::String, no_group::Array{String}=[""], o
         # group according to functional groups
         for fg in filter(x -> !(x in no_group), fgroups)
             names = [t.name for t in sys.techs if t.functional_group==fg]
+            names = map(n -> replace(n, ".", "_"), names)
             println(f, "{ rank=same $(join(names, ' ')) }")
         end
 

@@ -89,12 +89,12 @@ s3 = System(
 
 
 # find systems
-ss1 = build_all_systems(techs1[1], techs1[2:end])
+ss1 = build_all_systems(techs1[1], techs1[2:end], 1000)[1]
 @test length(ss1) == 1
 @test length(ss1[1].techs) == 8
 @test length(ss1[1].connections) == 9
 
-ss2 = build_all_systems(techs2[1], techs2[2:end])
+ss2 = build_all_systems(techs2[1], techs2[2:end], 1000)[1]
 @test length(ss2) == 1
 @test length(ss2[1].techs) == 4
 @test length(ss2[1].connections) == 4
