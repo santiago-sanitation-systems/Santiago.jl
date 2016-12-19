@@ -77,7 +77,7 @@ function show(io::Base.IO, s::System)
     !s.complete ? print(io, "Incomplete ") : nothing
     println(io, "System with $(length(s.techs)) technologies and $(length(s.connections)) connections: ")
     for i in s.connections
-        println(io, "$(i[1]) | $(i[2]) | $(i[3])")
+        println(io, " $(i[2].name) → ($(i[1].name)) → $(i[3].name)")
     end
 end
 
@@ -126,7 +126,7 @@ function get_inputs(sys::System)
     ins = DataStructures.counter(get_inputs(sys.techs))
     for c in sys.connections
         num = push!(ins, c[1], -1) # not very elegant...
-        if num == 0
+        if num <= 0
             pop!(ins, c[1])
         end
     end
@@ -191,6 +191,8 @@ function build_system!(sys::System, completesystems::Array{System}, deadendsyste
         # get matching Techs
         candidates = get_candidates(sys, techs)
         if length(candidates)==0
+            # println("--- dead end ---")
+            # println(sys)
             push!(deadendsystems, sys)
         end
 
@@ -198,28 +200,31 @@ function build_system!(sys::System, completesystems::Array{System}, deadendsyste
             # extend systems
             sys_ext = extend_system(sys, candidate)
             for sysi in sys_ext
-                if sysi.complete
-                    push!(completesystems, sysi)
-                    # println(resultfile, sysi)
-                    # flush(resultfile)
-                else
-                    build_system!(sysi, completesystems, deadendsystems,
-                                  techs, n_tech_max, resultfile)
+                if !(sysi in completesystems)
+                    if sysi.complete
+                        push!(completesystems, sysi)
+                        println(resultfile, sysi)
+                        flush(resultfile)
+                    else
+                        build_system!(sysi, completesystems, deadendsystems,
+                                      techs, n_tech_max, resultfile)
+                    end
                 end
             end
         end
     end
 end
 
+
 """
-Returns an Array of all possible `System`s starting with `source`. A source can be any technology with a least one output.
-    """
+    Returns an Array of all possible `System`s starting with `source`. A source can be any technology with a least one output.
+        """
 function build_all_systems(source::Tech, techs::Array{Tech}, n_tech_max;
                            resultfile::IO=STDOUT)
     completesystems = System[]
     deadendsystems = System[]
     build_system!(System(source), completesystems, deadendsystems, techs, n_tech_max, resultfile)
-    return unique(completesystems), deadendsystems
+    return completesystems, deadendsystems
 end
 
 
@@ -245,12 +250,11 @@ end
 
 
 """
-Return an array of all possible extension of `sys` with the candidate technology
-"""
+    Return an array of all possible extension of `sys` with the candidate technology
+    """
 function extend_system(sys::System, tech::Tech)
 
     sysout = get_outputs(sys)
-    # push!(sys.techs, tech)
 
     newsystems = System[]
     # add new a Tech
@@ -260,8 +264,8 @@ function extend_system(sys::System, tech::Tech)
                 # --- connection to new tech
                 sysi = deepcopy(sys)
                 push!(sysi.connections, (prodin, last_tech, tech)) # add new connection
-
                 push!(sysi.techs, tech)
+
                 sysi.complete = is_complete(sysi)
                 push!(newsystems, sysi)
 
@@ -270,6 +274,9 @@ function extend_system(sys::System, tech::Tech)
                 # loops originating at tech
                 for prodout in tech.outputs
                     techins = filter!(t -> t!=tech, get_openin_techs(sysi, prodout))
+                    if tech.functional_group == :T
+                        filter!(t -> t.functional_group!= :T, techins)
+                    end
                     x = [(prodout, tech, t) for t in techins]
                     append!(connections, x)
                 end
@@ -277,6 +284,9 @@ function extend_system(sys::System, tech::Tech)
                 # loops ending at tech
                 for prodinopen in tech.inputs
                     techouts = get_openout_techs(sysi, prodinopen)
+                    if tech.functional_group == :T
+                        filter!(t -> t.functional_group!= :T, techouts)
+                    end
                     x = [(prodinopen, t, tech) for t in techouts if t !=tech]
                     append!(connections, x)
                 end
@@ -286,29 +296,31 @@ function extend_system(sys::System, tech::Tech)
                     sysj = deepcopy(sysi)
                     for c in con
                         push!(sysj.connections, c)
-                        sysj.complete = is_complete(sysj)
-                        push!(newsystems, sysj)
                     end
+                    sysj.complete = is_complete(sysj)
+                    push!(newsystems, sysj)
                 end
-
             end
+
         end
     end
+
     return newsystems
 end
 
 
 # ---------------------------------
-# write dot file for visualisation with grapgviz
+# write dot file for visualisation with graphviz
 
-"""Writes a DOT file of a `System`. The resulting file can be visualized with GraphViz, e,g.:
-            ```
-             dot -Tpng file.dot -o graph.png
-            ```
-        ## Arguments
-        nogroup    Array of functional groups which should not be grouped in the plot
+"""
+Writes a DOT file of a `System`. The resulting file can be visualized with GraphViz, e,g.:
+```
+ dot -Tpng file.dot -o graph.png
+```
+## Arguments
+nogroup    Array of functional groups which should not be grouped in the plot
 
-            """
+"""
 function writedotfile(sys::System, file::String, no_group::Array{String}=[""], options::String="")
     open(file, "w") do f
         println(f, "digraph system {")
