@@ -187,7 +187,7 @@ end
 function build_system!(sys::System, completesystems::Array{System}, deadendsystems::Array{System},
                        techs::Array{Tech}, n_tech_max::Int, resultfile::IO)
 
-    if length(sys.techs) <= n_tech_max
+    if length(sys.techs) < n_tech_max
         # get matching Techs
         candidates = get_candidates(sys, techs)
         if length(candidates)==0
