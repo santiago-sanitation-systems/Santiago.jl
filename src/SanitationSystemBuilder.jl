@@ -330,7 +330,7 @@ function writedotfile(sys::System, file::String, no_group::Array{String}=[""], o
             println(f, "$(options);")
         end
         # define colors for function groups
-        fgroups = unique(t.functional_group for t in sys.techs)
+        fgroups = sort(unique(t.functional_group for t in sys.techs))
         colors = Dict(fgroups[i] => mod(i,5)+1 for i in 1:length(fgroups))
 
         # define nodes
