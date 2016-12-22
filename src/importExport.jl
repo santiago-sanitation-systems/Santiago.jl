@@ -39,7 +39,7 @@ function importTechFile(techFile::String, sourceGroup::String)
     # Separate Inputs and outputs.
     tmp = split(techTable[3,i], " ")
     j = 1
-    while tmp[j] != "->"
+    while (j <= length(tmp)) && (tmp[j] != "->")
       tmp[j] = replace(tmp[j], ",", "")
       push!(currentTech.inputs, tmp[j])
       j += 1
