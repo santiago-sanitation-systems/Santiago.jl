@@ -183,9 +183,9 @@ end
 
 # Return a vector of Systems
 function build_system!(sys::System, completesystems::Array{System}, deadendsystems::Array{System},
-                       techs::Array{Tech}, n_tech_max::Int, resultfile::IO)
+                       techs::Array{Tech}, islegal::Function, resultfile::IO)
 
-    if length(sys.techs) < n_tech_max
+    if islegal(sys)
         # get matching Techs
         candidates = get_candidates(sys, techs)
         if length(candidates)==0
@@ -205,7 +205,7 @@ function build_system!(sys::System, completesystems::Array{System}, deadendsyste
                         flush(resultfile)
                     else
                         build_system!(sysi, completesystems, deadendsystems,
-                                      techs, n_tech_max, resultfile)
+                                      techs, islegal, resultfile)
                     end
                 end
             end
@@ -217,11 +217,11 @@ end
 """
     Returns an Array of all possible `System`s starting with `source`. A source can be any technology with a least one output.
         """
-function build_all_systems(source::Tech, techs::Array{Tech}, n_tech_max;
+function build_all_systems(source::Tech, techs::Array{Tech}; islegal::Function=x -> true,
                            resultfile::IO=STDOUT)
     completesystems = System[]
     deadendsystems = System[]
-    build_system!(System(source), completesystems, deadendsystems, techs, n_tech_max, resultfile)
+    build_system!(System(source), completesystems, deadendsystems, techs, islegal, resultfile)
     return completesystems, deadendsystems
 end
 
