@@ -185,28 +185,26 @@ end
 function build_system!(sys::System, completesystems::Array{System}, deadendsystems::Array{System},
                        techs::Array{Tech}, islegal::Function, resultfile::IO)
 
-    if islegal(sys)
-        # get matching Techs
-        candidates = get_candidates(sys, techs)
-        if length(candidates)==0
-            # println("--- dead end ---")
-            # println(sys)
-            push!(deadendsystems, sys)
-        end
+    # get matching Techs
+    candidates = get_candidates(sys, techs)
+    if length(candidates)==0
+        # println("--- dead end ---")
+        # println(sys)
+        push!(deadendsystems, sys)
+    end
 
-        for candidate in candidates
-            # extend systems
-            sys_ext = extend_system(sys, candidate)
-            for sysi in sys_ext
-                if !(sysi in completesystems)
-                    if sysi.complete
-                        push!(completesystems, sysi)
-                        println(resultfile, sysi)
-                        flush(resultfile)
-                    else
-                        build_system!(sysi, completesystems, deadendsystems,
-                                      techs, islegal, resultfile)
-                    end
+    for candidate in candidates
+        # extend systems
+        sys_ext = extend_system(sys, candidate)
+        for sysi in sys_ext
+            if !(sysi in completesystems)
+                if sysi.complete
+                    push!(completesystems, sysi)
+                    println(resultfile, sysi)
+                    flush(resultfile)
+                elseif islegal(sysi)
+                    build_system!(sysi, completesystems, deadendsystems,
+                            techs, islegal, resultfile)
                 end
             end
         end

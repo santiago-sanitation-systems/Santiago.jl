@@ -19,7 +19,7 @@ end
 This function reads a .csv file with technology and relationships
 and returns a tuple of an array with sources and an array of all technologies
 """
-function importTechFile(techFile::String, sourceGroup::String)
+function importTechFile(techFile::String, sourceGroup::String, t_group::String)
 
   techTable = readtable(techFile, separator = ';',   nastrings = [""], header= false)
 
@@ -165,9 +165,27 @@ function importTechFile(techFile::String, sourceGroup::String)
       error("Case 8: Unrecognized Syntax Inrel.")
     end
   end
+  
+  # Filter: for Technologies with group t_group it is not allowed that an input "A" and a transported input "transportedA"
+  # appear at the same time.
+  subTechFiltered = Tech[]
+  for subTech in subTechList
+	islegal = true
+	for input in subTech.inputs
+		t_input = join([Symbol("transported"), Symbol(input.name)], "")
+		for i in subTech.inputs
+			if Symbol(t_input) == i.name && subTech.functional_group == Symbol(t_group)
+				islegal = false
+			end
+		end
+	end
+	if islegal
+		push!(subTechFiltered, subTech)
+	end
+  end
 
-  sources = filter(t -> t.functional_group == Symbol(sourceGroup), subTechList)
-  techs = filter(t -> t.functional_group != Symbol(sourceGroup), subTechList)
+  sources = filter(t -> t.functional_group == Symbol(sourceGroup), subTechFiltered)
+  techs = filter(t -> t.functional_group != Symbol(sourceGroup), subTechFiltered)
 
   return sources, techs
   # Print it outptechFile = "techdata_ex_7.csv"
