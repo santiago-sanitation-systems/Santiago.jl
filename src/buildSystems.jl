@@ -25,6 +25,7 @@ show(io::Base.IO, p::Product) =  print("$(p.name)")
     outputs::Array{Product}
     name::String
     functional_group::Symbol
+	appscore::Float64
     n_inputs::Int
 end
 
@@ -32,11 +33,12 @@ end
 The `Tech` type represents Technolgies.
 It consist of `inputs`, `outputs`, a `name` and a `functional_group`.
 """
-function Tech{T<:String}(inputs::Array{T}, outputs::Array{T}, name::T, functional_group::T)
+function Tech{T<:String}(inputs::Array{T}, outputs::Array{T}, name::T, functional_group::T, appscore::Float64)
     Tech([Product(x) for x in inputs],
 	 [Product(x) for x in outputs],
 	 name,
 	 Symbol(functional_group),
+	 appscore,
 	 size(inputs,1))
 end
 
@@ -183,7 +185,7 @@ end
 
 # Return a vector of Systems
 function build_system!(sys::System, completesystems::Array{System}, deadendsystems::Array{System},
-                       techs::Array{Tech}, islegal::Function, resultfile::IO)
+                       techs::Array{Tech}, islegal::Function, resultfile::IO) #to get the debug print, add debug::String
 
     # get matching Techs
     candidates = get_candidates(sys, techs)
@@ -193,6 +195,7 @@ function build_system!(sys::System, completesystems::Array{System}, deadendsyste
         push!(deadendsystems, sys)
     end
 
+#	count=0
     for candidate in candidates
         # extend systems
         sys_ext = extend_system(sys, candidate)
@@ -203,8 +206,11 @@ function build_system!(sys::System, completesystems::Array{System}, deadendsyste
                     println(resultfile, sysi)
                     flush(resultfile)
                 elseif islegal(sysi)
+#					count += 1
+#					debug_n = join([debug, count], ", ")
+#					println(debug_n)
                     build_system!(sysi, completesystems, deadendsystems,
-                            techs, islegal, resultfile)
+                            techs, islegal, resultfile) #to get the debug print, add debug_n
                 end
             end
         end
@@ -214,12 +220,12 @@ end
 
 """
     Returns an Array of all possible `System`s starting with `source`. A source can be any technology with a least one output.
-        """
+"""
 function build_all_systems(source::Tech, techs::Array{Tech}; islegal::Function=x -> true,
                            resultfile::IO=STDOUT)
     completesystems = System[]
     deadendsystems = System[]
-    build_system!(System(source), completesystems, deadendsystems, techs, islegal, resultfile)
+    build_system!(System(source), completesystems, deadendsystems, techs, islegal, resultfile) #to get the debug print, add ""
     return completesystems, deadendsystems
 end
 

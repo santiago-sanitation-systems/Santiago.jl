@@ -10,6 +10,7 @@ type MasterTech
   inputs::Array
   outputs::Array
   functional_group::String
+  appscore::Float64
   inrel::String
   outrel::String
   MasterTech() = new()
@@ -31,6 +32,7 @@ function importTechFile(techFile::String, sourceGroup::String, t_group::String)
     currentTech = MasterTech()
     currentTech.name = techTable[1,i]
     currentTech.functional_group = techTable[2,i]
+	currentTech.appscore = parse(Float64, string(techTable[6,i]))
     currentTech.inputs = Array{String, 1}(0)
     currentTech.outputs = Array{String, 1}(0)
     currentTech.inrel = techTable[4,i]
@@ -53,6 +55,7 @@ function importTechFile(techFile::String, sourceGroup::String, t_group::String)
 
     # Add to Array
     push!(techList, currentTech)
+	
   end
 
 
@@ -63,7 +66,7 @@ function importTechFile(techFile::String, sourceGroup::String, t_group::String)
     # Case 1: Copy | Copy
     if (currentTech.inrel == "NA" || currentTech.inrel == "AND") && (currentTech.outrel == "NA" || currentTech.outrel == "AND")
       newSubTech = Tech(currentTech.inputs,
-      currentTech.outputs, currentTech.name, currentTech.functional_group)
+      currentTech.outputs, currentTech.name, currentTech.functional_group, currentTech.appscore)
       push!(subTechList, newSubTech)
 
       # Case 2: Copy | GenVar
@@ -74,7 +77,7 @@ function importTechFile(techFile::String, sourceGroup::String, t_group::String)
         for subTechOut in possibleCombis
           subTechName = join([currentTech.name, c], "_")
           newSubTech = Tech(currentTech.inputs,
-          subTechOut, subTechName, currentTech.functional_group)
+          subTechOut, subTechName, currentTech.functional_group, currentTech.appscore)
           push!(subTechList, newSubTech)
           c += 1
         end
@@ -86,7 +89,7 @@ function importTechFile(techFile::String, sourceGroup::String, t_group::String)
         subTechOut = currentTech.outputs[i]
         subTechName = join([currentTech.name, i], "_")
         newSubTech = Tech(currentTech.inputs,
-        [subTechOut], subTechName, currentTech.functional_group)
+        [subTechOut], subTechName, currentTech.functional_group, currentTech.appscore)
         push!(subTechList, newSubTech)
       end
       techFile = "techdata_ex_7.csv"
@@ -113,7 +116,7 @@ function importTechFile(techFile::String, sourceGroup::String, t_group::String)
               subTechName = join([currentTech.name, c], "_")
               subTechOut = join(["transported", candidateOut], "")
               newSubTech = Tech(subTechIn,
-              [subTechOut], subTechName, currentTech.functional_group)
+              [subTechOut], subTechName, currentTech.functional_group, currentTech.appscore)
               push!(subTechList, newSubTech)
 
               c += 1
@@ -130,7 +133,7 @@ function importTechFile(techFile::String, sourceGroup::String, t_group::String)
         subTechIn = currentTech.inputs[i]
         subTechOut = join(["transported", subTechIn], "")
         newSubTech = Tech([subTechIn],
-        [subTechOut], subTechName, currentTech.functional_group)
+        [subTechOut], subTechName, currentTech.functional_group, currentTech.appscore)
         push!(subTechList, newSubTech)
       end
 
@@ -142,7 +145,7 @@ function importTechFile(techFile::String, sourceGroup::String, t_group::String)
         for subTechIn in possibleCombis
           subTechName = join([currentTech.name, c], "_")
           newSubTech = Tech(subTechIn,
-          currentTech.outputs, subTechName, currentTech.functional_group)
+          currentTech.outputs, subTechName, currentTech.functional_group, currentTech.appscore)
           push!(subTechList, newSubTech)
           c += 1
         end
@@ -154,7 +157,7 @@ function importTechFile(techFile::String, sourceGroup::String, t_group::String)
         subTechIn = currentTech.inputs[i]
         subTechName = join([currentTech.name, i], "_")
         newSubTech = Tech([subTechIn],
-        currentTech.outputs, subTechName, currentTech.functional_group)
+        currentTech.outputs, subTechName, currentTech.functional_group, currentTech.appscore)
         push!(subTechList, newSubTech)
       end
 
