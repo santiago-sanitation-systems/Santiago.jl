@@ -20,7 +20,7 @@ end
 This function reads a .csv file with technology and relationships
 and returns a tuple of an array with sources and an array of all technologies
 """
-function importTechFile(techFile::String, sourceGroup::String, t_group::String)
+function importTechFile(techFile::String, sourceGroup::String, sourceAddGroup::String, t_group::String)
 
   techTable = readtable(techFile, separator = ';',   nastrings = [""], header= false)
 
@@ -188,9 +188,10 @@ function importTechFile(techFile::String, sourceGroup::String, t_group::String)
   end
 
   sources = filter(t -> t.functional_group == Symbol(sourceGroup), subTechFiltered)
-  techs = filter(t -> t.functional_group != Symbol(sourceGroup), subTechFiltered)
+  sourcesAdd = filter(t -> t.functional_group == Symbol(sourceAddGroup), subTechFiltered)
+  techs = filter(t -> (t.functional_group != Symbol(sourceGroup) && t.functional_group != Symbol(sourceAddGroup)), subTechFiltered)
 
-  return sources, techs
+  return sources, sourcesAdd, techs
   # Print it outptechFile = "techdata_ex_7.csv"
   #while length(subTechList) > 0
   #  currentPrint = pop!(subTechList)

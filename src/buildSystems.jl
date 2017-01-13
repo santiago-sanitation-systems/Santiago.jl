@@ -69,7 +69,7 @@ The `System` is an Array of Tuples{Product, Tech, Tech}.
 end
 
 System(techs::Array{Tech}, con::Array{Connection}) = System(Set(techs), Set(con), false)
-System(tech::Tech) = System(Set([tech]), Set(Connection[]), false)
+System(techs::Array{Tech}) = System(Set(techs), Set(Connection[]), false)
 
 
 
@@ -185,17 +185,16 @@ end
 
 # Return a vector of Systems
 function build_system!(sys::System, completesystems::Array{System}, deadendsystems::Array{System},
-                       techs::Array{Tech}, islegal::Function, resultfile::IO) #to get the debug print, add debug::String
+                       techs::Array{Tech}, islegal::Function, resultfile::IO, print_prog::Bool)
 
     # get matching Techs
     candidates = get_candidates(sys, techs)
-    if length(candidates)==0
+    #if length(candidates)==0
         # println("--- dead end ---")
         # println(sys)
-        push!(deadendsystems, sys)
-    end
-
-#	count=0
+        #push!(deadendsystems, sys)
+    #end
+	
     for candidate in candidates
         # extend systems
         sys_ext = extend_system(sys, candidate)
@@ -206,11 +205,9 @@ function build_system!(sys::System, completesystems::Array{System}, deadendsyste
                     println(resultfile, sysi)
                     flush(resultfile)
                 elseif islegal(sysi)
-#					count += 1
-#					debug_n = join([debug, count], ", ")
-#					println(debug_n)
+					!print_prog || print(".")
                     build_system!(sysi, completesystems, deadendsystems,
-                            techs, islegal, resultfile) #to get the debug print, add debug_n
+                            techs, islegal, resultfile, false)
                 end
             end
         end
@@ -221,11 +218,11 @@ end
 """
     Returns an Array of all possible `System`s starting with `source`. A source can be any technology with a least one output.
 """
-function build_all_systems(source::Tech, techs::Array{Tech}; islegal::Function=x -> true,
+function build_all_systems(source::Array{Tech}, techs::Array{Tech}; islegal::Function=x -> true,
                            resultfile::IO=STDOUT)
     completesystems = System[]
     deadendsystems = System[]
-    build_system!(System(source), completesystems, deadendsystems, techs, islegal, resultfile) #to get the debug print, add ""
+    build_system!(System(source), completesystems, deadendsystems, techs, islegal, resultfile, true)
     return completesystems, deadendsystems
 end
 
@@ -279,6 +276,8 @@ function extend_system(sys::System, tech::Tech)
                     if tech.functional_group == :T
                         filter!(t -> t.functional_group!= :T, techins)
                     end
+					# Loops to last_tech are forbidden, if the functional group is different.
+					filter!(t -> (t.name != last_tech.name || t.functional_group == tech.functional_group), techins)
                     x = [(prodout, tech, t) for t in techins]
                     append!(connections, x)
                 end
