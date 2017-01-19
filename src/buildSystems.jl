@@ -185,7 +185,7 @@ end
 
 # Return a vector of Systems
 function build_system!(sys::System, completesystems::Array{System}, deadendsystems::Array{System},
-                       techs::Array{Tech}, islegal::Function, resultfile::IO, print_prog::Bool)
+                       techs::Array{Tech}, islegal::Function, resultfile::IO, print_prog::Bool, hashset::Set{UInt64})
 
     # get matching Techs
     candidates = get_candidates(sys, techs)
@@ -198,19 +198,21 @@ function build_system!(sys::System, completesystems::Array{System}, deadendsyste
     for candidate in candidates
         # extend systems
         sys_ext = extend_system(sys, candidate)
+		
         for sysi in sys_ext
-            if !(sysi in completesystems)
-                if sysi.complete
-                    push!(completesystems, sysi)
-                    println(resultfile, sysi)
-                    flush(resultfile)
-                elseif islegal(sysi)
-					!print_prog || print(".")
-                    build_system!(sysi, completesystems, deadendsystems,
-                            techs, islegal, resultfile, false)
-                end
+		
+            if sysi.complete && !(sysi in completesystems)
+                push!(completesystems, sysi)
+                println(resultfile, sysi)
+                flush(resultfile)
+            elseif !sysi.complete && islegal(sysi) && !(hash(sysi) in hashset)
+				push!(hashset, hash(sysi))
+				!print_prog || print(".")
+                build_system!(sysi, completesystems, deadendsystems,
+                            techs, islegal, resultfile, false, hashset)
             end
-        end
+            
+		end
     end
 end
 
@@ -222,7 +224,7 @@ function build_all_systems(source::Array{Tech}, techs::Array{Tech}; islegal::Fun
                            resultfile::IO=STDOUT)
     completesystems = System[]
     deadendsystems = System[]
-    build_system!(System(source), completesystems, deadendsystems, techs, islegal, resultfile, true)
+    build_system!(System(source), completesystems, deadendsystems, techs, islegal, resultfile, true, Set{UInt64}())
     return completesystems, deadendsystems
 end
 
