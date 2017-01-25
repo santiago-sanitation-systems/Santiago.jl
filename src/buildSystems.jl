@@ -8,6 +8,7 @@ import Base.getindex
 export Tech, Product, System
 export build_all_systems
 export writedotfile
+export prefilterTechList
 
 # -----------
 # define types
@@ -316,7 +317,7 @@ end
 	number of technologies is reduced by removing Techs that require an input that is not available with 
 	the sources provided.
 """
-function prefilterTechlist(currentSources::Array{Tech}, sources::Array{Tech}, sourcesAdd::Array{Tech}, tech_list::Array{Tech})
+function prefilterTechList(currentSources::Array{Tech}, sources::Array{Tech}, sourcesAdd::Array{Tech}, tech_list::Array{Tech})
 	
 	# All Products that can be created by available sources
 	otherSourcesProduct = vcat([t.outputs for t in sources]...)
@@ -325,7 +326,7 @@ function prefilterTechlist(currentSources::Array{Tech}, sources::Array{Tech}, so
 	
 	# Outputs of all the used Sources
 	output_list = Product[]
-	for ss_c in ss
+	for ss_c in currentSources
 		append!(output_list, ss_c.outputs)
 	end
 	
