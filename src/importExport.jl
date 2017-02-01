@@ -4,6 +4,7 @@ using Combinatorics
 
 export importTechFile
 export writedotfile
+export generateCombinations
 
 type MasterTech
   name::String
@@ -192,18 +193,27 @@ function importTechFile(techFile::String, sourceGroup::String, sourceAddGroup::S
   techs = filter(t -> (t.functional_group != Symbol(sourceGroup) && t.functional_group != Symbol(sourceAddGroup)), subTechFiltered)
 
   return sources, sourcesAdd, techs
-  # Print it outptechFile = "techdata_ex_7.csv"
-  #while length(subTechList) > 0
-  #  currentPrint = pop!(subTechList)
-  #  inprods = join(currentPrint.inputs, ", ")
-  #  outprods = join(currentPrint.outputs, ", ")
-  #  products = join([inprods, outprods], "  →→  ")
-  #  printtext = join([currentPrint.name, products], ": ")
-  #  printline = join([printtext, "\n"], "")
-  #  print(printline)
-  #end
 
 end
+
+"""
+This function generates possible combinations of one source and all sourcesAdds
+returns all possible combinations.
+"""
+function generateCombinations(source::Tech, sourcesAdd::Array{Tech})
+
+	src_comb = Array{Tech}[]
+	push!(src_comb, [source])
+	
+	for s_pos in Combinatorics.combinations(sourcesAdd)
+		push!(s_pos, source)
+		push!(src_comb, s_pos)
+	end
+	
+	return src_comb
+end
+
+
 
 # ---------------------------------
 # write dot file for visualisation with graphviz
