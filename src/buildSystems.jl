@@ -4,6 +4,7 @@ import DataStructures
 import Combinatorics
 import Base.show
 import Base.getindex
+import Base.copy
 
 export Tech, Product, System
 export build_all_systems
@@ -69,9 +70,14 @@ The `System` is an Array of Tuples{Product, Tech, Tech}.
     complete::Bool
 end
 
+System(techs::Array{Tech}, con::Array{Connection}, complete::Bool) = System(Set(techs), Set(con), complete)
 System(techs::Array{Tech}, con::Array{Connection}) = System(Set(techs), Set(con), false)
 System(techs::Array{Tech}) = System(Set(techs), Set(Connection[]), false)
 
+# Function to copy a System
+function copy(sys::System)
+	System(copy(sys.techs), copy(sys.connections), copy(sys.complete))
+end
 
 
 function show(io::Base.IO, s::System)
@@ -264,7 +270,7 @@ function extend_system(sys::System, tech::Tech)
         if prodin in sysout
             for last_tech in get_openout_techs(sys, prodin)
                 # --- connection to new tech
-                sysi = deepcopy(sys)
+                sysi = copy(sys)
                 push!(sysi.connections, (prodin, last_tech, tech)) # add new connection
                 push!(sysi.techs, tech)
 
@@ -297,7 +303,7 @@ function extend_system(sys::System, tech::Tech)
 
                 # add all combinations of connections
                 for con in Combinatorics.combinations(connections)
-                    sysj = deepcopy(sysi)
+                    sysj = copy(sysi)
                     for c in con
                         push!(sysj.connections, c)
                     end
