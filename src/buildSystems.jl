@@ -163,8 +163,8 @@ function get_openout_techs(sys::System, prod::Product)
         return false
     end
 
-    matching_techs = filter(t -> prod in t.outputs, sys.techs) # Techs with matching outputs
-    filter(t -> !is_connected(t, sys), matching_techs) # Techs open outputs
+    matching_techs = filter(t -> prod in t.outputs, sys.techs) # Techs with matching outputs			# SLOW
+    filter(t -> !is_connected(t, sys), matching_techs) # Techs open outputs								# SLOW
 end
 
 """
