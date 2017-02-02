@@ -164,7 +164,7 @@ function get_openout_techs(sys::System, prod::Product)
     end
 
     matching_techs = filter(t -> prod in t.outputs, sys.techs) # Techs with matching outputs			# SLOW
-    filter(t -> !is_connected(t, sys), matching_techs) # Techs open outputs								# SLOW
+    filter(t -> !is_connected(t, sys), matching_techs) # Techs open outputs				        # SLOW
 end
 
 """
@@ -196,30 +196,25 @@ function build_system!(sys::System, completesystems::Array{System}, deadendsyste
 
     # get matching Techs
     candidates = get_candidates(sys, techs)
-    #if length(candidates)==0
-        # println("--- dead end ---")
-        # println(sys)
-        #push!(deadendsystems, sys)
-    #end
-	
+
     for candidate in candidates
         # extend systems
         sys_ext = extend_system(sys, candidate)
-		
+
         for sysi in sys_ext
-		
+
             if sysi.complete && !(sysi in completesystems)
                 push!(completesystems, sysi)
                 println(resultfile, sysi)
                 flush(resultfile)
             elseif !sysi.complete && islegal(sysi) && !(hash(sysi) in hashset)
-				push!(hashset, hash(sysi))
-				!print_prog || print(".")
+		push!(hashset, hash(sysi))
+		!print_prog || print(".")
                 build_system!(sysi, completesystems, deadendsystems,
-                            techs, islegal, resultfile, false, hashset)
+                              techs, islegal, resultfile, false, hashset)
             end
-            
-		end
+
+	end
     end
 end
 
@@ -285,8 +280,8 @@ function extend_system(sys::System, tech::Tech)
                     if tech.functional_group == :T
                         filter!(t -> t.functional_group!= :T, techins)
                     end
-					# Loops to last_tech are forbidden, if the functional group is different.
-					filter!(t -> (t.name != last_tech.name || t.functional_group == tech.functional_group), techins)
+		    # Loops to last_tech are forbidden, if the functional group is different.
+		    filter!(t -> (t.name != last_tech.name || t.functional_group == tech.functional_group), techins)
                     x = [(prodout, tech, t) for t in techins]
                     append!(connections, x)
                 end
@@ -320,40 +315,40 @@ end
 
 """
     Return an array possible Technologies (Sub Array of techlist) for the given Sources.
-	number of technologies is reduced by removing Techs that require an input that is not available with 
+	number of technologies is reduced by removing Techs that require an input that is not available with
 	the sources provided.
 """
 function prefilterTechList(currentSources::Array{Tech}, sources::Array{Tech}, sourcesAdd::Array{Tech}, tech_list::Array{Tech})
-	
-	# All Products that can be created by available sources
-	otherSourcesProduct = vcat([t.outputs for t in sources]...)
-	otherSourcesAddProduct = vcat([t.outputs for t in sourcesAdd]...)
-	append!(otherSourcesProduct, otherSourcesAddProduct)
-	
-	# Outputs of all the used Sources
-	output_list = Product[]
-	for ss_c in currentSources
-		append!(output_list, ss_c.outputs)
-	end
-	
-	otherSourcesProduct = filter(x -> !(x in output_list), otherSourcesProduct)
-	otherSourcesProduct = map(x -> "$(x.name)", otherSourcesProduct) # convert to Strings
-	
-	# Additional Filter. REMOVE HARD CODING OF PRODUCT NAMES
-	for tproduct in otherSourcesProduct
-		if tproduct == "excreta"
-			append!(otherSourcesProduct, ["pithumus"])
-		end
-	end
 
-	# check of any the String in otherSourcesProduct is part of an input products name
-	function ffilter(x)
-		inputs = map(x -> "$(x.name)", x.inputs)
-		match_inputs = filter(Regex(join(otherSourcesProduct, '|')), inputs)
-		length(match_inputs) == 0
-	end
+    # All Products that can be created by available sources
+    otherSourcesProduct = vcat([t.outputs for t in sources]...)
+    otherSourcesAddProduct = vcat([t.outputs for t in sourcesAdd]...)
+    append!(otherSourcesProduct, otherSourcesAddProduct)
 
-	sub_tech_list = filter(ffilter, tech_list)
-	
-	return sub_tech_list
+    # Outputs of all the used Sources
+    output_list = Product[]
+    for ss_c in currentSources
+	append!(output_list, ss_c.outputs)
+    end
+
+    otherSourcesProduct = filter(x -> !(x in output_list), otherSourcesProduct)
+    otherSourcesProduct = map(x -> "$(x.name)", otherSourcesProduct) # convert to Strings
+
+    # Additional Filter. REMOVE HARD CODING OF PRODUCT NAMES
+    for tproduct in otherSourcesProduct
+	if tproduct == "excreta"
+	    append!(otherSourcesProduct, ["pithumus"])
+	end
+    end
+
+    # check of any the String in otherSourcesProduct is part of an input products name
+    function ffilter(x)
+	inputs = map(x -> "$(x.name)", x.inputs)
+	match_inputs = filter(Regex(join(otherSourcesProduct, '|')), inputs)
+	length(match_inputs) == 0
+    end
+
+    sub_tech_list = filter(ffilter, tech_list)
+
+    return sub_tech_list
 end
