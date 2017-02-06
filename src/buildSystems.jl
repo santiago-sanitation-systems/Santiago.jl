@@ -272,38 +272,34 @@ function extend_system(sys::System, tech::Tech)
                 sysi.complete = is_complete(sysi)
                 push!(newsystems, sysi)
 
-                # --- all possible connections
+                # --- all additional connections (only with in :S or :T)
                 connections = Connection[]
                 # loops originating at tech
-                for prodout in tech.outputs
-                    techins = filter!(t -> t!=tech, get_openin_techs(sysi, prodout))
-                    if tech.functional_group == :T
-                        filter!(t -> t.functional_group!= :T, techins)
+                if (tech.functional_group == :S) | (tech.functional_group == :T)
+                    for prodout in tech.outputs
+                        techins = filter!(t -> t.functional_group == tech.functional_group &&
+                                          t!=tech, get_openin_techs(sysi, prodout))
+                        x = [(prodout, tech, t) for t in techins]
+                        append!(connections, x)
                     end
-		    # Loops to last_tech are forbidden, if the functional group is different.
-		    filter!(t -> (t.name != last_tech.name || t.functional_group == tech.functional_group), techins)
-                    x = [(prodout, tech, t) for t in techins]
-                    append!(connections, x)
-                end
 
-                # loops ending at tech
-                for prodinopen in tech.inputs
-                    techouts = get_openout_techs(sysi, prodinopen)
-                    if tech.functional_group == :T
-                        filter!(t -> t.functional_group!= :T, techouts)
+                    # loops ending at tech
+                    for prodinopen in tech.inputs
+                        techouts = get_openout_techs(sysi, prodinopen)
+                        filter!(t -> t.functional_group == tech.functional_group && t!=tech, techouts)
+                        x = [(prodinopen, t, tech) for t in techouts]
+                        append!(connections, x)
                     end
-                    x = [(prodinopen, t, tech) for t in techouts if t !=tech]
-                    append!(connections, x)
-                end
 
-                # add all combinations of connections
-                for con in Combinatorics.combinations(connections)
-                    sysj = copy(sysi)
-                    for c in con
-                        push!(sysj.connections, c)
+                    # add all combinations of connections
+                    for con in Combinatorics.combinations(connections)
+                        sysj = copy(sysi)
+                        for c in con
+                            push!(sysj.connections, c)
+                        end
+                        sysj.complete = is_complete(sysj)
+                        push!(newsystems, sysj)
                     end
-                    sysj.complete = is_complete(sysj)
-                    push!(newsystems, sysj)
                 end
             end
 
@@ -314,10 +310,10 @@ function extend_system(sys::System, tech::Tech)
 end
 
 """
-    Return an array possible Technologies (Sub Array of techlist) for the given Sources.
-	number of technologies is reduced by removing Techs that require an input that is not available with
-	the sources provided.
-"""
+        Return an array possible Technologies (Sub Array of techlist) for the given Sources.
+	    number of technologies is reduced by removing Techs that require an input that is not available with
+	    the sources provided.
+    """
 function prefilterTechList(currentSources::Array{Tech}, sources::Array{Tech}, sourcesAdd::Array{Tech}, tech_list::Array{Tech})
 
     # All Products that can be created by available sources
