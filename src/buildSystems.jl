@@ -192,7 +192,8 @@ end
 
 # Return a vector of Systems
 function build_system!(sys::System, completesystems::Array{System}, deadendsystems::Array{System},
-                       techs::Array{Tech}, islegal::Function, resultfile::IO, print_prog::Bool, hashset::Set{UInt64})
+                       techs::Array{Tech}, islegal::Function, sysappscore::Function, resultfile::IO,
+                       print_prog::Bool, hashset::Set{UInt64})
 
     # get matching Techs
     candidates = get_candidates(sys, techs)
@@ -206,12 +207,13 @@ function build_system!(sys::System, completesystems::Array{System}, deadendsyste
             if sysi.complete && !(sysi in completesystems)
                 push!(completesystems, sysi)
                 println(resultfile, sysi)
+                println(resultfile, "Sysappscore: $(sysappscore(sysi))\n---\n")
                 flush(resultfile)
             elseif !sysi.complete && islegal(sysi) && !(hash(sysi) in hashset)
-		push!(hashset, hash(sysi))
-		!print_prog || print(".")
+		            push!(hashset, hash(sysi))
+		            !print_prog || print(".")
                 build_system!(sysi, completesystems, deadendsystems,
-                              techs, islegal, resultfile, false, hashset)
+                              techs, islegal, sysappscore, resultfile, false, hashset)
             end
 
 	end
@@ -223,10 +225,10 @@ end
     Returns an Array of all possible `System`s starting with `source`. A source can be any technology with a least one output.
 """
 function build_all_systems(source::Array{Tech}, techs::Array{Tech}; islegal::Function=x -> true,
-                           resultfile::IO=STDOUT)
+                           resultfile::IO=STDOUT, sysappscore::Function=x -> 0)
     completesystems = System[]
     deadendsystems = System[]
-    build_system!(System(source), completesystems, deadendsystems, techs, islegal, resultfile, true, Set{UInt64}())
+    build_system!(System(source), completesystems, deadendsystems, techs, islegal, sysappscore, resultfile, true, Set{UInt64}())
     return completesystems, deadendsystems
 end
 
