@@ -193,10 +193,14 @@ end
 # Return a vector of Systems
 function build_system!(sys::System, completesystems::Array{System}, deadendsystems::Array{System},
                        techs::Array{Tech}, islegal::Function, sysappscore::Function, resultfile::IO,
-                       print_prog::Bool, hashset::Set{UInt64})
+                       print_prog::Bool, hashset::Set{UInt64}, storeDeadends::Bool)
 
     # get matching Techs
     candidates = get_candidates(sys, techs)
+	
+	if storeDeadends && length(candidates) == 0
+		push!(deadendsystems, sys)
+	end
 
     for candidate in candidates
         # extend systems
@@ -213,10 +217,10 @@ function build_system!(sys::System, completesystems::Array{System}, deadendsyste
 		            push!(hashset, hash(sysi))
 		            !print_prog || print(".")
                 build_system!(sysi, completesystems, deadendsystems,
-                              techs, islegal, sysappscore, resultfile, false, hashset)
+                              techs, islegal, sysappscore, resultfile, false, hashset, storeDeadends)
             end
 
-	end
+		end
     end
 end
 
@@ -225,10 +229,11 @@ end
     Returns an Array of all possible `System`s starting with `source`. A source can be any technology with a least one output.
 """
 function build_all_systems(source::Array{Tech}, techs::Array{Tech}; islegal::Function=x -> true,
-                           resultfile::IO=STDOUT, sysappscore::Function=x -> 0)
+                           resultfile::IO=STDOUT, sysappscore::Function=x -> 0, storeDeadends::Bool=false)
     completesystems = System[]
     deadendsystems = System[]
-    build_system!(System(source), completesystems, deadendsystems, techs, islegal, sysappscore, resultfile, true, Set{UInt64}())
+    build_system!(System(source), completesystems, deadendsystems, techs, islegal, sysappscore, resultfile, true, Set{UInt64}(), storeDeadends)
+	println("done")
     return completesystems, deadendsystems
 end
 
