@@ -193,14 +193,14 @@ end
 # Return a vector of Systems
 function build_system!(sys::System, completesystems::Array{System}, deadendsystems::Array{System},
                        techs::Array{Tech}, islegal::Function, sysappscore::Function, resultfile::IO,
-                       print_prog::Bool, hashset::Set{UInt64}, storeDeadends::Bool)
+                       hashset::Set{UInt64}, storeDeadends::Bool)
 
     # get matching Techs
     candidates = get_candidates(sys, techs)
-	
-	if storeDeadends && length(candidates) == 0
-		push!(deadendsystems, sys)
-	end
+
+    if storeDeadends && length(candidates) == 0
+	push!(deadendsystems, sys)
+    end
 
     for candidate in candidates
         # extend systems
@@ -214,13 +214,12 @@ function build_system!(sys::System, completesystems::Array{System}, deadendsyste
                 println(resultfile, "Sysappscore: $(sysappscore(sysi))\n---\n")
                 flush(resultfile)
             elseif !sysi.complete && islegal(sysi) && !(hash(sysi) in hashset)
-		            push!(hashset, hash(sysi))
-		            !print_prog || print(".")
+		push!(hashset, hash(sysi))
                 build_system!(sysi, completesystems, deadendsystems,
-                              techs, islegal, sysappscore, resultfile, false, hashset, storeDeadends)
+                              techs, islegal, sysappscore, resultfile, hashset, storeDeadends)
             end
 
-		end
+	end
     end
 end
 
@@ -232,8 +231,7 @@ function build_all_systems(source::Array{Tech}, techs::Array{Tech}; islegal::Fun
                            resultfile::IO=STDOUT, sysappscore::Function=x -> 0, storeDeadends::Bool=false)
     completesystems = System[]
     deadendsystems = System[]
-    build_system!(System(source), completesystems, deadendsystems, techs, islegal, sysappscore, resultfile, true, Set{UInt64}(), storeDeadends)
-	println("done")
+    build_system!(System(source), completesystems, deadendsystems, techs, islegal, sysappscore, resultfile, Set{UInt64}(), storeDeadends)
     return completesystems, deadendsystems
 end
 
