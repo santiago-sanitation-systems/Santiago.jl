@@ -5,6 +5,7 @@ import Combinatorics
 import Base.show
 import Base.getindex
 import Base.copy
+import StatsBase
 
 export Tech, Product, System
 export build_all_systems
@@ -27,7 +28,7 @@ show(io::Base.IO, p::Product) =  print("$(p.name)")
     outputs::Array{Product}
     name::String
     functional_group::Symbol
-	appscore::Float64
+    appscore::Float64
     n_inputs::Int
 end
 
@@ -76,7 +77,7 @@ System(techs::Array{Tech}) = System(Set(techs), Set(Connection[]), false)
 
 # Function to copy a System
 function copy(sys::System)
-	System(copy(sys.techs), copy(sys.connections), copy(sys.complete))
+    System(copy(sys.techs), copy(sys.connections), copy(sys.complete))
 end
 
 
@@ -194,6 +195,8 @@ end
 function build_system!(sys::System, completesystems::Array{System}, deadendsystems::Array{System},
                        techs::Array{Tech}, islegal::Function, sysappscore::Function, resultfile::IO,
                        hashset::Set{UInt64}, storeDeadends::Bool)
+    # max_candidates = 5
+    # fract_candidates = 0.1
 
     # get matching Techs
     candidates = get_candidates(sys, techs)
@@ -202,10 +205,16 @@ function build_system!(sys::System, completesystems::Array{System}, deadendsyste
 	push!(deadendsystems, sys)
     end
 
+    # sample a random subset
+    # if length(candidates) > 0
+    #     nn = max(1, min(max_candidates, floor(Int, length(candidates)*fract_candidates))) # at least 1
+    #     candidates = StatsBase.sample(candidates, nn, replace=false)
+    # end
+
+
     for candidate in candidates
         # extend systems
         sys_ext = extend_system(sys, candidate)
-
         for sysi in sys_ext
 
             if sysi.complete && !(sysi in completesystems)
@@ -214,7 +223,7 @@ function build_system!(sys::System, completesystems::Array{System}, deadendsyste
                 println(resultfile, "Sysappscore: $(sysappscore(sysi))\n---\n")
                 flush(resultfile)
             elseif !sysi.complete && islegal(sysi) && !(hash(sysi) in hashset)
-		push!(hashset, hash(sysi))
+	        push!(hashset, hash(sysi))
                 build_system!(sysi, completesystems, deadendsystems,
                               techs, islegal, sysappscore, resultfile, hashset, storeDeadends)
             end
@@ -225,8 +234,8 @@ end
 
 
 """
-    Returns an Array of all possible `System`s starting with `source`. A source can be any technology with a least one output.
-"""
+        Returns an Array of all possible `System`s starting with `source`. A source can be any technology with a least one output.
+    """
 function build_all_systems(source::Array{Tech}, techs::Array{Tech}; islegal::Function=x -> true,
                            resultfile::IO=STDOUT, sysappscore::Function=x -> 0, storeDeadends::Bool=false)
     completesystems = System[]
@@ -258,8 +267,8 @@ end
 
 
 """
-    Return an array of all possible extension of `sys` with the candidate technology
-"""
+        Return an array of all possible extension of `sys` with the candidate technology
+    """
 function extend_system(sys::System, tech::Tech)
 
     sysout = get_outputs(sys)
@@ -277,35 +286,35 @@ function extend_system(sys::System, tech::Tech)
                 sysi.complete = is_complete(sysi)
                 push!(newsystems, sysi)
 
-                # --- all additional connections (only with in :S or :T)
+                # --- all additional connections
                 connections = Connection[]
+
                 # loops originating at tech
-                if (tech.functional_group == :S) | (tech.functional_group == :T)
-                    for prodout in tech.outputs
-                        techins = filter!(t -> t.functional_group == tech.functional_group &&
-                                          t!=tech, get_openin_techs(sysi, prodout))
-                        x = [(prodout, tech, t) for t in techins]
-                        append!(connections, x)
-                    end
-
-                    # loops ending at tech
-                    for prodinopen in tech.inputs
-                        techouts = get_openout_techs(sysi, prodinopen)
-                        filter!(t -> t.functional_group == tech.functional_group && t!=tech, techouts)
-                        x = [(prodinopen, t, tech) for t in techouts]
-                        append!(connections, x)
-                    end
-
-                    # add all combinations of connections
-                    for con in Combinatorics.combinations(connections)
-                        sysj = copy(sysi)
-                        for c in con
-                            push!(sysj.connections, c)
-                        end
-                        sysj.complete = is_complete(sysj)
-                        push!(newsystems, sysj)
-                    end
+                for prodout in tech.outputs
+                    techins = get_openin_techs(sysi, prodout)
+                    filter!(t -> t!=tech, techins)
+                    x = [(prodout, tech, t) for t in techins]
+                    append!(connections, x)
                 end
+
+                # loops ending at tech
+                for prodinopen in tech.inputs
+                    techouts = get_openout_techs(sysi, prodinopen)
+                    filter!(t -> t!=tech, techouts)
+                    x = [(prodinopen, t, tech) for t in techouts]
+                    append!(connections, x)
+                end
+
+                # add all combinations of connections
+                for con in Combinatorics.combinations(connections)
+                    sysj = copy(sysi)
+                    for c in con
+                        push!(sysj.connections, c)
+                    end
+                    sysj.complete = is_complete(sysj)
+                    push!(newsystems, sysj)
+                end
+
             end
 
         end
@@ -315,10 +324,10 @@ function extend_system(sys::System, tech::Tech)
 end
 
 """
-        Return an array possible Technologies (Sub Array of techlist) for the given Sources.
-	    number of technologies is reduced by removing Techs that require an input that is not available with
-	    the sources provided.
-    """
+            Return an array possible Technologies (Sub Array of techlist) for the given Sources.
+	        number of technologies is reduced by removing Techs that require an input that is not available with
+	        the sources provided.
+        """
 function prefilterTechList(currentSources::Array{Tech}, sources::Array{Tech}, sourcesAdd::Array{Tech}, tech_list::Array{Tech})
 
     # All Products that can be created by available sources
