@@ -215,28 +215,11 @@ end
 subTechFiltered = filter(islegal, subTechList)
 
 
-# ## Filter: for Technologies with group t_group it is not allowed that an input "A" and a transported input "transportedA"
-# ## appear at the same time.
-# subTechFiltered = Tech[]
-# for subTech in subTechList
-#     islegal = true
-#     for input in subTech.inputs
-#         t_input = join([Symbol("transported"), Symbol(input.name)], "")
-#         for i in subTech.inputs
-#             if Symbol(t_input) == i.name && subTech.functional_group == Symbol(t_group)
-#                 islegal = false
-#             end
-#         end
-#     end
-#     if islegal
-#         push!(subTechFiltered, subTech)
-#     end
-# end
-
 ## separate sources, sourcesAdd, and Technologies
 sources = filter(t -> t.functional_group == Symbol(sourceGroup), subTechFiltered)
 sourcesAdd = filter(t -> t.functional_group == Symbol(sourceAddGroup), subTechFiltered)
 techs = filter(t -> (t.functional_group != Symbol(sourceGroup) && t.functional_group != Symbol(sourceAddGroup)), subTechFiltered)
+
 
 return sources, sourcesAdd, techs
 

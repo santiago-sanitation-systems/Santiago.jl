@@ -324,18 +324,19 @@ function extend_system(sys::System, tech::Tech)
 end
 
 """
-            Return an array possible Technologies (Sub Array of techlist) for the given Sources.
-	        number of technologies is reduced by removing Techs that require an input that is not available with
-	        the sources provided.
-        """
-function prefilterTechList(currentSources::Array{Tech}, sources::Array{Tech}, sourcesAdd::Array{Tech}, tech_list::Array{Tech})
+Return an array possible Technologies (subset of techlist) for the given Sources.
+The number of technologies is reduced by removing Techs that require an input that is not available with
+the sources provided.
+"""
+function prefilterTechList(currentSources::Array{Tech}, sources::Array{Tech},
+                           sourcesAdd::Array{Tech}, tech_list::Array{Tech})
 
     # All Products that can be created by available sources
     otherSourcesProduct = vcat([t.outputs for t in sources]...)
     otherSourcesAddProduct = vcat([t.outputs for t in sourcesAdd]...)
     append!(otherSourcesProduct, otherSourcesAddProduct)
 
-    # Outputs of all the used Sources
+    # Outputs of all the used Products by current Source
     output_list = Product[]
     for ss_c in currentSources
 	append!(output_list, ss_c.outputs)
@@ -343,12 +344,14 @@ function prefilterTechList(currentSources::Array{Tech}, sources::Array{Tech}, so
 
     otherSourcesProduct = filter(x -> !(x in output_list), otherSourcesProduct)
     otherSourcesProduct = map(x -> "$(x.name)", otherSourcesProduct) # convert to Strings
+    push!(otherSourcesProduct, "^[.]") # this is a dummy patter to ensure that ffilter works if otherSourcesProduct is empty
+
 
     # Additional Filter. REMOVE HARD CODING OF PRODUCT NAMES
     for tproduct in otherSourcesProduct
-	if tproduct == "excreta"
-	    append!(otherSourcesProduct, ["pithumus"])
-	end
+        if tproduct == "excreta"
+            append!(otherSourcesProduct, ["pithumus"])
+        end
     end
 
     # check of any the String in otherSourcesProduct is part of an input products name
