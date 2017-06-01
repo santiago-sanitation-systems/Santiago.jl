@@ -5,6 +5,7 @@ import Combinatorics
 import Base.show
 import Base.getindex
 import Base.copy
+import Base.==
 import StatsBase
 
 export Tech, Product, System
@@ -21,6 +22,7 @@ export prefilterTechList
 end
 
 Product(name::String) = Product(Symbol(name))
+==(a::Product, b::Product) = a.name==b.name
 show(io::Base.IO, p::Product) =  print("$(p.name)")
 
 @auto_hash_equals immutable Tech
@@ -231,7 +233,7 @@ function build_system!(sys::System, completesystems::Array{System}, deadendsyste
       build_system!(sys_ext, completesystems, deadendsystems,
       techs, islegal, sysappscore, resultfile, hashset, storeDeadends)
     end
-  
+
   end
 end
 
@@ -266,24 +268,24 @@ function get_candidates(sys::System, techs::Array{Tech})
 
     end
   end
+
   return matching_techs
 end
 
 
 # test if outputs are compatible with next inputs.
 function is_compatible(outputs, inputs)
-  sort(outputs) == sort(inputs)         # no empty inputs allowed
-  # sort(outputs) == sort(unique(inputs)) # empty inputs allowed possible
+ length(setdiff(outputs, inputs)) == 0   # Probably SLOW!
 end
 
 
 """
 Return an array of all possible extension of `sys` with the candidate technology
 """
-function extend_system(sys::System, techs::Array{Tech})
+function extend_system(sys::System, tech_comb::Array{Tech})
   sysi = copy(sys)
   # --- add new techologies
-  append!(tech_comb, sysi.technologies)
+  union!(sysi.techs, tech_comb)
 
   for tech in tech_comb
     for prodin in tech.inputs
@@ -293,6 +295,7 @@ function extend_system(sys::System, techs::Array{Tech})
       push!(sysi.connections, (prodin, last_tech, tech)) # add new connection
     end
   end
+
   sysi.complete = is_complete(sysi)
 
   return sysi

@@ -282,7 +282,7 @@ function writedotfile(sys::System, file::String, no_group::Array{String}=[""], o
         for fg in filter(x -> !(x in no_group), fgroups)
             names = [t.name for t in sys.techs if t.functional_group==fg]
             names = map(n -> replace(n, ".", "_"), names)
-            println(f, "{ rank=same $(join(names, ' ')) }")
+            # println(f, "{ rank=same $(join(names, ' ')) }")
         end
 
         println(f, "}")
