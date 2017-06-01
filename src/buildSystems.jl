@@ -260,7 +260,7 @@ function get_candidates(sys::System, techs::Array{Tech})
   n_out = length(outs)
   ## get matching combinations
   for k in 1:n_out
-    for c in Combinatorics.combinations(get_candidates(techs, outs, k), k) # try all combination of lenght k (in R: combn())
+    for c in Combinatorics.combinations(get_candidates(techssub, outs, k), k) # try all combination of lenght k (in R: combn())
       inputs = get_inputs(c)
       if is_compatible(outs, inputs)
         push!(matching_techs, c)
@@ -291,7 +291,14 @@ function extend_system(sys::System, tech_comb::Array{Tech})
     for prodin in tech.inputs
 
       # --- connection to new tech
-      last_tech = collect(get_openout_techs(sys, prodin))[1]  # get a technology with output = "prodin" ?BUG?
+      last_tech = collect(get_openout_techs(sys, prodin))[1]  # get a technology with output = "prodin"
+      if last_tech == tech && last_tech.name == "sbr_8_trans"
+        # println(last_tech)
+        # println(tech)
+        # println(sys)
+        # println(sysi)
+      end
+
       push!(sysi.connections, (prodin, last_tech, tech)) # add new connection
     end
   end
