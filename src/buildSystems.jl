@@ -104,19 +104,19 @@ function get_outputs{T<:Union{Array{Tech}, Set{Tech}}}(techs::T)
 end
 
 """
-return all "open" outputs of a system
+returns all "open" outputs of a system
+
+A dic
 """
 function get_outputs(sys::System)
   # all outs
-  outs = DataStructures.counter(get_outputs(sys.techs))
+  outs = get_outputs(sys.techs)
 
   for c in sys.connections
-    num = push!(outs, c[1], -1) # not very elegant...
-    if num == 0
-      pop!(outs, c[1])
-    end
+    idx = find(outs .== c[1]) # get index of appl products mathing c
+    deleteat!(outs, idx[1])   # remove one product
   end
-  return collect(keys(outs))
+  return outs
 end
 
 
@@ -193,11 +193,10 @@ end
 function get_candidates(s::Array{Tech}, outs, k)
 
   n_out = length(outs)
-  n_in_min = k==1? n_out : 1
   n_in_max = n_out - k + 1
 
   function condi(t::Tech)
-    issubset(t.inputs, outs) && (n_in_min <= t.n_inputs <= n_in_max)
+    issubset(t.inputs, outs) && (t.n_inputs <= n_in_max)
   end
 
   filter(condi, s)
@@ -275,7 +274,14 @@ end
 
 # test if outputs are compatible with next inputs.
 function is_compatible(outputs, inputs)
- length(setdiff(outputs, inputs)) == 0   # Probably SLOW!
+  outputs = DataStructures.counter(outputs)
+  inputs = DataStructures.counter(inputs)
+
+  # exclude spliting of one output to multiple inputs
+  for prod in keys(outputs)
+     if outputs[prod] < inputs[prod] return false
+  end
+  return true
 end
 
 
@@ -291,15 +297,9 @@ function extend_system(sys::System, tech_comb::Array{Tech})
     for prodin in tech.inputs
 
       # --- connection to new tech
-      last_tech = collect(get_openout_techs(sys, prodin))[1]  # get a technology with output = "prodin"
-      if last_tech == tech && last_tech.name == "sbr_8_trans"
-        # println(last_tech)
-        # println(tech)
-        # println(sys)
-        # println(sysi)
-      end
+      last_tech = collect(get_openout_techs(sys, prodin))  # get a technology with output = "prodin" BUG!
 
-      push!(sysi.connections, (prodin, last_tech, tech)) # add new connection
+      push!(sysi.connections, (prodin, last_tech[1], tech)) # add new connection
     end
   end
 
