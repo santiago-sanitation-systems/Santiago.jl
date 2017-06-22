@@ -134,7 +134,7 @@ return all "open" inputs of a system
 function get_inputs(sys::System)
   # all ins
   ins = DataStructures.counter(get_inputs(sys.techs))
-  for c in sys.connections
+    for c in sys.connections
     num = push!(ins, c[1], -1) # not very elegant...
     if num <= 0
       pop!(ins, c[1])
@@ -220,19 +220,19 @@ function build_system!(sys::System, completesystems::Array{System}, deadendsyste
 
   for candidate in candidates
     # extend systems
-    sys_ext = extend_system(sys, candidate)
-
-    if sys_ext.complete && !(sys_ext in completesystems)
-      push!(completesystems, sys_ext)
-      println(resultfile, sys_ext)
-      println(resultfile, "Sysappscore: $(sysappscore(sys_ext))\n---\n")
-      flush(resultfile)
-    elseif !sys_ext.complete && islegal(sys_ext) && !(hash(sys_ext) in hashset)
-      push!(hashset, hash(sys_ext))
-      build_system!(sys_ext, completesystems, deadendsystems,
-      techs, islegal, sysappscore, resultfile, hashset, storeDeadends)
+    sys_exts = extend_system(sys, candidate)
+    for sys_ext in sys_exts
+      if sys_ext.complete && !(sys_ext in completesystems)
+        push!(completesystems, sys_ext)
+        println(resultfile, sys_ext)
+        println(resultfile, "Sysappscore: $(sysappscore(sys_ext))\n---\n")
+        flush(resultfile)
+      elseif !sys_ext.complete && islegal(sys_ext) && !(hash(sys_ext) in hashset)
+        push!(hashset, hash(sys_ext))
+        build_system!(sys_ext, completesystems, deadendsystems,
+        techs, islegal, sysappscore, resultfile, hashset, storeDeadends)
+      end
     end
-
   end
 end
 
@@ -277,36 +277,78 @@ function is_compatible(outputs, inputs)
   outputs = DataStructures.counter(outputs)
   inputs = DataStructures.counter(inputs)
 
+  # check if outputs and inputs are compatible
+  if length(setdiff(keys(outputs), keys(inputs))) != 0
+    return false
+  end
+
   # exclude spliting of one output to multiple inputs
   for prod in keys(outputs)
-     if outputs[prod] < inputs[prod] return false
+    if outputs[prod] < inputs[prod]
+       return false
+    end
   end
   return true
 end
 
+#-----------------------------------------------------
+# helper for extend_system
+
+"""
+return all variation how sys can be extended with tech_comb
+"""
+function make_connections!(part_sys::Array{System}, extended_sys::Array{System})
+  for s in part_sys
+    if length(get_inputs(s)) == 0 # check if more connections must be added
+      if is_complete(s) # check if the whole system is complete
+        s.complete = true
+      end
+      push!(extended_sys, s)
+    else
+      part_sys_new = add_next_connection(s)
+      make_connections!(part_sys_new, extended_sys)
+    end
+  end
+end
+
+"""
+helper to add connections for the next product
+"""
+function add_next_connection(sys::System)
+  new_part_sys = System[]
+
+  # select first open input product
+  p = get_inputs(sys)[1]
+  in_techs = get_openin_techs(sys, p)
+  out_techs = get_openout_techs(sys, p)
+  n = length(out_techs)
+
+  for cons in Base.product(repeated(in_techs, n)...)
+    if length(unique(cons)) == length(in_techs)
+      sysi = copy(sys)
+      for (i, out_tech) in enumerate(out_techs)
+        push!(sysi.connections, (p, out_tech, cons[i])) # add new connection
+      end
+      push!(new_part_sys, sysi)
+    end
+  end
+  return new_part_sys
+end
 
 """
 Return an array of all possible extension of `sys` with the candidate technology
 """
 function extend_system(sys::System, tech_comb::Array{Tech})
+
   sysi = copy(sys)
-  # --- add new techologies
   union!(sysi.techs, tech_comb)
+  extended_sys = System[]
+  make_connections!([sysi], extended_sys)
 
-  for tech in tech_comb
-    for prodin in tech.inputs
 
-      # --- connection to new tech
-      last_tech = collect(get_openout_techs(sys, prodin))  # get a technology with output = "prodin" BUG!
-
-      push!(sysi.connections, (prodin, last_tech[1], tech)) # add new connection
-    end
-  end
-
-  sysi.complete = is_complete(sysi)
-
-  return sysi
+  return extended_sys
 end
+
 
 """
 Return an array possible Technologies (subset of techlist) for the given Sources.
