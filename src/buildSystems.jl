@@ -314,22 +314,26 @@ end
 """
 helper to add connections for the next product
 """
-function add_next_connection(sys::System)
+function add_next_connection(sys::System) # sys is the combination of the initial sys and tech_comb
   new_part_sys = System[]
 
   # select first open input product
   p = get_inputs(sys)[1]
   in_techs = get_openin_techs(sys, p)
   out_techs = get_openout_techs(sys, p)
+  setdiff!(out_techs, in_techs) # to avoid looping back to the same tech
+  # has additional benefit of finding loops between techs of tech_comb in case
+  # of an output of one tech from tech_comb is part of the set of "open inputs"
   n = length(out_techs)
-
-  for cons in Base.product(repeated(in_techs, n)...)
-    if length(unique(cons)) == length(in_techs)
-      sysi = copy(sys)
-      for (i, out_tech) in enumerate(out_techs)
-        push!(sysi.connections, (p, out_tech, cons[i])) # add new connection
+  if n > 0
+    for connection_combs in Base.product(repeated(in_techs, n)...)
+      if length(unique(connection_combs)) == length(in_techs) # no empty input techs allowd
+        sysi = copy(sys)
+        for (i, out_tech) in enumerate(out_techs)
+          push!(sysi.connections, (p, out_tech, connection_combs[i])) # add new connection
+        end
+        push!(new_part_sys, sysi)
       end
-      push!(new_part_sys, sysi)
     end
   end
   return new_part_sys
