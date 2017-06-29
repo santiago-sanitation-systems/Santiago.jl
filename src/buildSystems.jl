@@ -10,6 +10,7 @@ import StatsBase
 
 export Tech, Product, System
 export build_all_systems
+export add_loop_techs!
 export writedotfile
 export prefilterTechList
 
@@ -242,6 +243,17 @@ Returns an Array of all possible `System`s starting with `source`. A source can 
 """
 function build_all_systems(source::Array{Tech}, techs::Array{Tech}; islegal::Function=x -> true,
   resultfile::IO=STDOUT, sysappscore::Function=x -> 0, storeDeadends::Bool=false)
+  # build looped techs
+  ninit = nold = length(techs)
+  add_loop_techs!(techs)
+  i = 1
+  while nold < length(techs) & i < 2
+    nold = length(techs)
+    add_loop_techs!(techs)
+    i += 1
+  end
+  println("$(length(techs) - ninit) looped techs added.")
+
   completesystems = System[]
   deadendsystems = System[]
   build_system!(System(source), completesystems, deadendsystems, techs, islegal, sysappscore, resultfile, Set{UInt64}(), storeDeadends)
@@ -322,15 +334,15 @@ function add_next_connection(sys::System) # sys is the combination of the initia
   in_techs = get_openin_techs(sys, p)
   out_techs = get_openout_techs(sys, p)
   setdiff!(out_techs, in_techs) # to avoid looping back to the same tech
-  # has additional benefit of finding loops between techs of tech_comb in case
-  # of an output of one tech from tech_comb is part of the set of "open inputs"
+    # has additional benefit of finding loops between techs of tech_comb in case
+    # of an output of one tech from tech_comb is part of the set of "open inputs"
   n = length(out_techs)
   if n > 0
     for connection_combs in Base.product(repeated(in_techs, n)...)
-      if length(unique(connection_combs)) == length(in_techs) # no empty input techs allowd
+      if length(unique(connection_combs)) == length(in_techs) # no empty input techs allowed / all in_techs must be used
         sysi = copy(sys)
         for (i, out_tech) in enumerate(out_techs)
-          push!(sysi.connections, (p, out_tech, connection_combs[i])) # add new connection
+          push!(sysi.connections, (p, out_tech, connection_combs[i])) # add new connection between out_techs and the combinations of in_techs for product p
         end
         push!(new_part_sys, sysi)
       end
@@ -395,4 +407,53 @@ function prefilterTechList(currentSources::Array{Tech}, sources::Array{Tech},
   sub_tech_list = filter(ffilter, tech_list)
 
   return sub_tech_list
+end
+
+"""
+add tech combinations with internal loops. Only for techs in group :S and :T
+"""
+function add_loop_techs!(tech_list::Array{Tech}; groups = [:S, :T])
+  for fgroup in groups
+    tech_list_group = filter(t -> t.functional_group == fgroup, tech_list)
+    for tech1 in tech_list_group
+      for tech2 in tech_list_group
+        if tech1 != tech2
+
+          outs1 = tech1.outputs
+          outs2 = tech2.outputs
+          ins1 = tech1.inputs
+          ins2 = tech2.inputs
+          if length(intersect(outs1, ins2)) >= 1 |
+             length(intersect(outs2, ins1)) >= 1
+            # matching tech are partners!
+            tech_new = make_looped_tech(tech1, tech2)
+            if !(tech_new in tech_list)
+              push!(tech_list, tech_new)
+            end
+          end
+        end
+      end
+    end
+  end
+end
+
+
+function make_looped_tech(tech1::Tech, tech2::Tech)
+
+  # input_new = union(in1, in2) - intersect(out1, in2) - intersect(out2, in1)
+  # output_new = union(out1, out2) - intersect(out1, in2) - intersect(out2, in1)
+
+  inputs = union(tech1.inputs, tech2.inputs)
+  outputs = union(tech1.outputs, tech2.outputs)
+
+  internal_connected = vcat(intersect(tech1.outputs, tech2.inputs),
+                            intersect(tech2.outputs, tech1.inputs))
+
+  inputs = setdiff(inputs, internal_connected)
+  outputs = setdiff(outputs, internal_connected)
+
+  name = join(sort([tech1.name, tech2.name]), " :: ")
+  appscore = (tech1.appscore + tech2.appscore)/2.0  # BUG or HACK!
+
+  return Tech(inputs, outputs, name, tech1.functional_group, appscore, length(inputs))
 end

@@ -3,7 +3,7 @@ using Iterators
 using Combinatorics
 
 export importTechFile
-    export writedotfile
+export writedotfile
 export generateCombinations
 
 type MasterTech
@@ -257,6 +257,8 @@ end
 
                                                 """
 function writedotfile(sys::System, file::String, no_group::Array{String}=[""], options::String="")
+    make_legal(name::String) = replace(name, " :: ", "")
+
     open(file, "w") do f
         println(f, "digraph system {")
         println(f, "rankdir=LR;")
@@ -270,11 +272,11 @@ function writedotfile(sys::System, file::String, no_group::Array{String}=[""], o
 
         ## define nodes
         for t in vcat(sys.techs...)
-            println(f, replace("$(t.name) [shape=box, fillcolor=$(colors[t.functional_group]) label=\"$(t.name)\n($(t.functional_group))\"];", ".", "_"))
+            println(f, replace("$(make_legal(t.name)) [shape=box, fillcolor=$(colors[t.functional_group]) label=\"$(t.name)\n($(t.functional_group))\"];", ".", "_"))
         end
         ## edges
         for c in sys.connections
-            println(f, replace("$(c[2].name) -> $(c[3].name) [label=\"$(c[1].name)\"];", ".", "_"))
+            println(f, replace("$(make_legal(c[2].name)) -> $(make_legal(c[3].name)) [label=\"$(c[1].name)\"];", ".", "_"))
         end
 
         no_group = [Symbol(x) for x in no_group]
