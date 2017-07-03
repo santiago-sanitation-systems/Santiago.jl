@@ -33,6 +33,13 @@ show(io::Base.IO, p::Product) =  print("$(p.name)")
   functional_group::Symbol
   appscore::Float64
   n_inputs::Int
+  internal_products::Array{Product}
+end
+
+function Tech(inputs::Array{Product}, outputs::Array{Product},
+  name::String, functional_group::Symbol,
+  appscore::Float64, n_inputs::Int)
+  Tech(inputs, outputs, name, functional_group, appscore, n_inputs, Product[])
 end
 
 """
@@ -256,7 +263,8 @@ function build_all_systems(source::Array{Tech}, techs::Array{Tech}; islegal::Fun
 
   completesystems = System[]
   deadendsystems = System[]
-  build_system!(System(source), completesystems, deadendsystems, techs, islegal, sysappscore, resultfile, Set{UInt64}(), storeDeadends)
+  build_system!(System(source), completesystems, deadendsystems, techs, islegal,
+                sysappscore, resultfile, Set{UInt64}(), storeDeadends)
   return completesystems, deadendsystems
 end
 
@@ -427,7 +435,7 @@ function add_loop_techs!(tech_list::Array{Tech}; groups = [:S, :T])
              length(intersect(outs2, ins1)) >= 1
             # matching tech are partners!
             tech_new = make_looped_tech(tech1, tech2)
-            if !(tech_new in tech_list)
+            if !(tech_new in tech_list) && length(tech_new.outputs)>0
               push!(tech_list, tech_new)
             end
           end
@@ -455,5 +463,5 @@ function make_looped_tech(tech1::Tech, tech2::Tech)
   name = join(sort([tech1.name, tech2.name]), " :: ")
   appscore = (tech1.appscore + tech2.appscore)/2.0  # BUG or HACK!
 
-  return Tech(inputs, outputs, name, tech1.functional_group, appscore, length(inputs))
+  return Tech(inputs, outputs, name, tech1.functional_group, appscore, length(inputs), internal_connected)
 end
