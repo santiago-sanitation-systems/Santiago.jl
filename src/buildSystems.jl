@@ -431,8 +431,9 @@ function add_loop_techs!(tech_list::Array{Tech}; groups = [:S, :T])
           outs2 = tech2.outputs
           ins1 = tech1.inputs
           ins2 = tech2.inputs
-          if length(intersect(outs1, ins2)) >= 1 |
-             length(intersect(outs2, ins1)) >= 1
+          exchange_1_2 = intersect(outs1, ins2)
+          exchange_2_1 = intersect(outs2, ins1)
+          if (length(exchange_1_2) >= 1 | length(exchange_2_1) >= 1) && length(intersect(exchange_1_2, exchange_2_1))==0
             # matching tech are partners!
             tech_new = make_looped_tech(tech1, tech2)
             if !(tech_new in tech_list) && length(tech_new.outputs)>0
@@ -451,17 +452,24 @@ function make_looped_tech(tech1::Tech, tech2::Tech)
   # input_new = union(in1, in2) - intersect(out1, in2) - intersect(out2, in1)
   # output_new = union(out1, out2) - intersect(out1, in2) - intersect(out2, in1)
 
-  inputs = union(tech1.inputs, tech2.inputs)
-  outputs = union(tech1.outputs, tech2.outputs)
+  inputs = DataStructures.counter(vcat(tech1.inputs, tech2.inputs))
+  outputs = DataStructures.counter(vcat(tech1.outputs, tech2.outputs))
 
-  internal_connected = vcat(intersect(tech1.outputs, tech2.inputs),
-                            intersect(tech2.outputs, tech1.inputs))
+  internal_connected = DataStructures.counter(vcat(intersect(tech1.outputs, tech2.inputs),
+                                                   intersect(tech2.outputs, tech1.inputs)))
 
-  inputs = setdiff(inputs, internal_connected)
-  outputs = setdiff(outputs, internal_connected)
+  # remove intenal connections
+  for p in keys(internal_connected)
+    push!(inputs, p, -1)
+    push!(outputs, p, -1)
+  end
+
+  ins = Product[p[1] for p in inputs if p[2]>0]
+  outs = Product[p[1] for p in outputs if p[2]>0]
+  internal_connected =  Product[p[1] for p in internal_connected if p[2]>0]
 
   name = join(sort([tech1.name, tech2.name]), " :: ")
   appscore = (tech1.appscore + tech2.appscore)/2.0  # BUG or HACK!
 
-  return Tech(inputs, outputs, name, tech1.functional_group, appscore, length(inputs), internal_connected)
+  return Tech(ins, outs, name, tech1.functional_group, appscore, length(ins), internal_connected)
 end
