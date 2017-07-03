@@ -31,14 +31,21 @@ show(io::Base.IO, p::Product) =  print("$(p.name)")
   outputs::Array{Product}
   name::String
   functional_group::Symbol
-  appscore::Float64
+  appscore::Array{Float64}
   n_inputs::Int
   internal_products::Array{Product}
 end
 
+
 function Tech(inputs::Array{Product}, outputs::Array{Product},
   name::String, functional_group::Symbol,
   appscore::Float64, n_inputs::Int)
+  Tech(inputs, outputs, name, functional_group, Float64[appscore], n_inputs, Product[])
+end
+
+function Tech(inputs::Array{Product}, outputs::Array{Product},
+  name::String, functional_group::Symbol,
+  appscore::Array{Float64}, n_inputs::Int)
   Tech(inputs, outputs, name, functional_group, appscore, n_inputs, Product[])
 end
 
@@ -469,7 +476,7 @@ function make_looped_tech(tech1::Tech, tech2::Tech)
   internal_connected =  Product[p[1] for p in internal_connected if p[2]>0]
 
   name = join(sort([tech1.name, tech2.name]), " :: ")
-  appscore = (tech1.appscore + tech2.appscore)/2.0  # BUG or HACK!
+  appscore = sort(vcat(tech1.appscore, tech2.appscore))
 
   return Tech(ins, outs, name, tech1.functional_group, appscore, length(ins), internal_connected)
 end
