@@ -256,7 +256,7 @@ end
                                                 nogroup    Array of functional groups which should not be grouped in the plot
 
                                                 """
-function writedotfile(sys::System, file::String, no_group::Array{String}=[""], options::String="")
+function writedotfile(sys::System, file::String, no_group::Array{String}=["S", "C", "T"], options::String="")
     make_legal(name::String) = replace(name, " :: ", "")
 
     open(file, "w") do f
@@ -270,9 +270,18 @@ function writedotfile(sys::System, file::String, no_group::Array{String}=[""], o
         fgroups = sort(unique(t.functional_group for t in sys.techs))
         colors = Dict(fgroups[i] => mod(i,5)+1 for i in 1:length(fgroups))
 
+        colors = Dict(:U => "#F15A31", :S => "#F99D34", :C => "#C1C430", :T => "#70BF54", :D => "#00B6CD")
+
+
         ## define nodes
         for t in vcat(sys.techs...)
-            println(f, replace("$(make_legal(t.name)) [shape=box, fillcolor=$(colors[t.functional_group]) label=\"$(t.name)\n($(t.functional_group))\"];", ".", "_"))
+            label = "$(t.name)\n"
+            for p in t.internal_products
+              label = label * " - $(p.name)\n"
+            end
+            label = label * "($(t.functional_group))"
+#            println(f, replace("$(make_legal(t.name)) [shape=box, fillcolor=$(colors[t.functional_group]) label=\"$label\"];", ".", "_"))
+            println(f, replace("$(make_legal(t.name)) [shape=box, fillcolor=\"$(get(colors, t.functional_group, "#999999"))\" label=\"$label\"];", ".", "_"))
         end
         ## edges
         for c in sys.connections
@@ -284,7 +293,7 @@ function writedotfile(sys::System, file::String, no_group::Array{String}=[""], o
         for fg in filter(x -> !(x in no_group), fgroups)
             names = [t.name for t in sys.techs if t.functional_group==fg]
             names = map(n -> replace(n, ".", "_"), names)
-            # println(f, "{ rank=same $(join(names, ' ')) }")
+            println(f, "{ rank=same $(join(names, ' ')) }")
         end
 
         println(f, "}")
