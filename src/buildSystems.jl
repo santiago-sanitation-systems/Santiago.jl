@@ -23,7 +23,6 @@ name::Symbol
 end
 
 Product(name::String) = Product(Symbol(name))
-==(a::Product, b::Product) = a.name==b.name
 show(io::Base.IO, p::Product) =  print("$(p.name)")
 
 @auto_hash_equals struct Tech
