@@ -26,13 +26,13 @@ Product(name::String) = Product(Symbol(name))
 show(io::Base.IO, p::Product) =  print("$(p.name)")
 
 @auto_hash_equals struct Tech
-inputs::Array{Product}
-outputs::Array{Product}
-name::String
-functional_group::Symbol
-appscore::Array{Float64}
-n_inputs::Int
-internal_products::Array{Product}
+    inputs::Array{Product}
+    outputs::Array{Product}
+    name::String
+    functional_group::Symbol
+    appscore::Array{Float64}
+    n_inputs::Int
+    internal_products::Array{Product}
 end
 
 
@@ -82,11 +82,13 @@ const Connection = Tuple{Product,Tech,Tech}
 The `System` is an Array of Tuples{Product, Tech, Tech}.
 """
 @auto_hash_equals mutable struct System
-techs::Set{Tech}
-connections::Set{Connection}
-complete::Bool
+    techs::Set{Tech}
+    connections::Set{Connection}
+    complete::Bool
+    properties::Dict
 end
 
+System(techs::Set{Tech}, con::Set{Connection}, complete::Bool) = System(techs, con, complete, Dict())
 System(techs::Array{Tech}, con::Array{Connection}, complete::Bool) = System(Set(techs), Set(con), complete)
 System(techs::Array{Tech}, con::Array{Connection}) = System(Set(techs), Set(con), false)
 System(techs::Array{Tech}) = System(Set(techs), Set(Connection[]), false)
@@ -237,9 +239,10 @@ function build_system!(sys::System, completesystems::Array{System}, deadendsyste
         sys_exts = extend_system(sys, candidate)
         for sys_ext in sys_exts
             if sys_ext.complete && !(sys_ext in completesystems)
+                sys_ext.properties["sysappscore"] = sysappscore(sys_ext)
                 push!(completesystems, sys_ext)
                 println(resultfile, sys_ext)
-                println(resultfile, "Sysappscore: $(sysappscore(sys_ext))\n---\n")
+                println(resultfile, "Sysappscore: $(sys_ext.properties["sysappscore"])\n---\n")
                 flush(resultfile)
             elseif !sys_ext.complete && islegal(sys_ext) && !(hash(sys_ext) in hashset)
                 push!(hashset, hash(sys_ext))
