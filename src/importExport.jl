@@ -66,7 +66,7 @@ function importTechFile(techFile::String, sourceGroup::String, sourceAddGroup::S
             out_transported = filter(p -> contains(string(p.name), "transported"), outs)
             out_NOTtransported = filter(p -> !contains(string(p.name), "transported"), outs)
 
-            # produce array of two Techs
+            ## produce array of two Techs
             techs = Tech[Tech(t.inputs,
                               out_NOTtransported,
                               t.name,
@@ -93,7 +93,7 @@ function importTechFile(techFile::String, sourceGroup::String, sourceAddGroup::S
         if (currentTech.inrel == "NA" || currentTech.inrel == "AND") && (currentTech.outrel == "NA" || currentTech.outrel == "AND")
             newSubTech = Tech(currentTech.inputs,
                               currentTech.outputs, currentTech.name, currentTech.functional_group, currentTech.appscore)
-            # push!(subTechList, newSubTech)
+            ## push!(subTechList, newSubTech)
             append!(subTechList, make2(newSubTech))
 
             ## Case 2: Copy | GenVar
@@ -172,7 +172,7 @@ function importTechFile(techFile::String, sourceGroup::String, sourceAddGroup::S
                     subTechName = join([currentTech.name, c], "_")
                     newSubTech = Tech(subTechIn,
                                       currentTech.outputs, subTechName, currentTech.functional_group, currentTech.appscore)
-                    # push!(subTechList, newSubTech)
+                    ## push!(subTechList, newSubTech)
                     append!(subTechList, make2(newSubTech))
                     c += 1
                 end
@@ -185,7 +185,7 @@ function importTechFile(techFile::String, sourceGroup::String, sourceAddGroup::S
                 subTechName = join([currentTech.name, i], "_")
                 newSubTech = Tech([subTechIn],
                                   currentTech.outputs, subTechName, currentTech.functional_group, currentTech.appscore)
-                # push!(subTechList, newSubTech)
+                ## push!(subTechList, newSubTech)
                 append!(subTechList, make2(newSubTech))
             end
 
@@ -247,14 +247,14 @@ end
 ## write dot file for visualisation with graphviz
 
 """
-                                                Writes a DOT file of a `System`. The resulting file can be visualized with GraphViz, e,g.:
-                                                ```
-                                                 dot -Tpng file.dot -o graph.png
-                                                ```
-                                                ## Arguments
-                                                nogroup    Array of functional groups which should not be grouped in the plot
+ Writes a DOT file of a `System`. The resulting file can be visualized with GraphViz, e,g.:
+ ```
+ dot -Tpng file.dot -o graph.png
+ ```
+ ## Arguments
+ nogroup    Array of functional groups which should not be grouped in the plot
 
-                                                """
+ """
 function writedotfile(sys::System, file::String, no_group::Array{String}=["S", "C", "T"], options::String="")
     make_legal(name::String) = replace(name, " :: ", "")
 
@@ -265,11 +265,19 @@ function writedotfile(sys::System, file::String, no_group::Array{String}=["S", "
         if options!=""
             println(f, "$(options);")
         end
+
+        if haskey(sys.properties, "ID")
+            println(f, "label=\"ID: $(sys.properties["ID"])\";")
+            println(f, "labelfontsize=22.0;")
+            println(f, "labelloc=\"top\";")
+            println(f, "labeljust=left")
+        end
+
         ## define colors for function groups
         fgroups = sort(unique(t.functional_group for t in sys.techs))
         colors = Dict(fgroups[i] => mod(i,5)+1 for i in 1:length(fgroups))
 
-        colors = Dict(:U => "#F15A31", :S => "#F99D34", :C => "#C1C430", :T => "#70BF54", :D => "#00B6CD")
+        colors = Dict(:U => "# F15A31", :S => "# F99D34", :C => "# C1C430", :T => "# 70BF54", :D => "# 00B6CD")
 
 
         ## define nodes
@@ -279,22 +287,22 @@ function writedotfile(sys::System, file::String, no_group::Array{String}=["S", "
                 label = label * " - $(p.name)\n"
             end
             label = label * "($(t.functional_group))"
-            #            println(f, replace("$(make_legal(t.name)) [shape=box, fillcolor=$(colors[t.functional_group]) label=\"$label\"];", ".", "_"))
-            println(f, replace("$(make_legal(t.name)) [shape=box, fillcolor=\"$(get(colors, t.functional_group, "#999999"))\" label=\"$label\"];", ".", "_"))
-                               end
-                               ## edges
-                               for c in sys.connections
-                               println(f, replace("$(make_legal(c[2].name)) -> $(make_legal(c[3].name)) [label=\"$(c[1].name)\"];", ".", "_"))
-                               end
+            ##            println(f, replace("$(make_legal(t.name)) [shape=box, fillcolor=$(colors[t.functional_group]) label=\"$label\"];", ".", "_"))
+            println(f, replace("$(make_legal(t.name)) [shape=box, fillcolor=\"$(get(colors, t.functional_group, "# 999999"))\" label=\"$label\"];", ".", "_"))
+        end
+        ## edges
+        for c in sys.connections
+            println(f, replace("$(make_legal(c[2].name)) -> $(make_legal(c[3].name)) [label=\"$(c[1].name)\"];", ".", "_"))
+        end
 
-                               no_group = [Symbol(x) for x in no_group]
-                               ## group according to functional groups
-                               for fg in filter(x -> !(x in no_group), fgroups)
-                               names = [t.name for t in sys.techs if t.functional_group==fg]
-                               names = map(n -> replace(n, ".", "_"), names)
-                               println(f, "{ rank=same $(join(names, ' ')) }")
-                               end
+        no_group = [Symbol(x) for x in no_group]
+        ## group according to functional groups
+        for fg in filter(x -> !(x in no_group), fgroups)
+            names = [t.name for t in sys.techs if t.functional_group==fg]
+            names = map(n -> replace(n, ".", "_"), names)
+            println(f, "{ rank=same $(join(names, ' ')) }")
+        end
 
-                               println(f, "}")
-                               end
-                               end
+        println(f, "}")
+    end
+end
