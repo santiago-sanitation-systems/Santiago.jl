@@ -224,7 +224,7 @@ end
 
 # Return a vector of Systems
 function build_system!(sys::System, completesystems::Array{System}, deadendsystems::Array{System},
-                       techs::Array{Tech}, islegal::Function, sysappscore::Function, resultfile::IO,
+                       techs::Array{Tech}, islegal::Function, resultfile::IO,
                        hashset::Set{UInt64}, storeDeadends::Bool)
 
     # get Array of matching Techs Arrays
@@ -239,15 +239,13 @@ function build_system!(sys::System, completesystems::Array{System}, deadendsyste
         sys_exts = extend_system(sys, candidate)
         for sys_ext in sys_exts
             if sys_ext.complete && !(sys_ext in completesystems)
-                sys_ext.properties["sysappscore"] = sysappscore(sys_ext)
                 push!(completesystems, sys_ext)
                 println(resultfile, sys_ext)
-                println(resultfile, "Sysappscore: $(sys_ext.properties["sysappscore"])\n---\n")
                 flush(resultfile)
             elseif !sys_ext.complete && islegal(sys_ext) && !(hash(sys_ext) in hashset)
                 push!(hashset, hash(sys_ext))
                 build_system!(sys_ext, completesystems, deadendsystems,
-                              techs, islegal, sysappscore, resultfile, hashset, storeDeadends)
+                              techs, islegal, resultfile, hashset, storeDeadends)
             end
         end
     end
@@ -258,7 +256,7 @@ end
 Returns an Array of all possible `System`s starting with `source`. A source can be any technology with a least one output.
 """
 function build_all_systems(source::Array{Tech}, techs::Array{Tech}; islegal::Function=x -> true,
-                           resultfile::IO=STDOUT, sysappscore::Function=x -> 0, storeDeadends::Bool=false)
+                           resultfile::IO=STDOUT, storeDeadends::Bool=false)
     # build looped techs
     ninit = nold = length(techs)
     add_loop_techs!(techs)
@@ -273,7 +271,7 @@ function build_all_systems(source::Array{Tech}, techs::Array{Tech}; islegal::Fun
     completesystems = System[]
     deadendsystems = System[]
     build_system!(System(source), completesystems, deadendsystems, techs, islegal,
-                  sysappscore, resultfile, Set{UInt64}(), storeDeadends)
+                  resultfile, Set{UInt64}(), storeDeadends)
     return completesystems, deadendsystems
 end
 
