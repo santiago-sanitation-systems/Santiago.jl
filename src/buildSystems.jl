@@ -33,32 +33,50 @@ show(io::Base.IO, p::Product) =  print("$(p.name)")
     appscore::Array{Float64}
     n_inputs::Int
     internal_products::Array{Product}
+    trans::Array{Float64,2}
+    masses::Array{Float64,2}
 end
 
 
 function Tech(inputs::Array{Product}, outputs::Array{Product},
               name::String, functional_group::Symbol,
-              appscore::Float64, n_inputs::Int)
-    Tech(inputs, outputs, name, functional_group, Float64[appscore], n_inputs, Product[])
+              appscore::Float64, n_inputs::Int, trans::Array{Float64}, masses::Array{Float64})
+    Tech(inputs, outputs, name, functional_group, Float64[appscore],
+         n_inputs, Product[],
+         trans, masses)
 end
 
 function Tech(inputs::Array{Product}, outputs::Array{Product},
               name::String, functional_group::Symbol,
-              appscore::Array{Float64}, n_inputs::Int)
-    Tech(inputs, outputs, name, functional_group, appscore, n_inputs, Product[])
+              appscore::Array{Float64}, n_inputs::Int,
+              trans::Array{Float64}, masses::Array{Float64})
+    Tech(inputs, outputs, name, functional_group, appscore,
+         n_inputs, Product[],
+         trans, masses)
 end
 
 """
 The `Tech` type represents Technolgies.
-It consist of `inputs`, `outputs`, a `name` and a `functional_group`.
+It consist of `inputs`, `outputs`, a `name`, a `functional_group`, and a transfere matrix `trans`.
 """
-function Tech{T<:String}(inputs::Array{T}, outputs::Array{T}, name::T, functional_group::T, appscore::Float64)
+function Tech{T<:String}(inputs::Array{T}, outputs::Array{T}, name::T, functional_group::T,
+                         appscore::Float64;
+                         masses::Array{Float64,2} = zeros(trans),
+                         trans::Array{Float64,2} = zeros(masses))
+
+    if size(outputs,1) > 0 && size(outputs,1) != size(trans,2)
+        error("Transition matrix `trans` must have the same number of columns a Tech outputs.")
+    end
+    if any(sum(trans,2) .> 1)
+        error("The sum of a row of the transition matrix is larger than 1!")
+    end
     Tech([Product(x) for x in inputs],
          [Product(x) for x in outputs],
          name,
          Symbol(functional_group),
          appscore,
-         size(inputs,1))
+         size(inputs,1),
+         trans, masses)
 end
 
 
