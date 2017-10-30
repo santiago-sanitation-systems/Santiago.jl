@@ -95,7 +95,7 @@ System(techs::Array{Tech}) = System(Set(techs), Set(Connection[]), false)
 
 # Function to copy a System
 function copy(sys::System)
-    System(copy(sys.techs), copy(sys.connections), copy(sys.complete))
+    System(copy(sys.techs), copy(sys.connections), copy(sys.complete), copy(sys.properties))
 end
 
 
