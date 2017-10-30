@@ -113,7 +113,7 @@ System(techs::Array{Tech}) = System(Set(techs), Set(Connection[]), false)
 
 # Function to copy a System
 function copy(sys::System)
-    System(copy(sys.techs), copy(sys.connections), copy(sys.complete), copy(sys.properties))
+    System(copy(sys.techs), copy(sys.connections), copy(sys.complete))
 end
 
 
@@ -393,7 +393,6 @@ function extend_system(sys::System, tech_comb::Array{Tech})
     union!(sysi.techs, tech_comb)
     extended_sys = System[]
     make_connections!([sysi], extended_sys)
-
 
     return extended_sys
 end
