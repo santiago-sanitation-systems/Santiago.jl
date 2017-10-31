@@ -512,30 +512,21 @@ end
 # -----------
 # massflow
 
-function propagate_M!(t::Tech, sys::System)
+function propagate_M!(t::Tech, Mnew::Array{Float64}, sys::System)
     for (i,p) in enumerate(t.outputs)
-
         next_t = collect(filter(c -> c[1] == p && c[2] == t, sys.connections))[1][3]
 
-        # println(p)
-        # println(i)
-        # println(next_t)
-        # @show size(t.Mout[:,i])
-        # @show size(next_t.transC)
-        # @show size(t.Mout[:,i] .* next_t.transC)
-        # @show size(next_t.Mout)
+        Mnew2 = Mnew[:,i] .* next_t.transC # the new mass
+        next_t.Mout[:,:] += Mnew2 # store additional mass
 
-        next_t.Mout[:,:] += t.Mout[:,i] .* next_t.transC
-        propagate_M!(next_t, sys)
+        propagate_M!(next_t, Mnew2, sys)
     end
 end
 
 
 function propagate_M!(sys::System)
     # iterate over all sources
-    #for t in collect(sys.techs)[6:6]
     for t in filter(t -> length(t.inputs) == 0, sys.techs)
-        @show t
-        propagate_M!(t, sys)
+        propagate_M!(t, t.Mout, sys)
     end
 end
