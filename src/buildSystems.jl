@@ -33,41 +33,41 @@ show(io::Base.IO, p::Product) =  print("$(p.name)")
     appscore::Array{Float64}
     n_inputs::Int
     internal_products::Array{Product}
-    trans::Array{Float64,2}
-    masses::Array{Float64,2}
+    transC::Array{Float64,2}
+    Mout::Array{Float64,2}
 end
 
 
 function Tech(inputs::Array{Product}, outputs::Array{Product},
               name::String, functional_group::Symbol,
-              appscore::Float64, n_inputs::Int, trans::Array{Float64}, masses::Array{Float64})
+              appscore::Float64, n_inputs::Int, transC::Array{Float64}, Mout::Array{Float64})
     Tech(inputs, outputs, name, functional_group, Float64[appscore],
          n_inputs, Product[],
-         trans, masses)
+         transC, Mout)
 end
 
 function Tech(inputs::Array{Product}, outputs::Array{Product},
               name::String, functional_group::Symbol,
               appscore::Array{Float64}, n_inputs::Int,
-              trans::Array{Float64}, masses::Array{Float64})
+              transC::Array{Float64}, Mout::Array{Float64})
     Tech(inputs, outputs, name, functional_group, appscore,
          n_inputs, Product[],
-         trans, masses)
+         transC, Mout)
 end
 
 """
 The `Tech` type represents Technolgies.
-It consist of `inputs`, `outputs`, a `name`, a `functional_group`, and a transfere matrix `trans`.
+It consist of `inputs`, `outputs`, a `name`, a `functional_group`, and a transfere matrix `transC`.
 """
 function Tech{T<:String}(inputs::Array{T}, outputs::Array{T}, name::T, functional_group::T,
                          appscore::Float64;
-                         masses::Array{Float64,2} = zeros(trans),
-                         trans::Array{Float64,2} = zeros(masses))
+                         Mout::Array{Float64,2} = zeros(transC),
+                         transC::Array{Float64,2} = zeros(Mout))
 
-    if size(outputs,1) > 0 && size(outputs,1) != size(trans,2)
-        error("Transition matrix `trans` must have the same number of columns a Tech outputs.")
+    if size(outputs,1) > 0 && size(outputs,1) != size(transC,2)
+        error("Transition matrix `transC` must have the same number of columns a Tech outputs.")
     end
-    if any(sum(trans,2) .> 1)
+    if any(sum(transC,2) .> 1)
         error("The sum of a row of the transition matrix is larger than 1!")
     end
     Tech([Product(x) for x in inputs],
@@ -76,7 +76,7 @@ function Tech{T<:String}(inputs::Array{T}, outputs::Array{T}, name::T, functiona
          Symbol(functional_group),
          appscore,
          size(inputs,1),
-         trans, masses)
+         transC, Mout)
 end
 
 
@@ -97,7 +97,7 @@ const Connection = Tuple{Product,Tech,Tech}
 
 
 """
-The `System` is an Array of Tuples{Product, Tech, Tech}.
+A `System` consists of `techs` and `conncetions`.
 """
 @auto_hash_equals mutable struct System
     techs::Set{Tech}
@@ -505,4 +505,37 @@ function make_looped_tech(tech1::Tech, tech2::Tech)
     appscore = sort(vcat(tech1.appscore, tech2.appscore))
 
     return Tech(ins, outs, name, tech1.functional_group, appscore, length(ins), internal_connected)
+end
+
+
+
+# -----------
+# massflow
+
+function propagate_M!(t::Tech, sys::System)
+    for (i,p) in enumerate(t.outputs)
+
+        next_t = collect(filter(c -> c[1] == p && c[2] == t, sys.connections))[1][3]
+
+        # println(p)
+        # println(i)
+        # println(next_t)
+        # @show size(t.Mout[:,i])
+        # @show size(next_t.transC)
+        # @show size(t.Mout[:,i] .* next_t.transC)
+        # @show size(next_t.Mout)
+
+        next_t.Mout[:,:] += t.Mout[:,i] .* next_t.transC
+        propagate_M!(next_t, sys)
+    end
+end
+
+
+function propagate_M!(sys::System)
+    # iterate over all sources
+    #for t in collect(sys.techs)[6:6]
+    for t in filter(t -> length(t.inputs) == 0, sys.techs)
+        @show t
+        propagate_M!(t, sys)
+    end
 end
