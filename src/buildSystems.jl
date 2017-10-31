@@ -95,7 +95,7 @@ System(techs::Array{Tech}) = System(Set(techs), Set(Connection[]), false)
 
 # Function to copy a System
 function copy(sys::System)
-    System(copy(sys.techs), copy(sys.connections), copy(sys.complete), copy(sys.properties))
+    System(copy(sys.techs), copy(sys.connections), copy(sys.complete))
 end
 
 
@@ -207,12 +207,20 @@ end
 
 # pre filter the tech list
 function get_candidates(s::Array{Tech}, outs, k)
-
+    # Limitation!
+    # This function guaranties, that we never add a techs, which leads to new open inputs.
+    # However, this banns not only loops, but also "triangles". E.g if only "A is given"
+    #   A ---> B
+    #    \    ^
+    #     \  /
+    #      >C
+    # this system cannot be found! Because B, C are on the same stage
+    # of the algorithm. (Exception: both inputs of B have the same product)
     n_out = length(outs)
     n_in_max = n_out - k + 1
-
     function condi(t::Tech)
         issubset(t.inputs, outs) && (t.n_inputs <= n_in_max)
+
     end
 
     filter(condi, s)
@@ -284,6 +292,7 @@ function get_candidates(sys::System, techs::Array{Tech})
 
     matching_techs = Array{Array{Tech},1}()
     n_out = length(outs)
+
     ## get matching combinations
     for k in 1:n_out
         for c in Combinatorics.combinations(get_candidates(techssub, outs, k), k) # try all combination of lenght k (in R: combn())

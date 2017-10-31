@@ -3,98 +3,48 @@ using Base.Test
 
 SSB = SanitationSystemBuilder
 
-# -----------
-# techs
+@testset begin
 
-techs1 = [
-    Tech(String[], ["aa", "bb"], "one", "g1"),
-    Tech(["aa"], ["dd"], "two", "g2"),
-    Tech(["bb", "cc"], ["gg"], "three", "g3"),
-    Tech(["dd"], ["cc", "ee", "ff"], "four", "g3"),
-    Tech(["ff", "gg"], ["hh"], "five", "g3"),
-    Tech(["ee"], String[], "six", "g4"),
-    Tech(["hh"], ["ii"], "seven", "g5"),
-    Tech(["ii"], String[], "eight", "g6")
-]
+    # -----------
+    # techs
 
 
-techs2 = [
-    Tech(String[], ["aa"], "one", "g1"),
-    Tech(["aa", "dd"], ["bb"], "two", "g2"),
-    Tech(["bb"], ["cc", "dd"], "three", "g2"),
-    Tech(["cc"], String[], "four", "g3")
-]
+    A = Tech(String[], ["a1", "a2"], "A", "group1", 0.5)
+    B = Tech(String[], ["b1"], "B", "group1", 0.5)
 
-# tranport loop problem?
-techs2_2 = [
-    techs2...,
-    Tech(["bb"], ["bb"], "t1", "g_transport"),
-    Tech(["cc"], ["cc"], "t2", "g_transport"),
-    Tech(["dd"], ["dd"], "t3", "g_transport")
-]
+    # techs and sinks
+    C = Tech(["a1"], String["c1", "c2"], "C", "group1", 0.5)
+    D = Tech(["a2", "c2", "b2"], String["d1", "d2", "d3"], "D", "group1", 0.5)
+
+    C2 = Tech(["a1"], String["c1"], "C", "group1", 0.5)
+    D2 = Tech(["a2", "b1"], String["d1", "d2", "d3"], "D", "group1", 0.5)
+
+    E = Tech(["c1", "d1"], String[], "E", "group1", 0.5)
+    F = Tech(["d2", "d3"], String[], "F", "group1", 0.5)
 
 
-@test length(SSB.get_outputs(techs1)) == 9
-@test length(SSB.get_outputs(techs2)) == 4
+    @test length(SSB.get_inputs([A])) == 0
+    @test length(SSB.get_inputs([A,D])) == 3
+    @test length(SSB.get_inputs([A,D,E])) == 5
 
-@test length(SSB.get_inputs(techs1)) == 9
-@test length(SSB.get_inputs(techs2)) == 4
+    @test length(SSB.get_outputs([A])) == 2
+    @test length(SSB.get_outputs([A,D])) == 5
+    @test length(SSB.get_outputs([A,D,E])) == 5
 
-# -----------
-# System
-
-s1 = System(techs1, Tuple{Product, Tech, Tech}[])
-
-s2 = System(
-    techs2,
-    [(Product("aa"), techs2[1], techs2[2]),
-     (Product("bb"), techs2[2], techs2[3])
-     ]
-)
-
-# complete system
-s3 = System(
-    techs2,
-    [(Product("aa"), techs2[1], techs2[2]),
-     (Product("bb"), techs2[2], techs2[3]),
-     (Product("cc"), techs2[3], techs2[4]),
-     (Product("dd"), techs2[3], techs2[2])
-     ]
-)
-
-@test length(SSB.get_outputs(s1.techs)) == 9
-@test length(SSB.get_outputs(s2.techs)) == 4
-@test length(SSB.get_inputs(s1.techs)) == 9
-@test length(SSB.get_inputs(s2.techs)) == 4
-
-@test length(SSB.get_outputs(s1)) == 9
-@test length(SSB.get_outputs(s2)) == 2
-@test length(SSB.get_inputs(s1)) == 9
-@test length(SSB.get_inputs(s2)) == 2
-
-# complete system
-@test SSB.get_outputs(s3) == Product[]
-@test SSB.get_inputs(s3) == Product[]
-
-@test SSB.is_complete(s2) == false
-@test SSB.is_complete(s3) == true
-
-# find open technologies
-@test length(SSB.get_openout_techs(s2, Product("aa"))) == 0
-@test length(SSB.get_openout_techs(s2, Product("cc"))) == 1
-@test length(SSB.get_openout_techs(s2, Product("dd"))) == 1
-@test length(SSB.get_openin_techs(s2, Product("bb"))) == 1
-@test length(SSB.get_openin_techs(s2, Product("dd"))) == 1
-@test length(SSB.get_openin_techs(s2, Product("cc"))) == 1
+    c1 = SSB.get_candidates([C2,D2,E,F], SSB.get_outputs([A,B]), 1)
+    c2 = SSB.get_candidates([C2,D2,E,F], SSB.get_outputs([A,B]), 2)
 
 
-# find systems
-ss1 = build_all_systems(techs1[1], techs1[2:end], 1000)[1]
-@test length(ss1) == 1
-@test length(ss1[1].techs) == 8
-@test length(ss1[1].connections) == 9
+    # -----------
+    # System
 
-ss2 = build_all_systems(techs2[1], techs2[2:end], 1000)[1]
-@test length(ss2) == 1
-@test length(ss2[1].techs) == 4
-@test length(ss2[1].connections) == 4
+    # system without  triangle
+    allSys, _ = build_all_systems([A, B], [C2, D2, E, F], storeDeadends=false)
+    @test length(allSys) == 1
+
+    # This system cannot be found with the current algorithm (triangle!)
+    # connection between A, C, and D
+    allSys, _ = build_all_systems([A, B], [C, D, E, F], storeDeadends=false)
+    @test_skip length(allSys) == 1
+
+end
