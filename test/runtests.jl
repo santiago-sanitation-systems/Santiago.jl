@@ -9,42 +9,69 @@ SSB = SanitationSystemBuilder
     # techs
 
 
-    A = Tech(String[], ["a1", "a2"], "A", "group1", 0.5)
-    B = Tech(String[], ["b1"], "B", "group1", 0.5)
+    # sources
+    massesA = Float64[505 600;
+                      340 400;
+                      140 260;
+                      80 90]
+    A = Tech(String[], ["a1", "a2"], "A", "group1", 0.5, Mout=massesA)
+
+    massesB = Float64[1405;
+                      760;
+                      600;
+                      110][:,:]
+    B = Tech(String[], ["b1"], "B", "group1", 0.5, Mout=massesB)
+
 
     # techs and sinks
-    C = Tech(["a1"], String["c1", "c2"], "C", "group1", 0.5)
-    D = Tech(["a2", "c2", "b2"], String["d1", "d2", "d3"], "D", "group1", 0.5)
 
-    C2 = Tech(["a1"], String["c1"], "C", "group1", 0.5)
-    D2 = Tech(["a2", "b1"], String["d1", "d2", "d3"], "D", "group1", 0.5)
+    C = Tech(["a1"], ["c1"], "C", "group1", 0.5,
+             transC = [1.0;
+                       1.0;
+                       1.0;
+                       1.0][:,:])
+    D = Tech(["a2", "b1"], String["d1", "d2", "d3"], "D", "group1", 0.5,
+             transC=[0.1 0.1 0.8;
+                      0.6 0.3 0.1;
+                      0.0 0.0 1.0;
+                      0.5 0.5 0.0])
 
-    E = Tech(["c1", "d1"], String[], "E", "group1", 0.5)
-    F = Tech(["d2", "d3"], String[], "F", "group1", 0.5)
+
+    E = Tech(["c1", "d1"], String[], "E", "group1", 0.5, transC=[1.0; 1.0; 1.0; 1.0][:,:])
+    F = Tech(["d2", "d3"], String[], "F", "group1", 0.5, transC=[1.0; 1.0; 1.0; 1.0][:,:])
+
 
 
     @test length(SSB.get_inputs([A])) == 0
-    @test length(SSB.get_inputs([A,D])) == 3
-    @test length(SSB.get_inputs([A,D,E])) == 5
+    @test length(SSB.get_inputs([A,D])) == 2
+    @test length(SSB.get_inputs([A,D,E])) == 4
 
     @test length(SSB.get_outputs([A])) == 2
     @test length(SSB.get_outputs([A,D])) == 5
     @test length(SSB.get_outputs([A,D,E])) == 5
 
-    c1 = SSB.get_candidates([C2,D2,E,F], SSB.get_outputs([A,B]), 1)
-    c2 = SSB.get_candidates([C2,D2,E,F], SSB.get_outputs([A,B]), 2)
 
 
     # -----------
     # System
 
     # system without  triangle
-    allSys, _ = build_all_systems([A, B], [C2, D2, E, F], storeDeadends=false)
+    allSys, _ = build_all_systems([A, B], [C, D, E, F], storeDeadends=false)
     @test length(allSys) == 1
 
-    # This system cannot be found with the current algorithm (triangle!)
-    # connection between A, C, and D
-    allSys, _ = build_all_systems([A, B], [C, D, E, F], storeDeadends=false)
-    @test_skip length(allSys) == 1
+
+    # -----------
+    # Mass flow
+    sys = deepcopy(allSys[1])
+
+    SanitationSystemBuilder.propagate_M!(sys)
+
+    Mout_E = collect(filter(t -> t.name == "E", sys.techs))[1].Mout
+    Mout_F = collect(filter(t -> t.name == "F", sys.techs))[1].Mout
+
+    @test Mout_E ≈ [705.5, 1036.0, 140.0, 180.0][:,:]
+    @test Mout_F ≈ [1804.5, 464.0, 860.0, 100.0][:,:]
+
+
 
 end
