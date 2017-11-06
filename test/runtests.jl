@@ -8,6 +8,7 @@ SSB = SanitationSystemBuilder
     # -----------
     # techs
 
+    # 3 substances + 2 losses
 
     # sources
     massesA = Float64[505 600;
@@ -24,21 +25,26 @@ SSB = SanitationSystemBuilder
 
 
     # techs and sinks
-
     C = Tech(["a1"], ["c1"], "C", "group1", 0.5,
-             transC = [1.0;
-                       1.0;
-                       1.0;
-                       1.0][:,:])
+             transC=[0.5 0.2 0.3;
+                     1.0 0 0;
+                     1.0 0 0;
+                     1.0 0 0])
     D = Tech(["a2", "b1"], String["d1", "d2", "d3"], "D", "group1", 0.5,
-             transC=[0.1 0.1 0.8;
-                      0.6 0.3 0.1;
-                      0.0 0.0 1.0;
-                      0.5 0.5 0.0])
+             transC=[0.1 0.1 0.8 0 0;
+                     0.6 0.3 0.1 0 0;
+                     0.0 0.0 1.0 0 0;
+                     0.5 0.5 0.0 0 0])
 
 
-    E = Tech(["c1", "d1"], String[], "E", "group1", 0.5, transC=[1.0; 1.0; 1.0; 1.0][:,:])
-    F = Tech(["d2", "d3"], String[], "F", "group1", 0.5, transC=[1.0; 1.0; 1.0; 1.0][:,:])
+    E = Tech(["c1", "d1"], String[], "E", "group1", 0.5, transC=[1.0 0 0;
+                                                                 1.0 0 0;
+                                                                 1.0 0 0;
+                                                                 1.0 0 0])
+    F = Tech(["d2", "d3"], String[], "F", "group1", 0.5, transC=[1.0 0 0;
+                                                                 1.0 0 0;
+                                                                 1.0 0 0;
+                                                                 1.0 0 0])
 
 
 
@@ -66,11 +72,13 @@ SSB = SanitationSystemBuilder
 
     SanitationSystemBuilder.propagate_M!(sys)
 
+    Mout_C = collect(filter(t -> t.name == "C", sys.techs))[1].Mout
     Mout_E = collect(filter(t -> t.name == "E", sys.techs))[1].Mout
     Mout_F = collect(filter(t -> t.name == "F", sys.techs))[1].Mout
 
-    @test Mout_E ≈ [705.5, 1036.0, 140.0, 180.0][:,:]
-    @test Mout_F ≈ [1804.5, 464.0, 860.0, 100.0][:,:]
+    @test Mout_C[1,2:end] ≈ [101.0, 151.5]
+    @test Mout_E[:,1] ≈ [705.5 - 101.0 - 151.5, 1036.0, 140.0, 180.0]
+    @test Mout_F[:,1] ≈ [1804.5, 464.0, 860.0, 100.0]
 
 
 

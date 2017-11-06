@@ -62,13 +62,13 @@ It consist of `inputs`, `outputs`, a `name`, a `functional_group`, and a transfe
 function Tech{T<:String}(inputs::Array{T}, outputs::Array{T}, name::T, functional_group::T,
                          appscore::Float64;
                          Mout::Array{Float64,2} = zeros(transC),
-                         transC::Array{Float64,2} = zeros(Mout))
+                         transC::Array{Float64,2} = zeros(size(Mout,1), size(Mout,2)+2))
 
-    if size(outputs,1) > 0 && size(outputs,1) != size(transC,2)
-        error("Transition matrix `transC` must have the same number of columns a Tech outputs.")
+    if size(outputs,1) > 0 && size(outputs,1) + 2 != size(transC,2)
+        error("Transition matrix `transC` must have the same number of columns outputs plus 2.")
     end
-    if any(sum(transC,2) .> 1)
-        error("The sum of a row of the transition matrix is larger than 1!")
+    if size(inputs,1) > 0 && any(.!isapprox.(sum(transC,2), 1.0))
+        error("The elements of a row of the transition matrix sum to 1!")
     end
     Tech([Product(x) for x in inputs],
          [Product(x) for x in outputs],
@@ -514,12 +514,14 @@ end
 
 function propagate_M!(t::Tech, Mnew::Array{Float64}, sys::System)
     for (i,p) in enumerate(t.outputs)
+        # identify the connected Tech
         next_t = collect(filter(c -> c[1] == p && c[2] == t, sys.connections))[1][3]
 
         Mnew2 = Mnew[:,i] .* next_t.transC # the new mass
         next_t.Mout[:,:] += Mnew2 # store additional mass
 
-        propagate_M!(next_t, Mnew2, sys)
+        # do not propagate losses
+        propagate_M!(next_t, Mnew2[:,1:end-2], sys)
     end
 end
 
