@@ -62,10 +62,10 @@ It consist of `inputs`, `outputs`, a `name`, a `functional_group`, and a transfe
 function Tech{T<:String}(inputs::Array{T}, outputs::Array{T}, name::T, functional_group::T,
                          appscore::Float64;
                          Mout::Array{Float64,2} = zeros(transC),
-                         transC::Array{Float64,2} = zeros(size(Mout,1), size(Mout,2)+2))
+                         transC::Array{Float64,2} = zeros(size(Mout,1), size(Mout,2)+3))
 
-    if size(outputs,1) > 0 && size(outputs,1) + 2 != size(transC,2)
-        error("Transition matrix `transC` must have the same number of columns outputs plus 2.")
+    if size(outputs,1) > 0 && size(outputs,1) + 3 != size(transC,2)
+        error("Transition matrix `transC` must have the same number of columns outputs plus 3.")
     end
     if size(inputs,1) > 0 && any(.!isapprox.(sum(transC,2), 1.0))
         error("The elements of a row of the transition matrix sum to 1!")
@@ -521,7 +521,7 @@ function propagate_M!(t::Tech, Mnew::Array{Float64}, sys::System)
         next_t.Mout[:,:] += Mnew2 # store additional mass
 
         # do not propagate losses
-        propagate_M!(next_t, Mnew2[:,1:end-2], sys)
+        propagate_M!(next_t, Mnew2[:,1:end-3], sys)
     end
 end
 
