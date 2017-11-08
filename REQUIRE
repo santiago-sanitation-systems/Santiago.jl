@@ -4,3 +4,4 @@ DataStructures
 AutoHashEquals
 DataFrames
 Distributions
+NamedArrays

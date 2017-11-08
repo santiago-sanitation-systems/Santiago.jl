@@ -1,4 +1,5 @@
 using AutoHashEquals
+using NamedArrays
 
 import DataStructures
 import Combinatorics
@@ -7,6 +8,7 @@ import Base.getindex
 import Base.copy
 import Base.==
 import StatsBase
+
 
 export Tech, Product, System
 export build_all_systems
@@ -33,7 +35,7 @@ show(io::Base.IO, p::Product) =  print("$(p.name)")
     appscore::Array{Float64}
     n_inputs::Int
     internal_products::Array{Product}
-    transC::Array{Float64, 2}
+    transC::NamedArray{Float64, 2}
 end
 
 const Source = Tech
@@ -43,7 +45,7 @@ const Sink = Tech
 function Tech(inputs::Array{Product}, outputs::Array{Product},
               name::String, functional_group::Symbol,
               appscore::Float64, n_inputs::Int,
-              transC::Array{Float64})
+              transC::NamedArray{Float64})
     Tech(inputs, outputs,
          name, functional_group,
          Float64[appscore],
@@ -65,13 +67,18 @@ function Tech{T<:String}(inputs::Array{T}, outputs::Array{T}, name::T, functiona
     if size(inputs,1) > 0 && any(.!isapprox.(sum(transC,2), 1.0))
         error("The elements of a row of the transition matrix must sum to 1!")
     end
+    if size(outputs,1) > 0
+        colnames = vcat(outputs, ["air loss", "soil loss", "other loss"])
+    else
+        colnames = ["recovered", "air loss", "soil loss", "other loss"]
+    end
     Tech([Product(x) for x in inputs],
          [Product(x) for x in outputs],
          name,
          Symbol(functional_group),
          appscore,
          size(inputs,1),
-         transC)
+         NamedArray(transC, (SUBSTANCE_NAMES, colnames)))
 end
 
 

@@ -8,22 +8,17 @@ export entered
 export recovery_ratio
 
 
-const MassDict = Dict{Tech, <:Array{Float64}}
+const MassDict = Dict{Tech, <:NamedArray{Float64}}
 
 issource(t::Tech) = length(t.inputs) == 0
 issink(t::Tech) = length(t.outputs) == 0
 
 
-function massflow(sys::System, M_in::MassDict)::MassDict
+function massflow(sys::System, M_in::Dict)::MassDict
 
-    M_out = Dict{Tech, Array{Float64}}()
-    # init Dict with zeros
+    M_out = Dict{Tech, NamedArray{Float64}}()
     for t in sys.techs
-        if issink(t)
-            M_out[t] = zeros(NSUBSTANCE, 4)
-        else
-            M_out[t] = zeros(NSUBSTANCE, length(t.outputs) + 3)
-        end
+        M_out[t] = zeros(t.transC)
     end
 
     # iterate over all sources
@@ -38,7 +33,7 @@ function massflow(sys::System, M_in::MassDict)::MassDict
 end
 
 
-function propagate_M!(t::Tech, M_new::Array{Float64}, M_out::MassDict, sys::System)
+function propagate_M!(t::Tech, M_new::NamedArray{Float64}, M_out::MassDict, sys::System)
 
     for (i,p) in enumerate(t.outputs)
 
@@ -63,13 +58,14 @@ function recovered(M_out::MassDict)
     sum(m[:,1:end-3] for (t,m) in M_out if issink(t))
 end
 
-function entered(M_in::MassDict, sys::System)
-    sum(m for (t,m) in M_in if t in sys.techs)
+function entered(M_in::Dict, sys::System)
+    NamedArray(sum(m for (t,m) in M_in if t in sys.techs), (SUBSTANCE_NAMES,))
 end
 
-function recovery_ratio(M_out::MassDict, M_in::MassDict, sys::System)
+function recovery_ratio(M_out::MassDict, M_in::Dict, sys::System)
     mass_in = entered(M_in, sys)
     f = recovered(M_out) ./ mass_in
     f[mass_in .== 0.0] = 1.0  # define: 0/0 := 1.0
+    setnames!(f, ["ratio"], 2)
     return(f)
 end
