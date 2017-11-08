@@ -3,9 +3,10 @@
 
 export massflow
 export lost
-export recycled
+export recovered
 export entered
-export recycling_factor
+export recovery_ratio
+
 
 const MassDict = Dict{Tech, <:Array{Float64}}
 
@@ -58,7 +59,7 @@ function lost(M_out::MassDict)
     sum(m[:,(end-2):end] for (t,m) in M_out)
 end
 
-function recycled(M_out::MassDict)
+function recovered(M_out::MassDict)
     sum(m[:,1:end-3] for (t,m) in M_out if issink(t))
 end
 
@@ -66,10 +67,9 @@ function entered(M_in::MassDict, sys::System)
     sum(m for (t,m) in M_in if t in sys.techs)
 end
 
-function recycling_factor(M_out::MassDict, M_in::MassDict, sys::System)
-    mass_in = entered(M_in)
-    f = recycled(M_out) ./ mass_in
-    # define: 0/0 -> 1.0
-    f[mass_in .== 0.0] = 1.0
+function recovery_ratio(M_out::MassDict, M_in::MassDict, sys::System)
+    mass_in = entered(M_in, sys)
+    f = recovered(M_out) ./ mass_in
+    f[mass_in .== 0.0] = 1.0  # define: 0/0 := 1.0
     return(f)
 end
