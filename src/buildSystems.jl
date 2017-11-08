@@ -33,26 +33,23 @@ show(io::Base.IO, p::Product) =  print("$(p.name)")
     appscore::Array{Float64}
     n_inputs::Int
     internal_products::Array{Product}
-    transC::Array{Float64,2}
+    transC::Array{Float64, 2}
 end
 
 const Source = Tech
 const Sink = Tech
 
-function Tech(inputs::Array{Product}, outputs::Array{Product},
-              name::String, functional_group::Symbol,
-              appscore::Float64, n_inputs::Int, transC::Array{Float64})
-    Tech(inputs, outputs, name, functional_group, Float64[appscore],
-         n_inputs, Product[], transC)
-end
 
 function Tech(inputs::Array{Product}, outputs::Array{Product},
               name::String, functional_group::Symbol,
-              appscore::Array{Float64}, n_inputs::Int,
+              appscore::Float64, n_inputs::Int,
               transC::Array{Float64})
-    Tech(inputs, outputs, name, functional_group, appscore,
+    Tech(inputs, outputs,
+         name, functional_group,
+         Float64[appscore],
          n_inputs, Product[], transC)
 end
+
 
 """
 The `Tech` type represents Technolgies.
