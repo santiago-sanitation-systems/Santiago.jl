@@ -36,6 +36,7 @@ show(io::Base.IO, p::Product) =  print("$(p.name)")
     n_inputs::Int
     internal_products::Array{Product}
     transC::NamedArray{Float64, 2}
+    transC_reliability::NamedArray{Float64, 1}
 end
 
 const Source = Tech
@@ -45,21 +46,23 @@ const Sink = Tech
 function Tech(inputs::Array{Product}, outputs::Array{Product},
               name::String, functional_group::Symbol,
               appscore::Float64, n_inputs::Int,
-              transC::NamedArray{Float64})
+              transC::NamedArray{Float64}, transC_reliability::NamedArray{Float64, 1})
     Tech(inputs, outputs,
          name, functional_group,
          Float64[appscore],
-         n_inputs, Product[], transC)
+         n_inputs, Product[],
+         transC, transC_reliability)
 end
 
 
 """
 The `Tech` type represents Technolgies.
-It consist of `inputs`, `outputs`, a `name`, a `functional_group`, and a transfere matrix `transC`.
+It consist of `inputs`, `outputs`, a `name`, a `functional_group`, and a transfer matrix `transC`.
 """
 function Tech{T<:String}(inputs::Array{T}, outputs::Array{T}, name::T, functional_group::T,
                          appscore::Float64,
-                         transC::Array{Float64,2})
+                         transC::Array{Float64,2},
+                         transC_reliability::Array{<:Real, 1} = ones(size(transC,1)))
 
     if size(outputs,1) > 0 && size(outputs,1) + 3 != size(transC,2)
         error("Transition matrix `transC` must have the same number of columns outputs plus 3.")
@@ -67,6 +70,7 @@ function Tech{T<:String}(inputs::Array{T}, outputs::Array{T}, name::T, functiona
     if size(inputs,1) > 0 && any(.!isapprox.(sum(transC,2), 1.0))
         error("The elements of a row of the transition matrix must sum to 1!")
     end
+
     if size(outputs,1) > 0
         colnames = vcat(outputs, ["air loss", "soil loss", "other loss"])
     else
@@ -78,7 +82,8 @@ function Tech{T<:String}(inputs::Array{T}, outputs::Array{T}, name::T, functiona
          Symbol(functional_group),
          appscore,
          size(inputs,1),
-         NamedArray(transC, (SUBSTANCE_NAMES, colnames)))
+         NamedArray(transC, (SUBSTANCE_NAMES, colnames)),
+         NamedArray(transC_reliability*1.0, (SUBSTANCE_NAMES,)))
 end
 
 

@@ -1,6 +1,8 @@
 # -----------
 # massflow
 
+using Distributions
+
 export massflow
 export lost
 export recovered
@@ -14,18 +16,31 @@ issource(t::Tech) = length(t.inputs) == 0
 issink(t::Tech) = length(t.outputs) == 0
 
 
-function massflow(sys::System, M_in::Dict)::MassDict
+"""
+Compute massflows of a system.
+- if `MC` is false, the transfer coefficients are the expected values of the Dirichlet distribution
+- if `MC` is true, the transfer coefficients are sampled form Dirichlet distribution
+- `scale_reliability` a factor to scale the `transC_reliability` of all Techs.
+"""
+function massflow(sys::System, M_in::Dict; MC::Bool=false, scale_reliability::Real=1.0)::MassDict
 
     M_out = Dict{Tech, NamedArray{Float64}}()
+    transC_MC = Dict{Tech, NamedArray{Float64,2}}()
+
     for t in sys.techs
         M_out[t] = zeros(t.transC)
+        if MC
+            transC_MC[t] = sample_transC(t.transC, t.transC_reliability * scale_reliability)
+        else
+            transC_MC[t] = t.transC
+        end
     end
 
     # iterate over all sources
     for t in filter(issource, sys.techs)
-        M_new = M_in[t] .* t.transC
+        M_new = M_in[t] .* transC_MC[t]
         M_out[t] = M_new
-        propagate_M!(t, M_new[:,1:end-3], M_out, sys)
+        propagate_M!(t, M_new[:,1:end-3], M_out, transC_MC, sys)
     end
 
     return M_out
@@ -33,19 +48,33 @@ function massflow(sys::System, M_in::Dict)::MassDict
 end
 
 
-function propagate_M!(t::Tech, M_new::NamedArray{Float64}, M_out::MassDict, sys::System)
+function propagate_M!(t::Tech, M_new::NamedArray{Float64}, M_out::MassDict,
+                      transC_MC::Dict{Tech, NamedArray{Float64,2}}, sys::System)
 
     for (i,p) in enumerate(t.outputs)
 
         # identify the connected Tech
         next_t = collect(filter(c -> c[1] == p && c[2] == t, sys.connections))[1][3]
-        M_new2 = M_new[:,i] .* next_t.transC # the new mass
+        M_new2 = M_new[:,i] .* transC_MC[next_t] # the new mass
 
         M_out[next_t][:,:] += M_new2 # store additional mass
         # do not propagate losses
-        propagate_M!(next_t, M_new2[:,1:end-3], M_out, sys)
+        propagate_M!(next_t, M_new2[:,1:end-3], M_out, transC_MC, sys)
     end
 end
+
+
+# Sample a random transition matrix. Each row is Dirichlet distributed
+function sample_transC(transC::AbstractArray, transC_reliability::AbstractArray)
+    m = zeros(transC)
+    for i in 1:NSUBSTANCE
+        i_zero = transC[i,:] .<= 0.0
+        alpha = transC[i,.!i_zero]*transC_reliability[i]
+        m[i,.!i_zero] = rand( Dirichlet(alpha.array),1 )
+    end
+    m
+end
+
 
 
 # summary functions
