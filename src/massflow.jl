@@ -8,6 +8,7 @@ export lost
 export recovered
 export entered
 export recovery_ratio
+export massflow_summary
 
 
 const MassDict = Dict{Tech, <:NamedArray{Float64}}
@@ -17,7 +18,9 @@ issink(t::Tech) = length(t.outputs) == 0
 
 
 """
-Compute massflows of a system.
+Compute massflows of a system. Optionally with Monte Carlo (MC) simulation.
+
+Arguments:
 - if `MC` is false, the transfer coefficients are the expected values of the Dirichlet distribution
 - if `MC` is true, the transfer coefficients are sampled form Dirichlet distribution
 - `scale_reliability` a factor to scale the `transC_reliability` of all Techs.
@@ -83,13 +86,16 @@ function lost(M_out::MassDict)
     sum(m[:,(end-2):end] for (t,m) in M_out)
 end
 
+
 function recovered(M_out::MassDict)
     sum(m[:,1:end-3] for (t,m) in M_out if issink(t))
 end
 
+
 function entered(M_in::Dict, sys::System)
     NamedArray(sum(m for (t,m) in M_in if t in sys.techs), (SUBSTANCE_NAMES,))
 end
+
 
 function recovery_ratio(M_out::MassDict, M_in::Dict, sys::System)
     mass_in = entered(M_in, sys)
@@ -97,4 +103,58 @@ function recovery_ratio(M_out::MassDict, M_in::Dict, sys::System)
     f[mass_in .== 0.0] = 1.0  # define: 0/0 := 1.0
     setnames!(f, ["ratio"], 2)
     return(f)
+end
+
+
+"""
+Calculate summary statistics of a Monte Carlo massflow results
+"""
+
+function massflow_summary(sys::System, M_in::Dict; MC::Bool=true, n::Int=100,
+                          scale_reliability::Real=1.0)
+
+    summaries = Dict{String, NamedArray{Float64}}()
+
+    #  -- compute masses
+    ns = MC ? n : 1             # make only one run if MC == false
+    m_outs = [massflow(sys, M_in, MC=MC, scale_reliability=scale_reliability) for i in 1:ns]
+
+    ## quantiles to calculate
+    qq = [0.2, 0.5, 0.8]
+
+    # --  recovery ratio
+    tmp = hcat((recovery_ratio(m, M_in, sys) for m in m_outs)...)
+
+    rr = hcat(mean(tmp, 2),
+              std(tmp, 2),
+              mapslices(x-> quantile(x, qq), tmp, 2))
+    setnames!(rr, SUBSTANCE_NAMES, 1)
+    setnames!(rr, ["mean", "sd", ["q_$i" for i in qq]...], 2)
+
+    summaries["recovery_ratio"] = rr
+
+    # --  recovered
+    tmp = hcat((recovered(m) for m in m_outs)...)
+
+    rm = hcat(mean(tmp, 2),
+              std(tmp, 2),
+              mapslices(x-> quantile(x, qq), tmp, 2))
+    setnames!(rm, SUBSTANCE_NAMES, 1)
+    setnames!(rm, ["mean", "sd", ["q_$i" for i in qq]...], 2)
+
+    summaries["recovered"] = rm
+
+
+    # --  losses
+    tmp = cat(3, (lost(m) for m in m_outs)...)
+
+    ll = cat(3,
+             mean(tmp, 3),
+             std(tmp, 3),
+             mapslices(x-> quantile(x, qq), tmp, 3))
+    setnames!(ll, ["mean", "sd", ["q_$i" for i in qq]...], 3)
+
+    summaries["lost"] = ll
+
+    return(summaries)
 end
