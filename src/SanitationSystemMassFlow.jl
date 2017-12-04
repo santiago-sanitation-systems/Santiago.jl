@@ -1,4 +1,4 @@
-module SanitationSystemBuilder
+module SanitationSystemMassFlow
 
 using AutoHashEquals
 

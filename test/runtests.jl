@@ -1,7 +1,7 @@
-using SanitationSystemBuilder
+using SanitationSystemMassFlow
 using Base.Test
 
-SSB = SanitationSystemBuilder
+SSB = SanitationSystemMassFlow
 
 @testset begin
 
