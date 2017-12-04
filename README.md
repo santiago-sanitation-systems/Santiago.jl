@@ -1,62 +1,111 @@
 # SanitationSystemMassFlow
 
 
-Finds all combination of technologies that result in a valid
-sanitation system.
+Extension of the
+[](https://github.com/Eawag-SWW/.jl)
+package that
+- finds all possible systems given a set of sanitation technologies
+- calculates a (optionally stochastic) mass flow analysis for each system.
 
 
 # Installation
 
-SanitationSystemMassFlow can then be installed with the Julia command`
-Pkg.clone()`:
+1. Install [Julia](https://julialang.org/) version 0.6 or newer.
+
+2. Then the `SanitationSystemMassFlow` package is installed with the Julia command:
 ```Julia
 Pkg.clone("https://gitlab.com/scheidan/SanitationSystemMassFlow.git")
 ```
 
-# Usage !!! UPDATE !!!
+# Usage
 
 ```Julia
-using SanitationSystemBuilder
-# -----------
-#  define technologies
-techs1 = [
-    Tech(String[], ["aa", "bb"], "one", "g1"),
-    Tech(["aa"], ["dd"], "two", "g2"),
-    Tech(["bb", "cc"], ["gg"], "three", "g3"),
-    Tech(["dd"], ["cc", "ee", "ff"], "four", "g3"),
-    Tech(["ff", "gg"], ["hh"], "five", "g3"),
-    Tech(["ee"], String[], "six", "g4"),
-    Tech(["hh"], ["ii"], "seven", "g5"),
-    Tech(["ii"], String[], "eight", "g6")
-]
 
-
-techs2 = [
-    Tech(String[], ["aa"], "one", "g1"),
-    Tech(["aa", "dd"], ["bb"], "two", "g2"),
-    Tech(["bb"], ["cc", "dd"], "three", "g2"),
-    Tech(["cc"], String[], "four", "g3")
-]
+using SanitationSystemMassFlow
 
 # -----------
-# find all systems
+# techs
+
+A = Tech(String[], ["a1", "a2"], "A", "group1", 0.5,
+         [0.5 0.5 0 0 0;
+          0.5 0.5 0 0 0;
+          0.5 0.5 0 0 0;
+          0.5 0.5 0 0 0],
+         [5, 20, 100, 1000])
+
+B = Tech(String[], ["b1"], "B", "group1", 0.5, [1.0 0 0 0;
+                                                1 0 0 0;
+                                                1 0 0 0;
+                                                1 0 0 0], [5, 20, 100, 1000.0])
 
 
-systems1 = build_all_systems(techs1[1], techs1)
+C = Tech(["a1"], ["c1"], "C", "group1", 0.5,
+         [0.5 0.2 0.3 0;
+          1.0 0 0 0;
+          0.6 0 0 0.4;
+          1.0 0 0 0], [5, 20, 100, 1000])
+D = Tech(["a2", "b1"], String["d1", "d2", "d3"], "D", "group1", 0.5,
+         [0.1 0.1 0.8 0 0 0;
+          0.6 0.3 0.1 0 0 0;
+          0.0 0.0 1.0 0 0 0;
+          0.5 0.5 0.0 0 0 0],
+         [5, 20, 100, 1000])
 
-# write pdfs
-for i in 1:length(systems1)
-    writedotfile(systems1[i], "temp.dot")
-    run(`dot -Tpdf temp.dot -o systems1_$i.pdf`)
-end
+
+E = Tech(["c1", "d1"], String[], "E", "group1", 0.5, [1.0 0 0 0;
+                                                      1.0 0 0 0;
+                                                      1.0 0 0 0;
+                                                      0.8 0 0 0.2], [5, 20, 100, 1000])
+F = Tech(["d2", "d3"], String[], "F", "group1", 0.5, [1.0 0 0 0;
+                                                      1.0 0 0 0;
+                                                      0.5 0.5 0 0;
+                                                      1.0 0 0 0], [5, 20, 100, 1000])
+
+G = Tech(["a1", "a2", "b1"], String[], "G", "group1", 0.5, [0.0 0 0 1.0;
+                                                            0.0 0 0 1.0;
+                                                            0.0 0.5 0.5 0;
+                                                            0.0 1.0 0 0])
+
+# -----------
+# System
+
+# system without
+allSys, _ = build_all_systems([A, B], [C, D, E, F, G], storeDeadends=false)
 
 
-systems2 = build_all_systems(techs2[1], techs2)
+# -----------
+# Mass flow
 
-# write pdfs
-for i in 1:length(systems2)
-    writedotfile(systems2[i], "temp.dot")
-    run(`dot -Tpdf temp.dot -o systems2_$i.pdf`)
+# define input masses for each source
+massesA = Float64[600;
+                  400;
+                  260;
+                  90]
+
+massesB = Float64[1405;
+                  760;
+                  600;
+                  110]
+
+M_in = Dict(A => massesA, B => massesB)
+
+
+# test mass balances
+for sys in allSys
+
+    # deterministic
+    m_outs = massflow(sys, M_in)
+    @show entered(M_in, sys)
+    @show recovered(m_outs)
+    @show sum(lost(m_outs),2)
+
+    # stochastic
+    m_outs = massflow(sys, M_in, MC=true)
+    @show entered(M_in, sys)
+    @show recovered(m_outs)
+    @show sum(lost(m_outs),2)
+
+
 end
 
 
