@@ -2,8 +2,8 @@
 
 
 Extension of the
-[](https://github.com/Eawag-SWW/.jl)
-package that
+[SanitationSystemBuilder](https://github.com/Eawag-SWW/SanitationSystemBuilder.jl)
+package. It enables to
 - finds all possible systems given a set of sanitation technologies
 - calculates a (optionally stochastic) mass flow analysis for each system.
 
