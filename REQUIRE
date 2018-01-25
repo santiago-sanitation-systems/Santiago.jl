@@ -2,6 +2,5 @@ julia 0.6
 Combinatorics
 DataStructures
 AutoHashEquals
-DataFrames
 Distributions
 NamedArrays

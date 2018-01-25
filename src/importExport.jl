@@ -1,6 +1,4 @@
-using DataFrames
 using Combinatorics
-
 export importTechFile
 export writedotfile
 export generateCombinations
@@ -13,6 +11,8 @@ mutable struct MasterTech
     appscore::Float64
     inrel::String
     outrel::String
+    transC::Array{Float64, 2}
+    transC_reliability::Array{Float64, 1}
     MasterTech() = new()
 end
 
@@ -20,13 +20,13 @@ end
 This function reads a .csv file with technology and relationships
 and returns a tuple of an array with sources and an array of all technologies
 """
-function importTechFile(techFile::String, sourceGroup::String, sourceAddGroup::String, t_group::String)
+function importTechFile(techFile::String, sourceGroup::String, sourceAddGroup::String, sinkGroup::String)
 
-    techTable = readtable(techFile, separator = ';',   nastrings = [""], header= false)
+    techTable = readdlm(techFile, ';')
 
     ## Load the table into suitable Data Structure
     techList = MasterTech[]
-    for i in 2:ncol(techTable)
+    for i in 2:size(techTable,2)
 
         ## Copy some information
         currentTech = MasterTech()
@@ -40,6 +40,7 @@ function importTechFile(techFile::String, sourceGroup::String, sourceAddGroup::S
 
         ## Separate Inputs and outputs.
         tmp = split(techTable[3,i], " ")
+        filter!(x -> x != "", tmp)
         j = 1
         while (j <= length(tmp)) && (tmp[j] != "->")
             tmp[j] = replace(tmp[j], ",", "")
@@ -53,15 +54,31 @@ function importTechFile(techFile::String, sourceGroup::String, sourceAddGroup::S
             j += 1
         end
 
+        ## read transfer coefficients
+        currentTech.transC = vcat([[parse(Float64, x) for x in split(techTable[5+2*k,i], ',')]' for k in 1:NSUBSTANCE]...)
+        currentTech.transC_reliability = vcat([convert(Float64, techTable[6+2*k,i]) for k in 1:NSUBSTANCE]...)
+
+        if !isapprox(sum(currentTech.transC,2), ones(NSUBSTANCE,1))
+            error("Transfere coefficients of Tech $(techTable[1,i]) (column $i) doesn't sum up to 1 for every substance!")
+        end
+
+        nouts = length(currentTech.outputs) == 0 ? 1 : length(currentTech.outputs)
+        if size(currentTech.transC,2) != nouts + 3
+            error("Wrong number of transfere coefficients for Tech $(techTable[1,i]) (column $i)!
+  Exactly $(nouts+3) coefficients are needed.")
+        end
+
+
         ## Add to Array
         push!(techList, currentTech)
 
     end
 
+
     ## help function to generate two Techs with only "transported" or "not transported" output products
     function make2(t::Tech)
 
-        if t.functional_group != :D      # of t is not a sink
+        if t.functional_group != Symbol(sinkGroup)      # of t is not a sink
             outs = t.outputs
             out_transported = filter(p -> contains(string(p.name), "transported"), outs)
             out_NOTtransported = filter(p -> !contains(string(p.name), "transported"), outs)
@@ -72,13 +89,19 @@ function importTechFile(techFile::String, sourceGroup::String, sourceAddGroup::S
                               t.name,
                               t.functional_group,
                               t.appscore,
-                              t.n_inputs),
+                              t.n_inputs,
+                              t.internal_products,
+                              t.transC,
+                              t.transC_reliability),
                          Tech(t.inputs,
                               out_transported,
                               t.name*"_trans",
                               t.functional_group,
                               t.appscore,
-                              t.n_inputs)]
+                              t.n_inputs,
+                              t.internal_products,
+                              t.transC,
+                              t.transC_reliability)]
 
             return filter!(t -> length(t.outputs)>0, techs)
         else                    # if sink just return it as is
@@ -91,34 +114,25 @@ function importTechFile(techFile::String, sourceGroup::String, sourceAddGroup::S
     for currentTech in techList
         ## Case 1: Copy | Copy
         if (currentTech.inrel == "NA" || currentTech.inrel == "AND") && (currentTech.outrel == "NA" || currentTech.outrel == "AND")
+
             newSubTech = Tech(currentTech.inputs,
-                              currentTech.outputs, currentTech.name, currentTech.functional_group, currentTech.appscore)
-            ## push!(subTechList, newSubTech)
+                              currentTech.outputs,
+                              currentTech.name,
+                              currentTech.functional_group,
+                              currentTech.appscore,
+                              currentTech.transC,
+                              currentTech.transC_reliability)
+
             append!(subTechList, make2(newSubTech))
+
 
             ## Case 2: Copy | GenVar
         elseif (currentTech.inrel == "NA" || currentTech.inrel == "AND") && (currentTech.outrel == "OR")
-            c = 1
-            for i in 1:length(currentTech.outputs)
-                possibleCombis = collect(combinations(currentTech.outputs, i))
-                for subTechOut in possibleCombis
-                    subTechName = join([currentTech.name, c], "_")
-                    newSubTech = Tech(currentTech.inputs,
-                                      subTechOut, subTechName, currentTech.functional_group, currentTech.appscore)
-                    push!(subTechList, newSubTech)
-                    c += 1
-                end
-            end
+            error(" The relationship of output products cannot be defined as 'OR'!")
 
             ## Case 3: Copy | Gen1
         elseif (currentTech.inrel == "NA" || currentTech.inrel == "AND") && (currentTech.outrel == "XOR")
-            for i in 1:length(currentTech.outputs)
-                subTechOut = currentTech.outputs[i]
-                subTechName = join([currentTech.name, i], "_")
-                newSubTech = Tech(currentTech.inputs,
-                                  [subTechOut], subTechName, currentTech.functional_group, currentTech.appscore)
-                push!(subTechList, newSubTech)
-            end
+            error(" The relationship of output products cannot be defined as 'XOR'!")
 
             ## Case 4: GenVar | Hierarchy
         elseif currentTech.inrel == "OR" && (currentTech.outrel != "NA" && currentTech.outrel != "AND")
@@ -142,7 +156,12 @@ function importTechFile(techFile::String, sourceGroup::String, sourceAddGroup::S
                             subTechName = join([currentTech.name, c], "_")
                             subTechOut = join(["transported", candidateOut], "")
                             newSubTech = Tech(subTechIn,
-                                              [subTechOut], subTechName, currentTech.functional_group, currentTech.appscore)
+                                              [subTechOut],
+                                              subTechName,
+                                              currentTech.functional_group,
+                                              currentTech.appscore,
+                                              currentTech.transC,
+                                              currentTech.transC_reliability)
                             push!(subTechList, newSubTech)
 
                             c += 1
@@ -159,7 +178,12 @@ function importTechFile(techFile::String, sourceGroup::String, sourceAddGroup::S
                 subTechIn = currentTech.inputs[i]
                 subTechOut = join(["transported", subTechIn], "")
                 newSubTech = Tech([subTechIn],
-                                  [subTechOut], subTechName, currentTech.functional_group, currentTech.appscore)
+                                  [subTechOut],
+                                  subTechName,
+                                  currentTech.functional_group,
+                                  currentTech.appscore,
+                                  currentTech.transC,
+                                  currentTech.transC_reliability)
                 push!(subTechList, newSubTech)
             end
 
@@ -171,8 +195,12 @@ function importTechFile(techFile::String, sourceGroup::String, sourceAddGroup::S
                 for subTechIn in possibleCombis
                     subTechName = join([currentTech.name, c], "_")
                     newSubTech = Tech(subTechIn,
-                                      currentTech.outputs, subTechName, currentTech.functional_group, currentTech.appscore)
-                    ## push!(subTechList, newSubTech)
+                                      currentTech.outputs,
+                                      subTechName,
+                                      currentTech.functional_group,
+                                      currentTech.appscore,
+                                      currentTech.transC,
+                                      currentTech.transC_reliability)
                     append!(subTechList, make2(newSubTech))
                     c += 1
                 end
@@ -184,8 +212,12 @@ function importTechFile(techFile::String, sourceGroup::String, sourceAddGroup::S
                 subTechIn = currentTech.inputs[i]
                 subTechName = join([currentTech.name, i], "_")
                 newSubTech = Tech([subTechIn],
-                                  currentTech.outputs, subTechName, currentTech.functional_group, currentTech.appscore)
-                ## push!(subTechList, newSubTech)
+                                  currentTech.outputs,
+                                  subTechName,
+                                  currentTech.functional_group,
+                                  currentTech.appscore,
+                                  currentTech.transC,
+                                  currentTech.transC_reliability)
                 append!(subTechList, make2(newSubTech))
             end
 
@@ -206,7 +238,7 @@ function islegal(t::Tech)
     inp_trans  = [contains(i, "transported") for i in inp]
     outp_trans = [contains(i, "transported") for i in outp]
 
-    ##        is transport              |         everything is traqnsported | nothing is transported
+    ##        is transport              |         everything is transported  | nothing is transported
     (t.functional_group == Symbol("C")) | (all(inp_trans) & all(outp_trans)) | (all(.!(inp_trans)) & all(.!(outp_trans)))
 end
 
