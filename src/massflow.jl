@@ -2,6 +2,7 @@
 # massflow
 
 using Distributions
+using NamedArrays
 
 export massflow
 export lost
@@ -101,7 +102,7 @@ function recovery_ratio(M_out::MassDict, M_in::Dict, sys::System)
     mass_in = entered(M_in, sys)
     f = recovered(M_out) ./ mass_in
     f[mass_in .== 0.0] = 1.0  # define: 0/0 := 1.0
-    setnames!(f, ["ratio"], 2)
+    setnames!(f, "ratio", 2, 1)
     return(f)
 end
 
