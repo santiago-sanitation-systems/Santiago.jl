@@ -178,7 +178,7 @@ function get_inputs(sys::System)
     for c in sys.connections
         num = push!(ins, c[1], -1) # not very elegant...
         if num <= 0
-            pop!(ins, c[1])
+            DataStructures.reset!(ins, c[1])
         end
     end
     return collect(keys(ins))
