@@ -32,13 +32,15 @@ function massflow(sys::System, M_in::Dict; MC::Bool=false, scale_reliability::Re
     transC_MC = Dict{Tech, NamedArray{Float64,2}}()
 
     for t in sys.techs
-        M_out[t] = zeros(t.transC)
+        # M_out[t] = zeros(t.transC)
+        M_out[t] = 0.0*t.transC
         if MC
             transC_MC[t] = sample_transC(t.transC, t.transC_reliability * scale_reliability)
         else
             transC_MC[t] = t.transC
         end
     end
+
 
     # iterate over all sources
     for t in filter(issource, sys.techs)
@@ -70,7 +72,8 @@ end
 
 # Sample a random transition matrix. Each row is Dirichlet distributed
 function sample_transC(transC::AbstractArray, transC_reliability::AbstractArray)
-    m = zeros(transC)
+    # m = zeros(transC)
+    m = 0.0*transC
     for i in 1:NSUBSTANCE
         i_zero = transC[i,:] .<= 0.0
         alpha = transC[i,.!i_zero]*transC_reliability[i]
@@ -125,11 +128,10 @@ function massflow_summary(sys::System, M_in::Dict; MC::Bool=true, n::Int=100,
 
     # --  recovery ratio
     tmp = hcat((recovery_ratio(m, M_in, sys) for m in m_outs)...)
-
     rr = hcat(mean(tmp, 2),
               std(tmp, 2),
-              mapslices(x-> quantile(x, qq), tmp, 2))
-    setnames!(rr, SUBSTANCE_NAMES, 1)
+              NamedArray(mapslices(x -> quantile(x, qq), tmp.array, 2)))
+    setnames!(rr, SUBSTANCE_NAMES, 1) #
     setnames!(rr, ["mean", "sd", ["q_$i" for i in qq]...], 2)
 
     summaries["recovery_ratio"] = rr
@@ -139,7 +141,7 @@ function massflow_summary(sys::System, M_in::Dict; MC::Bool=true, n::Int=100,
 
     rm = hcat(mean(tmp, 2),
               std(tmp, 2),
-              mapslices(x-> quantile(x, qq), tmp, 2))
+              NamedArray(mapslices(x-> quantile(x, qq), tmp.array, 2)))
     setnames!(rm, SUBSTANCE_NAMES, 1)
     setnames!(rm, ["mean", "sd", ["q_$i" for i in qq]...], 2)
 
@@ -149,13 +151,20 @@ function massflow_summary(sys::System, M_in::Dict; MC::Bool=true, n::Int=100,
     # --  losses
     tmp = cat(3, (lost(m) for m in m_outs)...)
 
-    ll = cat(3,
-             mean(tmp, 3),
-             std(tmp, 3),
-             mapslices(x-> quantile(x, qq), tmp, 3))
+    ll = NamedArray(cat(3,
+                        mean(tmp.array, 3),
+                        std(tmp.array, 3),
+                        mapslices(x-> quantile(x, qq), tmp.array, 3)))
+
+    setnames!(ll, SUBSTANCE_NAMES, 1)
+    setnames!(ll, ["air loss", "soil loss", "other loss"],2)
     setnames!(ll, ["mean", "sd", ["q_$i" for i in qq]...], 3)
 
     summaries["lost"] = ll
+
+
+    # --  entered
+    summaries["entered"] = entered(M_in, sys)
 
     return(summaries)
 end
