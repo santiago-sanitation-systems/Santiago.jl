@@ -289,17 +289,19 @@ end
 Returns an Array of all possible `System`s starting with `source`. A source can be any technology with a least one output.
 """
 function build_all_systems(source::Array{Tech}, techs::Array{Tech}; islegal::Function=x -> true,
-                           resultfile::IO=STDOUT, storeDeadends::Bool=false)
-    # build looped techs
-    ninit = nold = length(techs)
-    add_loop_techs!(techs)
-    i = 1
-    while nold < length(techs) & i < 2
-        nold = length(techs)
+                           resultfile::IO=STDOUT, storeDeadends::Bool=false, addlooptechs::Bool=false)
+    if addlooptechs
+        # build looped techs
+        ninit = nold = length(techs)
         add_loop_techs!(techs)
-        i += 1
+        i = 1
+        while nold < length(techs) & i < 2
+            nold = length(techs)
+            add_loop_techs!(techs)
+            i += 1
+        end
+        println("$(length(techs) - ninit) looped techs added.")
     end
-    println("$(length(techs) - ninit) looped techs added.")
 
     completesystems = System[]
     deadendsystems = System[]

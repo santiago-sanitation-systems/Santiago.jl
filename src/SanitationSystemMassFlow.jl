@@ -4,7 +4,7 @@ using AutoHashEquals
 
 # number of substance in the massflow analysis
 const NSUBSTANCE = 4
-const SUBSTANCE_NAMES = ["phosphor", "nitrogen", "water", "solids"]
+const SUBSTANCE_NAMES = ["phosphor", "nitrogen", "water", "totalsolids"]
 
 include("buildSystems.jl")
 include("massflow.jl")
