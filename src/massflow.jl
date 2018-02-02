@@ -26,7 +26,8 @@ Arguments:
 - if `MC` is true, the transfer coefficients are sampled form Dirichlet distribution
 - `scale_reliability` a factor to scale the `transC_reliability` of all Techs.
 """
-function massflow(sys::System, M_in::Dict; MC::Bool=false, scale_reliability::Real=1.0)::MassDict
+function massflow(sys::System, M_in::Dict{Tech, Array{Float64, 1}};
+                  MC::Bool=false, scale_reliability::Real=1.0)::MassDict
 
     M_out = Dict{Tech, NamedArray{Float64}}()
     transC_MC = Dict{Tech, NamedArray{Float64,2}}()
@@ -117,17 +118,31 @@ Calculate summary statistics of a Monte Carlo massflow results
 function massflow_summary(sys::System, M_in::Dict; MC::Bool=true, n::Int=100,
                           scale_reliability::Real=1.0)
 
+
+    # -- convert M_in
+    M_in2 = Dict{Tech, Array{Float64,1}}()
+
+    sources = [t for t in sys.techs if issource(t)]
+    for ts in sources
+        haskey(M_in, ts.name) || error("Input masses are not defined for source '$(ts.name)'!")
+        m_in = M_in[ts.name]
+        size(m_in) == (4,) || error("Input masses defined for source '$(ts.name)' have dimensions $(size(M_in[ts.name])) instead of (4,)!")
+
+        M_in2[ts] = m_in
+    end
+
+
     summaries = Dict{String, NamedArray{Float64}}()
 
     #  -- compute masses
     ns = MC ? n : 1             # make only one run if MC == false
-    m_outs = [massflow(sys, M_in, MC=MC, scale_reliability=scale_reliability) for i in 1:ns]
+    m_outs = [massflow(sys, M_in2, MC=MC, scale_reliability=scale_reliability) for i in 1:ns]
 
     ## quantiles to calculate
     qq = [0.2, 0.5, 0.8]
 
     # --  recovery ratio
-    tmp = hcat((recovery_ratio(m, M_in, sys) for m in m_outs)...)
+    tmp = hcat((recovery_ratio(m, M_in2, sys) for m in m_outs)...)
     rr = hcat(mean(tmp, 2),
               std(tmp, 2),
               NamedArray(mapslices(x -> quantile(x, qq), tmp.array, 2)))
@@ -164,7 +179,7 @@ function massflow_summary(sys::System, M_in::Dict; MC::Bool=true, n::Int=100,
 
 
     # --  entered
-    summaries["entered"] = entered(M_in, sys)
+    summaries["entered"] = entered(M_in2, sys)
 
     return(summaries)
 end
