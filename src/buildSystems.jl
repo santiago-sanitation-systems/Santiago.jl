@@ -27,7 +27,9 @@ end
 Product(name::String) = Product(Symbol(name))
 show(io::Base.IO, p::Product) =  print("$(p.name)")
 
-@auto_hash_equals struct Tech
+abstract type AbstractTech end
+
+@auto_hash_equals struct Tech <: AbstractTech
     inputs::Array{Product}
     outputs::Array{Product}
     name::String
@@ -88,7 +90,7 @@ end
 
 
 # Functions for pretty printing
-function show(io::Base.IO, t::Tech)
+function show(io::Base.IO, t::AbstractTech)
     instr = ["$(ii.name)" for ii in t.inputs]
     outstr = ["$(ii.name)" for ii in t.outputs]
     instr = length(instr) >0 ? instr : ["Source"]
@@ -100,23 +102,39 @@ end
 """
 A `Connection`is a Tuples{Product, sourceTech, sinkTech}.
 """
-const Connection = Tuple{Product,Tech,Tech}
+const Connection = Tuple{Product, AbstractTech, AbstractTech}
+
+
+"""
+Type of combined (looped) Techs.
+"""
+@auto_hash_equals struct TechCombined <: AbstractTech
+    inputs::Array{Product}
+    outputs::Array{Product}
+    name::String
+    functional_group::Symbol
+    appscore::Array{Float64}
+    n_inputs::Int
+    internal_techs::Set{Tech}
+    internal_connections::Set{Connection}
+end
+
 
 
 """
 A `System` consists of `techs` and `conncetions`.
 """
 @auto_hash_equals mutable struct System
-    techs::Set{Tech}
+    techs::Set{AbstractTech}
     connections::Set{Connection}
     complete::Bool
     properties::Dict
 end
 
-System(techs::Set{Tech}, con::Set{Connection}, complete::Bool) = System(techs, con, complete, Dict())
-System(techs::Array{Tech}, con::Array{Connection}, complete::Bool) = System(Set(techs), Set(con), complete)
-System(techs::Array{Tech}, con::Array{Connection}) = System(Set(techs), Set(con), false)
-System(techs::Array{Tech}) = System(Set(techs), Set(Connection[]), false)
+System(techs::Set{AbstractTech}, con::Set{Connection}, complete::Bool) = System(techs, con, complete, Dict())
+System(techs::Array{AbstractTech}, con::Array{Connection}, complete::Bool) = System(Set(techs), Set(con), complete)
+System(techs::Array{AbstractTech}, con::Array{Connection}) = System(Set(techs), Set(con), false)
+System(techs::Array{AbstractTech}) = System(Set(techs), Set(Connection[]), false)
 
 # Function to copy a System
 function copy(sys::System)
@@ -136,7 +154,7 @@ end
 # -----------
 # helper functions
 
-function get_outputs{T<:Union{Array{Tech}, Set{Tech}}}(techs::T)
+function get_outputs{T<:Union{Array{AbstractTech}, Set{AbstractTech}}}(techs::T)
     outs = Product[]
     for t in techs
         append!(outs, t.outputs)
@@ -160,8 +178,7 @@ function get_outputs(sys::System)
     return outs
 end
 
-
-function get_inputs{T<:Union{Array{Tech}, Set{Tech}}}(techs::T)
+function get_inputs{T2<:Union{Array{T1}, Set{T1}} where T1<:AbstractTech}(techs::T2)
     ins = Product[]
     for t in techs
         append!(ins, t.inputs)
@@ -231,7 +248,7 @@ function get_openin_techs(sys::System, prod::Product)
 end
 
 # pre filter the tech list
-function get_candidates(s::Array{Tech}, outs, k)
+function get_candidates(s::Array{AbstractTech}, outs, k)
     # Limitation!
     # This function guaranties, that we never add a techs, which leads to new open inputs.
     # However, this banns not only loops, but also "triangles". E.g if only "A is given"
@@ -243,7 +260,7 @@ function get_candidates(s::Array{Tech}, outs, k)
     # of the algorithm. (Exception: both inputs of B have the same product)
     n_out = length(outs)
     n_in_max = n_out - k + 1
-    function condi(t::Tech)
+    function condi(t::AbstractTech)
         issubset(t.inputs, outs) && (t.n_inputs <= n_in_max)
 
     end
@@ -257,7 +274,7 @@ end
 
 # Return a vector of Systems
 function build_system!(sys::System, completesystems::Array{System}, deadendsystems::Array{System},
-                       techs::Array{Tech}, islegal::Function, resultfile::IO,
+                       techs::Array{AbstractTech}, islegal::Function, resultfile::IO,
                        hashset::Set{UInt64}, storeDeadends::Bool)
 
     # get Array of matching Techs Arrays
@@ -288,7 +305,7 @@ end
 """
 Returns an Array of all possible `System`s starting with `source`. A source can be any technology with a least one output.
 """
-function build_all_systems(source::Array{Tech}, techs::Array{Tech}; islegal::Function=x -> true,
+function build_all_systems(source::Array{AbstractTech}, techs::Array{AbstractTech}; islegal::Function=x -> true,
                            resultfile::IO=STDOUT, storeDeadends::Bool=false, addlooptechs::Bool=false)
     if addlooptechs
         # build looped techs
@@ -312,12 +329,12 @@ end
 
 
 # Returns techs that fit to an open system
-function get_candidates(sys::System, techs::Array{Tech})
+function get_candidates(sys::System, techs::Array{AbstractTech})
 
     techssub = filter(t -> !(t in sys.techs), techs) # filter out already used techs
     outs = get_outputs(sys)
 
-    matching_techs = Array{Array{Tech},1}()
+    matching_techs = Array{Array{AbstractTech},1}()
     n_out = length(outs)
 
     ## get matching combinations
@@ -405,7 +422,7 @@ end
 """
 Return an array of all possible extension of `sys` with the candidate technology
 """
-function extend_system(sys::System, tech_comb::Array{Tech})
+function extend_system(sys::System, tech_comb::Array{AbstractTech})
 
     sysi = copy(sys)
     union!(sysi.techs, tech_comb)
@@ -421,8 +438,8 @@ Return an array possible Technologies (subset of techlist) for the given Sources
 The number of technologies is reduced by removing Techs that require an input that is not available with
 the sources provided.
 """
-function prefilterTechList(currentSources::Array{Tech}, sources::Array{Tech},
-                           sourcesAdd::Array{Tech}, tech_list::Array{Tech})
+function prefilterTechList(currentSources::Array{AbstractTech}, sources::Array{AbstractTech},
+                           sourcesAdd::Array{AbstractTech}, tech_list::Array{AbstractTech})
 
     # All Products that can be created by available sources
     otherSourcesProduct = vcat([t.outputs for t in sources]...)
@@ -459,10 +476,12 @@ function prefilterTechList(currentSources::Array{Tech}, sources::Array{Tech},
     return sub_tech_list
 end
 
+
+
 """
 add tech combinations with internal loops. Only for techs in group :S and :T
 """
-function add_loop_techs!(tech_list::Array{Tech}; groups = [:S, :T])
+function add_loop_techs!(tech_list::Array{AbstractTech}; groups = [:S, :T])
     for fgroup in groups
         tech_list_group = filter(t -> t.functional_group == fgroup, tech_list)
         for tech1 in tech_list_group
@@ -497,21 +516,39 @@ function make_looped_tech(tech1::Tech, tech2::Tech)
     inputs = DataStructures.counter(vcat(tech1.inputs, tech2.inputs))
     outputs = DataStructures.counter(vcat(tech1.outputs, tech2.outputs))
 
-    internal_connected = DataStructures.counter(vcat(intersect(tech1.outputs, tech2.inputs),
-                                                     intersect(tech2.outputs, tech1.inputs)))
+    internal_12 = DataStructures.counter(vcat(intersect(tech1.outputs, tech2.inputs)))
+    internal_21 = DataStructures.counter(vcat(intersect(tech2.outputs, tech1.inputs)))
 
-    # remove intenal connections
-    for p in keys(internal_connected)
+    # --- remove internal connections for new tech ins and outs
+    # reduce counter
+    for p in keys(merge(internal_12, internal_21))
         push!(inputs, p, -1)
         push!(outputs, p, -1)
     end
-
+    # remove all products that occure 0 times
     ins = Product[p[1] for p in inputs if p[2]>0]
     outs = Product[p[1] for p in outputs if p[2]>0]
-    internal_connected =  Product[p[1] for p in internal_connected if p[2]>0]
 
+    # --- internal connections
+
+    internal_connections = Set{Connection}()
+    for p in internal_12
+        if p[2]>0
+            push!(internal_connections, (p[1], tech1, tech2))
+        end
+    end
+    for p in internal_21
+        if p[2]>0
+            push!(internal_connections, (p[1], tech2, tech1))
+        end
+    end
+
+
+    # name and apps score
     name = join(sort([tech1.name, tech2.name]), " :: ")
     appscore = sort(vcat(tech1.appscore, tech2.appscore))
 
-    return Tech(ins, outs, name, tech1.functional_group, appscore, length(ins), internal_connected)
+    return TechCombined(ins, outs, name, tech1.functional_group,
+                        appscore, length(ins),
+                        Set([tech1, tech2]), internal_connections)
 end

@@ -110,7 +110,7 @@ function importTechFile(techFile::String, sourceGroup::String, sourceAddGroup::S
     end
 
     ## Now generate subtechs
-    subTechList = Tech[]
+    subTechList = AbstractTech[]
     for currentTech in techList
         ## Case 1: Copy | Copy
         if (currentTech.inrel == "NA" || currentTech.inrel == "AND") && (currentTech.outrel == "NA" || currentTech.outrel == "AND")
