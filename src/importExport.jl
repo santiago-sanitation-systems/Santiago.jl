@@ -315,11 +315,12 @@ function writedotfile(sys::System, file::String, no_group::Array{String}=["S", "
         ## define nodes
         for t in vcat(sys.techs...)
             label = "$(t.name)\n"
-            for p in t.internal_products
-                label = label * " - $(p.name)\n"
+            if typeof(t) == TechCombined
+                for p in t.internal_connections
+                    label = label * "$(p[2].name) → $(p[3].name): $(p[1].name)\n"
+                end
             end
             label = label * "($(t.functional_group))"
-            ##            println(f, replace("$(make_legal(t.name)) [shape=box, fillcolor=$(colors[t.functional_group]) label=\"$label\"];", ".", "_"))
             println(f, replace("$(make_legal(t.name)) [shape=box, fillcolor=\"$(get(colors, t.functional_group, "# 999999"))\" label=\"$label\"];", ".", "_"))
         end
         ## edges
@@ -331,7 +332,7 @@ function writedotfile(sys::System, file::String, no_group::Array{String}=["S", "
         ## group according to functional groups
         for fg in filter(x -> !(x in no_group), fgroups)
             names = [t.name for t in sys.techs if t.functional_group==fg]
-            names = map(n -> replace(n, ".", "_"), names)
+            names = map(n -> make_legal(replace(n, ".", "_")), names)
             println(f, "{ rank=same $(join(names, ' ')) }")
         end
 
