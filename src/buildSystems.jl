@@ -36,8 +36,8 @@ abstract type AbstractTech end
     functional_group::Symbol
     appscore::Array{Float64}
     n_inputs::Int
-    transC::NamedArray{Float64, 2}
-    transC_reliability::NamedArray{Float64, 1}
+    transC::Dict{String, Dict{Product, Float64}}
+    transC_reliability::Dict{String, Float64}
 end
 
 const Source = Tech
@@ -47,7 +47,8 @@ const Sink = Tech
 function Tech(inputs::Array{Product}, outputs::Array{Product},
               name::String, functional_group::Symbol,
               appscore::Float64, n_inputs::Int,
-              transC::NamedArray{Float64}, transC_reliability::NamedArray{Float64, 1})
+              transC::Dict{String, Dict{Product, Float64}},
+              transC_reliability::Dict{String, Float64})
     Tech(inputs, outputs,
          name, functional_group,
          Float64[appscore],
@@ -58,33 +59,33 @@ end
 
 """
 The `Tech` type represents Technolgies.
-It consist of `inputs`, `outputs`, a `name`, a `functional_group`, and a transfer matrix `transC`.
+It consist of `inputs`, `outputs`, a `name`, a `functional_group`, and a transfer coefficients `transC`.
 """
 function Tech{T<:String}(inputs::Array{T}, outputs::Array{T}, name::T, functional_group::T,
                          appscore::Float64,
-                         transC::Array{Float64,2},
-                         transC_reliability::Array{<:Real, 1} = ones(size(transC,1)))
+                         transC::Dict{String, Dict{Product, Float64}},
+                         transC_reliability::Dict{String, Float64})
 
-    if size(outputs,1) > 0 && size(outputs,1) + 3 != size(transC,2)
-        error("Transition matrix `transC` must have the same number of columns outputs plus 3.")
-    end
-    if size(inputs,1) > 0 && any(.!isapprox.(sum(transC,2), 1.0))
-        error("The elements of a row of the transition matrix must sum to 1!")
+    # sanity check
+    for sub in keys(transC)
+        s = 0.0
+        for val = values(transC[sub])
+            s += val
+        end
+        if !isapprox(s, 1.0)
+            error("Tech $(name): The transfer coefficients for $sub do not sum to 1!")
+        end
     end
 
-    if size(outputs,1) > 0
-        colnames = vcat(outputs, ["air loss", "soil loss", "other loss"])
-    else
-        colnames = ["recovered", "air loss", "soil loss", "other loss"]
-    end
+
     Tech([Product(x) for x in inputs],
          [Product(x) for x in outputs],
          name,
          Symbol(functional_group),
          appscore,
          size(inputs,1),
-         NamedArray(transC, (SUBSTANCE_NAMES, colnames)),
-         NamedArray(transC_reliability*1.0, (SUBSTANCE_NAMES,)))
+         transC,
+         transC_reliability)
 end
 
 
