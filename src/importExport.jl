@@ -11,8 +11,8 @@ mutable struct MasterTech
     appscore::Float64
     inrel::String
     outrel::String
-    transC::Array{Float64, 2}
-    transC_reliability::Array{Float64, 1}
+    transC
+    transC_reliability
     MasterTech() = new()
 end
 
@@ -55,19 +55,43 @@ function importTechFile(techFile::String, sourceGroup::String, sourceAddGroup::S
         end
 
         ## read transfer coefficients
-        currentTech.transC = vcat([[parse(Float64, x) for x in split(techTable[5+2*k,i], ',')]' for k in 1:NSUBSTANCE]...)
-        currentTech.transC_reliability = vcat([convert(Float64, techTable[6+2*k,i]) for k in 1:NSUBSTANCE]...)
 
-        if !isapprox(sum(currentTech.transC,2), ones(NSUBSTANCE,1))
-            error("Transfere coefficients of Tech $(techTable[1,i]) (column $i) doesn't sum up to 1 for every substance!")
+        function make_transC_substance_dict(s::String)
+            d = Dict{Product, Float64}()
+            tmp = [split(replace(x, " ", ""), '=') for x in split(s, ',')]
+            for t in tmp
+                d[Product(t[1])] = parse(Float64, t[2])
+            end
+            return d
         end
 
-        nouts = length(currentTech.outputs) == 0 ? 1 : length(currentTech.outputs)
-        if size(currentTech.transC,2) != nouts + 3
-            error("Wrong number of transfere coefficients for Tech $(techTable[1,i]) (column $i)!
-  Exactly $(nouts+3) coefficients are needed.")
+        @show currentTech.outrel
+        transC = Dict{String, Dict{Product, Float64}}()
+        transC_rel = Dict{String, Float64}()
+        for k in 1:NSUBSTANCE
+            transC[SUBSTANCE_NAMES[k]] = make_transC_substance_dict(String(techTable[5+2*k,i]))
+            transC_rel[SUBSTANCE_NAMES[k]] = convert(Float64, techTable[6+2*k,i])
         end
+        currentTech.transC = transC
+        currentTech.transC_reliability = transC_rel
 
+
+        for sub in SUBSTANCE_NAMES
+            if '>' in currentTech.outrel   # is transport technolgy
+                needed_keys = Set([Product("x"), Product("airloss"), Product("soilloss"), Product("waterloss")])
+            else
+                if length(currentTech.outputs) > 0 # is not sink
+                    needed_keys = Set(vcat(Product.(currentTech.outputs), [Product("airloss"), Product("soilloss"), Product("waterloss")]))
+                else                # is sink
+                    needed_keys = Set([Product("recovered"), Product("airloss"), Product("soilloss"), Product("waterloss")])
+                end
+            end
+            if needed_keys != Set(keys(currentTech.transC[sub]))
+                diff_element = setdiff(needed_keys, Set(keys(currentTech.transC[sub])))
+                error("Transfere coefficients for Tech $(techTable[1,i]) (column $i) do not match for $sub.
+  No match for: $([String(e.name) for e in diff_element])")
+            end
+        end
 
         ## Add to Array
         push!(techList, currentTech)
@@ -90,7 +114,6 @@ function importTechFile(techFile::String, sourceGroup::String, sourceAddGroup::S
                               t.functional_group,
                               t.appscore,
                               t.n_inputs,
-                              t.internal_products,
                               t.transC,
                               t.transC_reliability),
                          Tech(t.inputs,
@@ -99,7 +122,6 @@ function importTechFile(techFile::String, sourceGroup::String, sourceAddGroup::S
                               t.functional_group,
                               t.appscore,
                               t.n_inputs,
-                              t.internal_products,
                               t.transC,
                               t.transC_reliability)]
 
