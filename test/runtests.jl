@@ -64,7 +64,7 @@ SSB = SanitationSystemMassFlow
     # System
 
     # system without  triangle
-    allSys, _ = build_all_systems([A, B], [C, D, E, F, G], storeDeadends=false)
+    allSys = build_all_systems([A, B], [C, D, E, F, G])
     @test length(allSys) == 2
 
 

@@ -36,7 +36,6 @@ abstract type AbstractTech end
     functional_group::Symbol
     appscore::Array{Float64}
     n_inputs::Int
-    internal_products::Array{Product}
     transC::NamedArray{Float64, 2}
     transC_reliability::NamedArray{Float64, 1}
 end
@@ -52,7 +51,7 @@ function Tech(inputs::Array{Product}, outputs::Array{Product},
     Tech(inputs, outputs,
          name, functional_group,
          Float64[appscore],
-         n_inputs, Product[],
+         n_inputs,
          transC, transC_reliability)
 end
 
@@ -131,10 +130,11 @@ A `System` consists of `techs` and `conncetions`.
     properties::Dict
 end
 
-System(techs::Set{AbstractTech}, con::Set{Connection}, complete::Bool) = System(techs, con, complete, Dict())
-System(techs::Array{AbstractTech}, con::Array{Connection}, complete::Bool) = System(Set(techs), Set(con), complete)
-System(techs::Array{AbstractTech}, con::Array{Connection}) = System(Set(techs), Set(con), false)
-System(techs::Array{AbstractTech}) = System(Set(techs), Set(Connection[]), false)
+System{T <: AbstractTech}(techs::Set{T}, con::Set{Connection}, complete::Bool) = System(techs, con, complete, Dict())
+System{T <: AbstractTech}(techs::Array{T}, con::Array{Connection}, complete::Bool) = System(Set(techs), Set(con), complete)
+System{T <: AbstractTech}(techs::Array{T}, con::Array{Connection}) = System(Set(techs), Set(con), false)
+System{T <: AbstractTech}(techs::Array{T}) = System(Set(techs), Set(Connection[]), false)
+
 
 # Function to copy a System
 function copy(sys::System)
@@ -154,7 +154,7 @@ end
 # -----------
 # helper functions
 
-function get_outputs{T<:Union{Array{AbstractTech}, Set{AbstractTech}}}(techs::T)
+function get_outputs{T2<:Union{Array{T1}, Set{T1}} where T1<:AbstractTech}(techs::T2)
     outs = Product[]
     for t in techs
         append!(outs, t.outputs)
@@ -248,7 +248,7 @@ function get_openin_techs(sys::System, prod::Product)
 end
 
 # pre filter the tech list
-function get_candidates(s::Array{AbstractTech}, outs, k)
+function get_candidates{T <: AbstractTech}(s::Array{T}, outs, k)
     # Limitation!
     # This function guaranties, that we never add a techs, which leads to new open inputs.
     # However, this banns not only loops, but also "triangles". E.g if only "A is given"
@@ -273,16 +273,12 @@ end
 # functions to find all systems
 
 # Return a vector of Systems
-function build_system!(sys::System, completesystems::Array{System}, deadendsystems::Array{System},
-                       techs::Array{AbstractTech}, islegal::Function, resultfile::IO,
-                       hashset::Set{UInt64}, storeDeadends::Bool)
+function build_system!{T <: AbstractTech}(sys::System, completesystems::Array{System},
+                                          techs::Array{T}, islegal::Function,
+                                          resultfile::IO, hashset::Set{UInt64})
 
     # get Array of matching Techs Arrays
     candidates = get_candidates(sys, techs)
-
-    if storeDeadends && length(candidates) == 0
-        push!(deadendsystems, sys)
-    end
 
     for candidate in candidates
         # extend systems
@@ -294,8 +290,8 @@ function build_system!(sys::System, completesystems::Array{System}, deadendsyste
                 flush(resultfile)
             elseif !sys_ext.complete && islegal(sys_ext) && !(hash(sys_ext) in hashset)
                 push!(hashset, hash(sys_ext))
-                build_system!(sys_ext, completesystems, deadendsystems,
-                              techs, islegal, resultfile, hashset, storeDeadends)
+                build_system!(sys_ext, completesystems,
+                              techs, islegal, resultfile, hashset)
             end
         end
     end
@@ -305,8 +301,9 @@ end
 """
 Returns an Array of all possible `System`s starting with `source`. A source can be any technology with a least one output.
 """
-function build_all_systems(source::Array{AbstractTech}, techs::Array{AbstractTech}; islegal::Function=x -> true,
-                           resultfile::IO=STDOUT, storeDeadends::Bool=false, addlooptechs::Bool=false)
+function build_all_systems{T1 <: AbstractTech, T2 <: AbstractTech}(source::Array{T1}, techs::Array{T2};
+                                                                   islegal::Function=x -> true,
+                                                                   resultfile::IO=STDOUT, addlooptechs::Bool=false)
     if addlooptechs
         # build looped techs
         ninit = nold = length(techs)
@@ -321,15 +318,14 @@ function build_all_systems(source::Array{AbstractTech}, techs::Array{AbstractTec
     end
 
     completesystems = System[]
-    deadendsystems = System[]
-    build_system!(System(source), completesystems, deadendsystems, techs, islegal,
-                  resultfile, Set{UInt64}(), storeDeadends)
-    return completesystems, deadendsystems
+    build_system!(System(source), completesystems, techs, islegal,
+                  resultfile, Set{UInt64}())
+    return completesystems
 end
 
 
 # Returns techs that fit to an open system
-function get_candidates(sys::System, techs::Array{AbstractTech})
+function get_candidates{T <: AbstractTech}(sys::System, techs::Array{T})
 
     techssub = filter(t -> !(t in sys.techs), techs) # filter out already used techs
     outs = get_outputs(sys)
@@ -422,7 +418,7 @@ end
 """
 Return an array of all possible extension of `sys` with the candidate technology
 """
-function extend_system(sys::System, tech_comb::Array{AbstractTech})
+function extend_system{T <: AbstractTech}(sys::System, tech_comb::Array{T})
 
     sysi = copy(sys)
     union!(sysi.techs, tech_comb)
