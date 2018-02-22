@@ -10,7 +10,7 @@ import Base.==
 import StatsBase
 
 
-export Tech, Product, System
+export AbstractTech, Tech, TechCombined, Product, System
 export build_all_systems
 export add_loop_techs!
 export writedotfile
@@ -25,7 +25,7 @@ name::Symbol
 end
 
 Product(name::String) = Product(Symbol(name))
-show(io::Base.IO, p::Product) =  print("$(p.name)")
+show(io::Base.IO, p::Product) = print(io, "$(p.name)")
 
 abstract type AbstractTech end
 

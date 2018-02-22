@@ -14,8 +14,8 @@ export massflow_summary
 
 const MassDict = Dict{Tech, <:NamedArray{Float64}}
 
-issource(t::Tech) = length(t.inputs) == 0
-issink(t::Tech) = length(t.outputs) == 0
+issource{T <: AbstractTech}(t::T) = length(t.inputs) == 0
+issink{T <: AbstractTech}(t::T) = length(t.outputs) == 0
 
 
 """
@@ -27,27 +27,18 @@ Arguments:
 - `scale_reliability` a factor to scale the `transC_reliability` of all Techs.
 """
 function massflow(sys::System, M_in::Dict{Tech, Array{Float64, 1}};
-                  MC::Bool=false, scale_reliability::Real=1.0)::MassDict
+                  MC::Bool=false, scale_reliability::Real=1.0)
 
     M_out = Dict{Tech, NamedArray{Float64}}()
-    transC_MC = Dict{Tech, NamedArray{Float64,2}}()
 
-    for t in sys.techs
-        # M_out[t] = zeros(t.transC)
-        M_out[t] = 0.0*t.transC
-        if MC
-            transC_MC[t] = sample_transC(t.transC, t.transC_reliability * scale_reliability)
-        else
-            transC_MC[t] = t.transC
-        end
-    end
+    for sub in SUBSTANCE_NAMES
 
+        # derive (random) adjacent matrix
+        P = get_adj_mat(sys, MC)
 
-    # iterate over all sources
-    for t in filter(issource, sys.techs)
-        M_new = M_in[t] .* transC_MC[t]
-        M_out[t] = M_new
-        propagate_M!(t, M_new[:,1:end-3], M_out, transC_MC, sys)
+        # calulate flows
+        calc_massflows(P, inputs)
+
     end
 
     return M_out
@@ -55,21 +46,73 @@ function massflow(sys::System, M_in::Dict{Tech, Array{Float64, 1}};
 end
 
 
-function propagate_M!(t::Tech, M_new::NamedArray{Float64}, M_out::MassDict,
-                      transC_MC::Dict{Tech, NamedArray{Float64,2}}, sys::System)
+function get_adj_mat(sys::System, substance)
 
-    for (i,p) in enumerate(t.outputs)
+    # -- get all Techs and all connections
+    allTechs = filter(t -> typeof(t) == Tech, sys.techs)
+    allConn = filter(c -> !any(contains.([c[2].name, c[3].name], "::")), sys.connections)
+    allConn_TechCombs = filter(c -> any(contains.([c[2].name, c[3].name], "::")), sys.connections)
 
-        # identify the connected Tech
-        next_t = collect(filter(c -> c[1] == p && c[2] == t, sys.connections))[1][3]
-        M_new2 = M_new[:,i] .* transC_MC[next_t] # the new mass
+    for t in filter(t -> typeof(t) == TechCombined, sys.techs)
+                union!(allTechs, t.internal_techs)
+                union!(allConn, t.internal_connections)
+    end
+    allTechs = collect(allTechs)
+    allConn = collect(allConn)
 
-        M_out[next_t][:,:] += M_new2 # store additional mass
-        # do not propagate losses
-        propagate_M!(next_t, M_new2[:,1:end-3], M_out, transC_MC, sys)
+    # add connection from or to TechComb
+    for c in allConn_TechCombs
+        prod, from_tech, to_tech = c
+        if contains(from_tech.name, "::")
+
+            int_con_prod = collect(filter(c -> c[1] == prod, from_tech.internal_connections))
+            ffilter = function (t::AbstractTech)
+                prod in t.outputs &&
+                    !any(getindex.(int_con_prod, 2) == t)
+            end
+
+            from_tech = collect(filter(ffilter, from_tech.internal_techs))[1]
+        end
+        if contains(to_tech.name, "::")
+
+            int_con_prod = collect(filter(c -> c[1] == prod, to_tech.internal_connections))
+            ffilter = function (t::AbstractTech)
+                prod in t.inputs &&
+                    !any(getindex.(int_con_prod, 3) == t)
+            end
+
+            to_tech = collect(filter(ffilter, to_tech.internal_techs))[1]
+        end
+
+        push!(allConn, (prod, from_tech, to_tech))
+    end
+
+
+    # -- build matrix
+    technames = getfield.(allTechs, :name)
+    lossnames = vcat([["$(n)_airloss", "$(n)_soilloss", "$(n)_waterloss"] for n in technames]...)
+    sinkrecoverd = ["$(s.name)_recovered" for s in allTechs if issink(s)]
+    Pnames = vcat(technames, lossnames, sinkrecoverd)
+    P = NamedArray(zeros(length(Pnames), length(Pnames)), (Pnames, Pnames), ("from", "to"))
+
+    # fill in transfer coefficients
+    for c in allConn
+        prod, from_tech, to_tech = c
+        P[from_tech.name, to_tech.name] += from_tech.transC[substance][prod]
+    end
+
+    # add all losses
+    for t in allTechs
+        P[t.name, t.name * "_airloss"] = t.transC[substance][Product("airloss")]
+        P[t.name, t.name * "_soilloss"] = t.transC[substance][Product("soilloss")]
+        P[t.name, t.name * "_waterloss"] = t.transC[substance][Product("waterloss")]
+    end
+
+    # add 'recovered' for sinks
+    for t in filter(issink, allTechs)
+        P[t.name, t.name * "_recovered"] = t.transC[substance][Product("recovered")]
     end
 end
-
 
 # Sample a random transition matrix. Each row is Dirichlet distributed
 function sample_transC(transC::AbstractArray, transC_reliability::AbstractArray)
@@ -85,6 +128,7 @@ end
 
 
 
+# -----------
 # summary functions
 
 function lost(M_out::MassDict)
