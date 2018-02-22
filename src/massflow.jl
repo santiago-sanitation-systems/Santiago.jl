@@ -34,7 +34,13 @@ function massflow(sys::System, M_in::Dict{Tech, Array{Float64, 1}};
     for sub in SUBSTANCE_NAMES
 
         # derive (random) adjacent matrix
-        P = get_adj_mat(sys, MC)
+        Pmean, rel_vect = get_adj_mat(sys, substance)
+
+        if MC
+            P = sample_P(Pmean, rel_vect)
+        else
+            P = Pmean
+        end
 
         # calulate flows
         calc_massflows(P, inputs)
@@ -46,7 +52,7 @@ function massflow(sys::System, M_in::Dict{Tech, Array{Float64, 1}};
 end
 
 
-function get_adj_mat(sys::System, substance)
+function get_adj_mat(sys::System, substance::String)
 
     # -- get all Techs and all connections
     allTechs = filter(t -> typeof(t) == Tech, sys.techs)
@@ -112,18 +118,28 @@ function get_adj_mat(sys::System, substance)
     for t in filter(issink, allTechs)
         P[t.name, t.name * "_recovered"] = t.transC[substance][Product("recovered")]
     end
+
+    # compile transC_reliability vector
+    rel_vect = NamedArray(zeros(length(Pnames)), (Pnames, ))
+    for t in allTechs
+        rel_vect[t.name] = t.transC_reliability[substance]
+    end
+
+    return P, rel_vect
 end
 
-# Sample a random transition matrix. Each row is Dirichlet distributed
-function sample_transC(transC::AbstractArray, transC_reliability::AbstractArray)
-    # m = zeros(transC)
-    m = 0.0*transC
-    for i in 1:NSUBSTANCE
-        i_zero = transC[i,:] .<= 0.0
-        alpha = transC[i,.!i_zero]*transC_reliability[i]
-        m[i,.!i_zero] = rand( Dirichlet(alpha.array),1 )
+
+
+# Sample a random adjacent matrix. Each row is Dirichlet distributed
+function sample_P(P::AbstractArray, transC_reliability::AbstractArray)
+    # m = zeros(P)
+    P2 = 0.0*P
+    for i in 1:size(P,1)
+        i_zero = P[i,:] .<= 0.0
+        alpha = P[i,.!i_zero] * transC_reliability[i]
+        P2[i,.!i_zero] = rand( Dirichlet(alpha.array), 1 )
     end
-    m
+    P2
 end
 
 
