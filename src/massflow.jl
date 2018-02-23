@@ -11,7 +11,6 @@ export entered
 export recovery_ratio
 export massflow_summary
 
-
 const MassDict = Dict{Tech, <:NamedArray{Float64}}
 
 issource{T <: AbstractTech}(t::T) = length(t.inputs) == 0
@@ -26,14 +25,14 @@ Arguments:
 - if `MC` is true, the transfer coefficients are sampled form Dirichlet distribution
 - `scale_reliability` a factor to scale the `transC_reliability` of all Techs.
 """
-function massflow(sys::System, M_in::Dict{Tech, Array{Float64, 1}};
+function massflow(sys::System, M_in::Dict{Dict{String, Real}};
                   MC::Bool=false, scale_reliability::Real=1.0)
 
-    M_out = Dict{Tech, NamedArray{Float64}}()
+    # --- calculate flows
+    flow_mats = Dict{String, AbstractArray}()
+    for substance in SUBSTANCE_NAMES
 
-    for sub in SUBSTANCE_NAMES
-
-        # derive (random) adjacent matrix
+        # -- derive (random) adjacent matrix
         Pmean, rel_vect = get_adj_mat(sys, substance)
 
         if MC
@@ -42,9 +41,33 @@ function massflow(sys::System, M_in::Dict{Tech, Array{Float64, 1}};
             P = Pmean
         end
 
-        # calulate flows
-        calc_massflows(P, inputs)
+        # -- calulate flows
+        technames = collect(keys(Pmean.dicts[1]))
+        m_inputs = NamedArray(zeros(size(Pmean,1)), (technames, ))
 
+        for name in technames
+            if haskey(M_in, name)
+                m_inputs[name] = M_in[name][substance]
+            end
+        end
+
+        flow_mats[substance] = calc_massflows(Pmean, m_inputs)
+    end
+
+    # --- rearrange results
+    M_out = MassDict()
+
+    for t in sys
+        masses = NamedArray(zeros())
+        for c  in filter(sys.connentions)
+
+        end
+
+        for l in losses
+
+        end
+
+        M_out[t] = masses
     end
 
     return M_out
@@ -142,6 +165,25 @@ function sample_P(P::AbstractArray, transC_reliability::AbstractArray)
     P2
 end
 
+
+
+function calc_massflows(P::AbstractArray, inp::AbstractVector)
+
+    size(P,1) == size(P,2) || error("'P' must be a square matrix!")
+    size(P,1) == length(inp) || error("'inp' must have $size(P,1) elements")
+
+    names = P.dicts[1]
+    P = P.array
+    inp = inp.array
+
+    inp = inp'
+    m = inp*P * inv(eye(P) - P) # not an optimal implementation from a numerical point of view...
+
+    flows = [(m+inp)[i]*P[i,j] for i=1:size(P,1), j=1:size(P,1)]
+
+    return NamedArray(flows, (names, names))
+
+end
 
 
 # -----------

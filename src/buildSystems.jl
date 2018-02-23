@@ -276,7 +276,7 @@ end
 # Return a vector of Systems
 function build_system!{T <: AbstractTech}(sys::System, completesystems::Array{System},
                                           techs::Array{T}, islegal::Function,
-                                          resultfile::IO, hashset::Set{UInt64})
+                                          logfile::IO, hashset::Set{UInt64})
 
     # get Array of matching Techs Arrays
     candidates = get_candidates(sys, techs)
@@ -287,12 +287,12 @@ function build_system!{T <: AbstractTech}(sys::System, completesystems::Array{Sy
         for sys_ext in sys_exts
             if sys_ext.complete && !(sys_ext in completesystems)
                 push!(completesystems, sys_ext)
-                println(resultfile, sys_ext)
-                flush(resultfile)
+                println(logfile, sys_ext)
+                flush(logfile)
             elseif !sys_ext.complete && islegal(sys_ext) && !(hash(sys_ext) in hashset)
                 push!(hashset, hash(sys_ext))
                 build_system!(sys_ext, completesystems,
-                              techs, islegal, resultfile, hashset)
+                              techs, islegal, logfile, hashset)
             end
         end
     end
@@ -304,7 +304,7 @@ Returns an Array of all possible `System`s starting with `source`. A source can 
 """
 function build_all_systems{T1 <: AbstractTech, T2 <: AbstractTech}(source::Array{T1}, techs::Array{T2};
                                                                    islegal::Function=x -> true,
-                                                                   resultfile::IO=STDOUT, addlooptechs::Bool=false)
+                                                                   logfile::String="log.txt", addlooptechs::Bool=false)
     if addlooptechs
         # build looped techs
         ninit = nold = length(techs)
@@ -318,24 +318,78 @@ function build_all_systems{T1 <: AbstractTech, T2 <: AbstractTech}(source::Array
         println("$(length(techs) - ninit) looped techs added.")
     end
 
+    f = open(logfile, "w")
     completesystems = System[]
     build_system!(System(source), completesystems, techs, islegal,
-                  resultfile, Set{UInt64}())
+                  f, Set{UInt64}())
+    close(f)
+
+    # split TechCombineds
+    split_techcombined!.(completesystems)
+
     return completesystems
 end
+
+
+# replace combined techs with seperate internal techs
+function split_techcombined!(sys)
+
+    combtechs = filter(t -> typeof(t) == TechCombined, sys.techs)
+
+    # remove TechCombineds
+    filter!(t -> typeof(t) != TechCombined, sys.techs)
+
+    # remove connection to/from TechCombineds
+    allConn_TechCombs = filter(c -> any(contains.([c[2].name, c[3].name], "::")),
+                               sys.connections)
+    filter!(c -> !(c in allConn_TechCombs), sys.connections)
+
+    # add internal techs/connections
+    for t in combtechs
+            union!(sys.techs, t.internal_techs)
+            union!(sys.connections, t.internal_connections)
+    end
+
+    # add connection from/to internal techs
+    for c in allConn_TechCombs
+        prod, from_tech, to_tech = c
+        if contains(from_tech.name, "::")
+
+            int_con_prod = collect(filter(c -> c[1] == prod, from_tech.internal_connections))
+            ffilter = function (t::AbstractTech)
+                prod in t.outputs &&
+                    !any(getindex.(int_con_prod, 2) == t)
+            end
+
+            from_tech = collect(filter(ffilter, from_tech.internal_techs))[1]
+        end
+        if contains(to_tech.name, "::")
+
+            int_con_prod = collect(filter(c -> c[1] == prod, to_tech.internal_connections))
+            ffilter = function (t::AbstractTech)
+                prod in t.inputs &&
+                    !any(getindex.(int_con_prod, 3) == t)
+            end
+
+            to_tech = collect(filter(ffilter, to_tech.internal_techs))[1]
+        end
+        push!(sys.connections, (prod, from_tech, to_tech))
+    end
+end
+
 
 
 # Returns techs that fit to an open system
 function get_candidates{T <: AbstractTech}(sys::System, techs::Array{T})
 
-    techssub = filter(t -> !(t in sys.techs), techs) # filter out already used techs
-    outs = get_outputs(sys)
+            techssub = filter(t -> !(t in sys.techs), techs) # filter out already used techs
+            outs = get_outputs(sys)
 
-    matching_techs = Array{Array{AbstractTech},1}()
-    n_out = length(outs)
+            matching_techs = Array{Array{AbstractTech},1}()
+            n_out = length(outs)
 
-    ## get matching combinations
-    for k in 1:n_out
+            ## get matching combinations
+            for k in 1:n_out
         for c in Combinatorics.combinations(get_candidates(techssub, outs, k), k) # try all combination of lenght k (in R: combn())
             inputs = get_inputs(c)
             if is_compatible(outs, inputs)

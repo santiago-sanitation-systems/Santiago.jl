@@ -65,7 +65,6 @@ function importTechFile(techFile::String, sourceGroup::String, sourceAddGroup::S
             return d
         end
 
-        @show currentTech.outrel
         transC = Dict{String, Dict{Product, Float64}}()
         transC_rel = Dict{String, Float64}()
         for k in 1:NSUBSTANCE
@@ -337,11 +336,6 @@ function writedotfile(sys::System, file::String, no_group::Array{String}=["S", "
         ## define nodes
         for t in vcat(sys.techs...)
             label = "$(t.name)\n"
-            if typeof(t) == TechCombined
-                for p in t.internal_connections
-                    label = label * "$(p[2].name) → $(p[3].name): $(p[1].name)\n"
-                end
-            end
             label = label * "($(t.functional_group))"
             println(f, replace("$(make_legal(t.name)) [shape=box, fillcolor=\"$(get(colors, t.functional_group, "# 999999"))\" label=\"$label\"];", ".", "_"))
         end
