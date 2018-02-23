@@ -264,7 +264,7 @@ function massflow_summary(sys::System, M_in::Dict; MC::Bool=true, n::Int=100,
                         mapslices(x-> quantile(x, qq), tmp.array, 3)))
 
     setnames!(ll, SUBSTANCE_NAMES, 1)
-    setnames!(ll, ["air loss", "soil loss", "other loss"],2)
+    setnames!(ll, ["air loss", "soil loss", " water loss"],2)
     setnames!(ll, ["mean", "sd", ["q_$i" for i in qq]...], 3)
     ll.dimnames = (:substance, :losses, :stats)
 
