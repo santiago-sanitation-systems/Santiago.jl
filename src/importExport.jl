@@ -20,7 +20,8 @@ end
 This function reads a .csv file with technology and relationships
 and returns a tuple of an array with sources and an array of all technologies
 """
-function importTechFile(techFile::String, sourceGroup::String, sourceAddGroup::String, sinkGroup::String)
+function importTechFile(techFile::String; sourceGroup::String="U",
+                        sourceAddGroup::String="Uadd", sinkGroup::String="D")
 
     techTable = readdlm(techFile, ';')
 
