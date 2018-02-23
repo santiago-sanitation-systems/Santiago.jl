@@ -11,7 +11,7 @@ export entered
 export recovery_ratio
 export massflow_summary
 
-const MassDict = Dict{Tech, <:NamedArray{Float64}}
+const MassDict = Dict{Tech, NamedArray{Float64}}
 
 issource{T <: AbstractTech}(t::T) = length(t.inputs) == 0
 issink{T <: AbstractTech}(t::T) = length(t.outputs) == 0
@@ -25,11 +25,14 @@ Arguments:
 - if `MC` is true, the transfer coefficients are sampled form Dirichlet distribution
 - `scale_reliability` a factor to scale the `transC_reliability` of all Techs.
 """
-function massflow(sys::System, M_in::Dict{Dict{String, Real}};
-                  MC::Bool=false, scale_reliability::Real=1.0)
+function massflow{T <: Real}(sys::System, M_in::Dict{String, Dict{String, T}};
+                             MC::Bool=false, scale_reliability::Real=1.0)
 
     # --- calculate flows
     flow_mats = Dict{String, AbstractArray}()
+    M_out = MassDict()
+    Ps = Dict{String, AbstractArray}()
+
     for substance in SUBSTANCE_NAMES
 
         # -- derive (random) adjacent matrix
@@ -40,10 +43,11 @@ function massflow(sys::System, M_in::Dict{Dict{String, Real}};
         else
             P = Pmean
         end
+        Ps[substance] = P
 
         # -- calulate flows
         technames = collect(keys(Pmean.dicts[1]))
-        m_inputs = NamedArray(zeros(size(Pmean,1)), (technames, ))
+        m_inputs = NamedArray(zeros(size(P,1)), (technames, ))
 
         for name in technames
             if haskey(M_in, name)
@@ -51,22 +55,46 @@ function massflow(sys::System, M_in::Dict{Dict{String, Real}};
             end
         end
 
-        flow_mats[substance] = calc_massflows(Pmean, m_inputs)
+        flow_mats[substance] = calc_massflows(P, m_inputs)
+
     end
 
     # --- rearrange results
-    M_out = MassDict()
 
-    for t in sys
-        masses = NamedArray(zeros())
-        for c  in filter(sys.connentions)
+    for t in sys.techs
+
+        outprod_names = ["$(p.name)" for p in t.outputs]
+        if issink(t)
+            cnames = ["recovered", "airloss", "soilloss", "waterloss"]
+        else
+            cnames = vcat(outprod_names, ["airloss", "soilloss", "waterloss"])
+        end
+        masses = NamedArray(zeros(NSUBSTANCE, length(cnames))-1,
+                            (SUBSTANCE_NAMES, cnames),
+                            ("substance", "product"))
+
+        for substance in SUBSTANCE_NAMES
+
+            flow = flow_mats[substance]
+            P = Ps[substance]
+
+            for prod in outprod_names
+                ouput_con = collect(filter(c -> c[1]==Product(prod) && c[2] == t, sys.connections))[1]
+
+                masses[substance, prod] =flow[t.name, ouput_con[3].name] *
+                    t.transC[substance][Product(prod)] /
+                    P[t.name, ouput_con[3].name]
+            end
+
+            for loss in ["airloss", "soilloss", "waterloss"]
+                masses[substance, loss] =flow[t.name, "$(t.name)_$loss"]
+            end
+
+            if issink(t)
+                masses[substance, "recovered"] = flow[t.name, "$(t.name)_recovered"]
+            end
 
         end
-
-        for l in losses
-
-        end
-
         M_out[t] = masses
     end
 
@@ -77,74 +105,34 @@ end
 
 function get_adj_mat(sys::System, substance::String)
 
-    # -- get all Techs and all connections
-    allTechs = filter(t -> typeof(t) == Tech, sys.techs)
-    allConn = filter(c -> !any(contains.([c[2].name, c[3].name], "::")), sys.connections)
-    allConn_TechCombs = filter(c -> any(contains.([c[2].name, c[3].name], "::")), sys.connections)
-
-    for t in filter(t -> typeof(t) == TechCombined, sys.techs)
-                union!(allTechs, t.internal_techs)
-                union!(allConn, t.internal_connections)
-    end
-    allTechs = collect(allTechs)
-    allConn = collect(allConn)
-
-    # add connection from or to TechComb
-    for c in allConn_TechCombs
-        prod, from_tech, to_tech = c
-        if contains(from_tech.name, "::")
-
-            int_con_prod = collect(filter(c -> c[1] == prod, from_tech.internal_connections))
-            ffilter = function (t::AbstractTech)
-                prod in t.outputs &&
-                    !any(getindex.(int_con_prod, 2) == t)
-            end
-
-            from_tech = collect(filter(ffilter, from_tech.internal_techs))[1]
-        end
-        if contains(to_tech.name, "::")
-
-            int_con_prod = collect(filter(c -> c[1] == prod, to_tech.internal_connections))
-            ffilter = function (t::AbstractTech)
-                prod in t.inputs &&
-                    !any(getindex.(int_con_prod, 3) == t)
-            end
-
-            to_tech = collect(filter(ffilter, to_tech.internal_techs))[1]
-        end
-
-        push!(allConn, (prod, from_tech, to_tech))
-    end
-
-
     # -- build matrix
-    technames = getfield.(allTechs, :name)
+    technames = getfield.(collect(sys.techs), :name)
     lossnames = vcat([["$(n)_airloss", "$(n)_soilloss", "$(n)_waterloss"] for n in technames]...)
-    sinkrecoverd = ["$(s.name)_recovered" for s in allTechs if issink(s)]
+    sinkrecoverd = ["$(s.name)_recovered" for s in sys.techs if issink(s)]
     Pnames = vcat(technames, lossnames, sinkrecoverd)
     P = NamedArray(zeros(length(Pnames), length(Pnames)), (Pnames, Pnames), ("from", "to"))
 
     # fill in transfer coefficients
-    for c in allConn
+    for c in sys.connections
         prod, from_tech, to_tech = c
         P[from_tech.name, to_tech.name] += from_tech.transC[substance][prod]
     end
 
     # add all losses
-    for t in allTechs
+    for t in sys.techs
         P[t.name, t.name * "_airloss"] = t.transC[substance][Product("airloss")]
         P[t.name, t.name * "_soilloss"] = t.transC[substance][Product("soilloss")]
         P[t.name, t.name * "_waterloss"] = t.transC[substance][Product("waterloss")]
     end
 
     # add 'recovered' for sinks
-    for t in filter(issink, allTechs)
+    for t in filter(issink, sys.techs)
         P[t.name, t.name * "_recovered"] = t.transC[substance][Product("recovered")]
     end
 
     # compile transC_reliability vector
     rel_vect = NamedArray(zeros(length(Pnames)), (Pnames, ))
-    for t in allTechs
+    for t in sys.techs
         rel_vect[t.name] = t.transC_reliability[substance]
     end
 
@@ -181,7 +169,7 @@ function calc_massflows(P::AbstractArray, inp::AbstractVector)
 
     flows = [(m+inp)[i]*P[i,j] for i=1:size(P,1), j=1:size(P,1)]
 
-    return NamedArray(flows, (names, names))
+    return NamedArray(flows, (names, names), ("from", "to"))
 
 end
 
@@ -200,7 +188,12 @@ end
 
 
 function entered(M_in::Dict, sys::System)
-    NamedArray(sum(m for (t,m) in M_in if t in sys.techs), (SUBSTANCE_NAMES,))
+    ent = NamedArray(zeros(NSUBSTANCE, 1), (SUBSTANCE_NAMES, ["entered"]), (:substance, :mass))
+    in_dicts = [m for (t,m) in M_in if t in getfield.(collect(sys.techs), :name)]
+    for substance in SUBSTANCE_NAMES
+        ent[substance, "entered"] = sum(get.(in_dicts, substance, 0))
+    end
+    return ent
 end
 
 
@@ -222,15 +215,10 @@ function massflow_summary(sys::System, M_in::Dict; MC::Bool=true, n::Int=100,
 
 
     # -- convert M_in
-    M_in2 = Dict{Tech, Array{Float64,1}}()
 
     sources = [t for t in sys.techs if issource(t)]
     for ts in sources
         haskey(M_in, ts.name) || error("Input masses are not defined for source '$(ts.name)'!")
-        m_in = M_in[ts.name]
-        size(m_in) == (4,) || error("Input masses defined for source '$(ts.name)' have dimensions $(size(M_in[ts.name])) instead of (4,)!")
-
-        M_in2[ts] = m_in
     end
 
 
@@ -238,18 +226,19 @@ function massflow_summary(sys::System, M_in::Dict; MC::Bool=true, n::Int=100,
 
     #  -- compute masses
     ns = MC ? n : 1             # make only one run if MC == false
-    m_outs = [massflow(sys, M_in2, MC=MC, scale_reliability=scale_reliability) for i in 1:ns]
+    m_outs = [massflow(sys, M_in, MC=MC, scale_reliability=scale_reliability) for i in 1:ns]
 
     ## quantiles to calculate
     qq = [0.2, 0.5, 0.8]
 
     # --  recovery ratio
-    tmp = hcat((recovery_ratio(m, M_in2, sys) for m in m_outs)...)
+    tmp = hcat((recovery_ratio(m, M_in, sys) for m in m_outs)...)
     rr = hcat(mean(tmp, 2),
               std(tmp, 2),
               NamedArray(mapslices(x -> quantile(x, qq), tmp.array, 2)))
     setnames!(rr, SUBSTANCE_NAMES, 1) #
     setnames!(rr, ["mean", "sd", ["q_$i" for i in qq]...], 2)
+    rr.dimnames = (:substance, :stats)
 
     summaries["recovery_ratio"] = rr
 
@@ -261,6 +250,7 @@ function massflow_summary(sys::System, M_in::Dict; MC::Bool=true, n::Int=100,
               NamedArray(mapslices(x-> quantile(x, qq), tmp.array, 2)))
     setnames!(rm, SUBSTANCE_NAMES, 1)
     setnames!(rm, ["mean", "sd", ["q_$i" for i in qq]...], 2)
+    rm.dimnames = (:substance, :stats)
 
     summaries["recovered"] = rm
 
@@ -276,12 +266,13 @@ function massflow_summary(sys::System, M_in::Dict; MC::Bool=true, n::Int=100,
     setnames!(ll, SUBSTANCE_NAMES, 1)
     setnames!(ll, ["air loss", "soil loss", "other loss"],2)
     setnames!(ll, ["mean", "sd", ["q_$i" for i in qq]...], 3)
+    ll.dimnames = (:substance, :losses, :stats)
 
     summaries["lost"] = ll
 
 
     # --  entered
-    summaries["entered"] = entered(M_in2, sys)
+    summaries["entered"] = entered(M_in, sys)
 
     return(summaries)
 end
