@@ -268,6 +268,13 @@ end
 subTechFiltered = filter(islegal, subTechList)
 
 
+# Test if all technologies in the input file exist at least in one form in the final tech lists
+for t in techList
+    if !any(contains(x.name, t.name) for x in subTechFiltered)
+        error("Tech '$(t.name)' is not imported! Check csv file carefully!")
+    end
+end
+
 ## separate sources, sourcesAdd, and Technologies
 sources = filter(t -> t.functional_group == Symbol(sourceGroup), subTechFiltered)
 sourcesAdd = filter(t -> t.functional_group == Symbol(sourceAddGroup), subTechFiltered)
