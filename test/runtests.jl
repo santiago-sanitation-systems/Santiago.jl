@@ -10,7 +10,7 @@ SSB = SanitationSystemMassFlow
 
     transC_rel = Dict{String, Float64}("phosphor" => 5.0,
                                        "nitrogen" => 20.0,
-                                         "water" => 100.0,
+                                        "water" => 100.0,
                                        "totalsolids" => 1000.0)
 
     # --

@@ -81,9 +81,16 @@ function massflow{T <: Real}(sys::System, M_in::Dict{String, Dict{String, T}};
             for prod in outprod_names
                 ouput_con = collect(filter(c -> c[1]==Product(prod) && c[2] == t, sys.connections))[1]
 
-                masses[substance, prod] =flow[t.name, ouput_con[3].name] *
-                    t.transC[substance][Product(prod)] /
-                    P[t.name, ouput_con[3].name]
+                prod_tmp = Product(replace(prod, "transported", ""))
+
+                if haskey(t.transC[substance], prod_tmp)
+                    tc = t.transC[substance][prod_tmp]
+                else
+                    tc = t.transC[substance][Product("x")]
+                end
+
+                masses[substance, prod] = flow[t.name, ouput_con[3].name] *
+                    tc / P[t.name, ouput_con[3].name]
             end
 
             for loss in ["airloss", "soilloss", "waterloss"]
@@ -115,7 +122,15 @@ function get_adj_mat(sys::System, substance::String)
     # fill in transfer coefficients
     for c in sys.connections
         prod, from_tech, to_tech = c
-        P[from_tech.name, to_tech.name] += from_tech.transC[substance][prod]
+        # transC are the same for transported or non-transported products
+        prod_tmp = Product(replace(String(prod.name), "transported", ""))
+
+        if haskey(from_tech.transC[substance], prod_tmp)
+            tc = from_tech.transC[substance][prod_tmp]
+        else
+            tc = from_tech.transC[substance][Product("x")]
+        end
+        P[from_tech.name, to_tech.name] += tc
     end
 
     # add all losses
