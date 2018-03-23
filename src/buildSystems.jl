@@ -479,8 +479,8 @@ Return an array possible Technologies (subset of techlist) for the given Sources
 The number of technologies is reduced by removing Techs that require an input that is not available with
 the sources provided.
 """
-function prefilterTechList(currentSources::Array{AbstractTech}, sources::Array{AbstractTech},
-                           sourcesAdd::Array{AbstractTech}, tech_list::Array{AbstractTech})
+function prefilterTechList{T1 <: AbstractTech, T2 <: AbstractTech}(currentSources::Array{T1}, sources::Array{T2},
+                           sourcesAdd::Array{T2}, tech_list::Array{T2})
 
     # All Products that can be created by available sources
     otherSourcesProduct = vcat([t.outputs for t in sources]...)
@@ -495,7 +495,7 @@ function prefilterTechList(currentSources::Array{AbstractTech}, sources::Array{A
 
     otherSourcesProduct = filter(x -> !(x in output_list), otherSourcesProduct)
     otherSourcesProduct = map(x -> "$(x.name)", otherSourcesProduct) # convert to Strings
-    push!(otherSourcesProduct, "^[.]") # this is a dummy patter to ensure that ffilter works if otherSourcesProduct is empty
+    push!(otherSourcesProduct, "^[.]") # this is a dummy patter to ensure that filter works if otherSourcesProduct is empty
 
 
     # Additional Filter. REMOVE HARD CODING OF PRODUCT NAMES
