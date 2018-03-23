@@ -288,6 +288,7 @@ function build_system!{T <: AbstractTech}(sys::System, completesystems::Array{Sy
         for sys_ext in sys_exts
             if sys_ext.complete && !(sys_ext in completesystems)
                 push!(completesystems, sys_ext)
+                println(logfile, now())
                 println(logfile, sys_ext)
                 flush(logfile)
             elseif !sys_ext.complete && islegal(sys_ext) && !(hash(sys_ext) in hashset)
