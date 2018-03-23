@@ -16,6 +16,7 @@ export add_loop_techs!
 export writedotfile
 export prefilterTechList
 
+
 # -----------
 # define types
 
@@ -305,21 +306,7 @@ Returns an Array of all possible `System`s starting with `source`. A source can 
 function build_all_systems{T1 <: AbstractTech,
                            T2 <: AbstractTech}(source::Array{T1}, techs::Array{T2};
                                                islegal::Function=x -> true,
-                                               logfile::IO=STDOUT,
-                                               addlooptechs::Bool=false,
-                                               looptechgroup::Array{Symbol}=Symbol.(["T", "S"]))
-    if addlooptechs
-        # build looped techs
-        ninit = nold = length(techs)
-        add_loop_techs!(techs, groups = looptechgroup)
-        i = 1
-        while nold < length(techs) & i < 2
-            nold = length(techs)
-            add_loop_techs!(techs, groups = looptechgroup)
-            i += 1
-        end
-        println("$(length(techs) - ninit) looped techs added.")
-    end
+                                               logfile::IO=STDOUT)
 
     completesystems = System[]
     build_system!(System(source), completesystems, techs, islegal,
