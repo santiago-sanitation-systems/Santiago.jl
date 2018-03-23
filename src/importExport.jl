@@ -81,7 +81,8 @@ function importTechFile(techFile::String; sourceGroup::String="U",
                 needed_keys = Set([Product("x"), Product("airloss"), Product("soilloss"), Product("waterloss")])
             else
                 if length(currentTech.outputs) > 0 # is not sink
-                    needed_keys = Set(vcat(Product.(currentTech.outputs), [Product("airloss"), Product("soilloss"), Product("waterloss")]))
+                    out_tmp = [replace(p, "transported", "") for p in currentTech.outputs]
+                    needed_keys = Set(vcat(Product.(out_tmp), [Product("airloss"), Product("soilloss"), Product("waterloss")]))
                 else                # is sink
                     needed_keys = Set([Product("recovered"), Product("airloss"), Product("soilloss"), Product("waterloss")])
                 end

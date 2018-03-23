@@ -10,6 +10,8 @@ export recovered
 export entered
 export recovery_ratio
 export massflow_summary
+export issource
+export issink
 
 const MassDict = Dict{Tech, NamedArray{Float64}}
 
