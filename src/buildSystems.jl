@@ -305,7 +305,7 @@ Returns an Array of all possible `System`s starting with `source`. A source can 
 function build_all_systems{T1 <: AbstractTech,
                            T2 <: AbstractTech}(source::Array{T1}, techs::Array{T2};
                                                islegal::Function=x -> true,
-                                               logfile::String="log.txt",
+                                               logfile::IO=STDOUT,
                                                addlooptechs::Bool=false,
                                                looptechgroup::Array{Symbol}=Symbol.(["T", "S"]))
     if addlooptechs
@@ -321,11 +321,10 @@ function build_all_systems{T1 <: AbstractTech,
         println("$(length(techs) - ninit) looped techs added.")
     end
 
-    f = open(logfile, "w")
     completesystems = System[]
     build_system!(System(source), completesystems, techs, islegal,
-                  f, Set{UInt64}())
-    close(f)
+                  logfile, Set{UInt64}())
+
 
     # split TechCombineds
     split_techcombined!.(completesystems)
