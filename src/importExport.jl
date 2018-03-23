@@ -290,7 +290,7 @@ end
      This function generates possible combinations of one source and all sourcesAdds
      returns all possible combinations.
     """
-function generateCombinations(source::Tech, sourcesAdd::Array{Tech})
+function generateCombinations{T <: AbstractTech}(source::T, sourcesAdd::Array{T})
 
     src_comb = Array{Tech}[]
     push!(src_comb, [source])
