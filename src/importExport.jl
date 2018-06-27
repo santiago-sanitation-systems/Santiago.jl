@@ -55,6 +55,11 @@ function importTechFile(techFile::String; sourceGroup::String="U",
             j += 1
         end
 
+        if length(intersect(currentTech.inputs, currentTech.outputs)) > 0
+            error("Same input and output product(s) for Tech $(techTable[1,i]) (column $i)!
+  Product(s): $(intersect(currentTech.inputs, currentTech.outputs))")
+        end
+
         ## read transfer coefficients
 
         function make_transC_substance_dict(s::String)
