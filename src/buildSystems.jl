@@ -351,7 +351,7 @@ function split_techcombined!(sys)
                     !any(getindex.(int_con_prod, 2) == t)
             end
 
-            from_tech = collect(filter(ffilter, from_tech.internal_techs))[1]
+            from_tech = collect(filter(ffilter, from_tech.internal_techs))
         end
         if contains(to_tech.name, "::")
 
@@ -361,9 +361,20 @@ function split_techcombined!(sys)
                     !any(getindex.(int_con_prod, 3) == t)
             end
 
-            to_tech = collect(filter(ffilter, to_tech.internal_techs))[1]
+            to_tech = collect(filter(ffilter, to_tech.internal_techs))
         end
-        push!(sys.connections, (prod, from_tech, to_tech))
+
+       if ! (typeof(from_tech) <: AbstractArray)
+           from_tech = [from_tech]
+       end
+       if ! (typeof(to_tech) <: AbstractArray)
+           to_tech = [to_tech]
+       end
+        for ft in [from_tech...]
+            for tt in [to_tech...]
+               push!(sys.connections, (prod, ft, tt))
+            end
+        end
     end
 end
 
