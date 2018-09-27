@@ -620,9 +620,3 @@ function make_looped_techs(tech1::Tech, tech2::Tech)
 
     return newtechs
 end
-
-
-
-
-
-end
