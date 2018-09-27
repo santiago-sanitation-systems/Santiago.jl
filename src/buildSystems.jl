@@ -548,9 +548,11 @@ function add_loop_techs!(tech_list::Array{AbstractTech}; groups = [:S, :T])
                     exchange_2_1 = intersect(outs2, ins1)
                     if (length(exchange_1_2) >= 1 | length(exchange_2_1) >= 1) && length(intersect(exchange_1_2, exchange_2_1))==0
                         # matching tech are partners!
-                        tech_new = make_looped_tech(tech1, tech2)
-                        if !(tech_new in tech_list) && length(tech_new.outputs)>0 && length(tech_new.inputs)>0
-                            push!(tech_list, tech_new)
+                        tech_news = make_looped_techs(tech1, tech2)
+                        for tech_new in tech_news
+                            if !(tech_new in tech_list) && length(tech_new.outputs)>0 && length(tech_new.inputs)>0
+                                push!(tech_list, tech_new)
+                            end
                         end
                     end
                 end
@@ -560,7 +562,7 @@ function add_loop_techs!(tech_list::Array{AbstractTech}; groups = [:S, :T])
 end
 
 
-function make_looped_tech(tech1::Tech, tech2::Tech)
+function make_looped_techs(tech1::Tech, tech2::Tech)
 
     # input_new = union(in1, in2) - intersect(out1, in2) - intersect(out2, in1)
     # output_new = union(out1, out2) - intersect(out1, in2) - intersect(out2, in1)
@@ -570,6 +572,8 @@ function make_looped_tech(tech1::Tech, tech2::Tech)
 
     internal_12 = DataStructures.counter(vcat(intersect(tech1.outputs, tech2.inputs)))
     internal_21 = DataStructures.counter(vcat(intersect(tech2.outputs, tech1.inputs)))
+
+    internal_products = [collect(keys(internal_12)), collect(keys(internal_21))]
 
     # --- remove internal connections for new tech ins and outs
     # reduce counter
@@ -600,7 +604,25 @@ function make_looped_tech(tech1::Tech, tech2::Tech)
     name = join(sort([tech1.name, tech2.name]), " :: ")
     appscore = sort(vcat(tech1.appscore, tech2.appscore))
 
-    return TechCombined(ins, outs, name, tech1.functional_group,
+    # make input variations
+    newtechs = TechCombined[]
+    tech = TechCombined(ins, outs, name, tech1.functional_group,
                         appscore, length(ins),
                         Set([tech1, tech2]), internal_connections)
+    push!(newtechs, tech)
+    for additional_inputs = Combinatorics.combinations(internal_products)
+         ins2 = vcat([ins..., additional_inputs...]...)
+        tech = TechCombined(ins2, outs, name, tech1.functional_group,
+                             appscore, length(ins),
+                             Set([tech1, tech2]), internal_connections)
+         push!(newtechs, tech)
+    end
+
+    return newtechs
+end
+
+
+
+
+
 end
