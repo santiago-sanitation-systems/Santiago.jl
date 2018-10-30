@@ -546,7 +546,8 @@ function add_loop_techs!(tech_list::Array{AbstractTech}; groups = [:S, :T])
                     ins2 = tech2.inputs
                     exchange_1_2 = intersect(outs1, ins2)
                     exchange_2_1 = intersect(outs2, ins1)
-                    if (length(exchange_1_2) >= 1 | length(exchange_2_1) >= 1) && length(intersect(exchange_1_2, exchange_2_1))==0
+                    if (length(exchange_1_2) >= 1 | length(exchange_2_1) >= 1) && length(intersect(exchange_1_2, exchange_2_1))==0 &&
+                        length(intersect(ins1, ins2)) == 0
                         # matching tech are partners!
                         tech_news = make_looped_techs(tech1, tech2)
                         for tech_new in tech_news
