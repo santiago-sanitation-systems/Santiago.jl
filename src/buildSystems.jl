@@ -8,6 +8,7 @@ import Base.getindex
 import Base.copy
 import Base.==
 import Base.isless
+import Base.hash
 import StatsBase
 
 
@@ -128,12 +129,16 @@ end
 """
 A `System` consists of `techs` and `conncetions`.
 """
-@auto_hash_equals mutable struct System
+mutable struct System
     techs::Set{AbstractTech}
     connections::Set{Connection}
     complete::Bool
     properties::Dict
 end
+
+# ignore properties for isequal
+Base.hash(sys::System, h::UInt) = hash(sys.techs, hash(sys.connections, hash(sys.complete, hash(:System, h))))
+Base.:(==)(a::System, b::System) = isequal(a.techs, b.techs) && isequal(a.connections, b.connections) && isequal(a.complete, b.complete) && true
 
 System{T <: AbstractTech}(techs::Set{T}, con::Set{Connection}, complete::Bool) = System(techs, con, complete, Dict())
 System{T <: AbstractTech}(techs::Array{T}, con::Array{Connection}, complete::Bool) = System(Set(techs), Set(con), complete)
@@ -319,7 +324,7 @@ function build_all_systems{T1 <: AbstractTech,
 
     # split TechCombineds
     split_techcombined!.(completesystems)
-
+    completesystems = unique(completesystems) # before split techs system are different but once splitted they are identical (e.g. due to permuations of some techs in two combitechs)
     return completesystems
 end
 
