@@ -7,6 +7,7 @@ import Base.show
 import Base.getindex
 import Base.copy
 import Base.==
+import Base.isless
 import StatsBase
 
 
@@ -27,6 +28,8 @@ end
 
 Product(name::String) = Product(Symbol(name))
 show(io::Base.IO, p::Product) = print(io, "$(p.name)")
+
+isless(p1::Product, p2::Product) = isless(p1.name, p2.name)
 
 abstract type AbstractTech end
 
@@ -607,13 +610,13 @@ function make_looped_techs(tech1::Tech, tech2::Tech)
 
     # make input variations
     newtechs = TechCombined[]
-    tech = TechCombined(ins, outs, name, tech1.functional_group,
+    tech = TechCombined(sort(ins), sort(outs), name, tech1.functional_group,
                         appscore, length(ins),
                         Set([tech1, tech2]), internal_connections)
     push!(newtechs, tech)
     for additional_inputs = Combinatorics.combinations(internal_products)
          ins2 = vcat([ins..., additional_inputs...]...)
-        tech = TechCombined(ins2, outs, name, tech1.functional_group,
+        tech = TechCombined(sort(ins2), sort(outs), name, tech1.functional_group,
                              appscore, length(ins),
                              Set([tech1, tech2]), internal_connections)
          push!(newtechs, tech)
