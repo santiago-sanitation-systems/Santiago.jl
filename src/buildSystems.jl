@@ -387,18 +387,37 @@ function split_techcombined!(sys)
 end
 
 
+# converts a vecptr of TEchs and techsCombined to a purly Tech array
+function meltTechs{T <: AbstractTech}(techs::Union{Array{T}, Set{T}})
+    flattechs = Tech[]
+    for t in techs
+        if typeof(t)==Tech
+            push!(flattechs, t)
+        else
+            append!(flattechs, t.internal_techs)
+        end
+    end
+    return flattechs
+end
+
+
 
 # Returns techs that fit to an open system
 function get_candidates{T <: AbstractTech}(sys::System, techs::Array{T})
 
-            techssub = filter(t -> !(t in sys.techs), techs) # filter out already used techs
-            outs = get_outputs(sys)
+    # filter out already used techs (also in TechCombined)
+    systechs = meltTechs(sys.techs)
+    ffilter(t::Tech) = !(t in systechs)
+    ffilter(t::TechCombined) = length(intersect(t.internal_techs, systechs)) == 0
+    techssub = filter(t -> ffilter(t), techs)
 
-            matching_techs = Array{Array{AbstractTech},1}()
-            n_out = length(outs)
+    outs = get_outputs(sys)
 
-            ## get matching combinations
-            for k in 1:n_out
+    matching_techs = Array{Array{AbstractTech},1}()
+    n_out = length(outs)
+
+    ## get matching combinations
+    for k in 1:n_out
         for c in Combinatorics.combinations(get_candidates(techssub, outs, k), k) # try all combination of lenght k (in R: combn())
             inputs = get_inputs(c)
             if is_compatible(outs, inputs)
@@ -407,6 +426,13 @@ function get_candidates{T <: AbstractTech}(sys::System, techs::Array{T})
 
         end
     end
+
+    ## check that no matching combination has dublicated Techs (e.g. not ok: [A, A::B])
+    function filterdublicates(m)
+        m_flat = meltTechs(m)
+        length(m_flat) == length(unique(m_flat))
+    end
+    filter!(filterdublicates, matching_techs)
 
     return matching_techs
 end
