@@ -223,6 +223,29 @@ function recovery_ratio(M_out::MassDict, M_in::Dict, sys::System)
 end
 
 
+function functional_group_losses(M_out::MassDict, M_in::Dict, sys::System)
+
+    functional_groups = [:U, :S, :C, :T, :D]
+    losses = NamedArray(zeros(NSUBSTANCE, 1 + length(functional_groups)*3),
+                        (SUBSTANCE_NAMES,
+                        vcat("entered", [["$(f)_airloss", "$(f)_soilloss", "$(f)_waterloss"] for f in functional_groups]...)),
+                        )
+
+    losses[:,"entered"] = entered(M_in, sys)
+
+    for f in functional_groups
+        loss = zeros(4, 3)
+        t_fg = filter(t -> t.functional_group == f, sys.techs)
+        for t in t_fg
+            loss += M_out[t][:,(end-2):end]
+        end
+
+        losses[:,["$(f)_airloss", "$(f)_soilloss", "$(f)_waterloss"]] = loss
+    end
+    losses
+end
+
+
 """
 Calculate summary statistics of a Monte Carlo massflow results
 """
@@ -246,7 +269,7 @@ function massflow_summary(sys::System, M_in::Dict; MC::Bool=true, n::Int=100,
     m_outs = [massflow(sys, M_in, MC=MC, scale_reliability=scale_reliability) for i in 1:ns]
 
     ## quantiles to calculate
-    qq = [0.2, 0.5, 0.8]
+    qq = [0.1, 0.5, 0.9]
 
     # --  recovery ratio
     tmp = hcat((recovery_ratio(m, M_in, sys) for m in m_outs)...)
@@ -287,6 +310,22 @@ function massflow_summary(sys::System, M_in::Dict; MC::Bool=true, n::Int=100,
 
     summaries["lost"] = ll
 
+    # -- losses per functional group
+    tmp = cat(3, (functional_group_losses(m, M_in, sys) for m in m_outs)...)
+
+    ll = NamedArray(cat(3,
+                        mean(tmp.array, 3),
+                        std(tmp.array, 3),
+                        mapslices(x-> quantile(x, qq), tmp.array, 3)))
+
+    setnames!(ll, SUBSTANCE_NAMES, 1)
+    functional_groups = [:U, :S, :C, :T, :D]
+    nn = vcat("entered", [["$(f)_airloss", "$(f)_soilloss", "$(f)_waterloss"] for f in functional_groups]...)
+    setnames!(ll, nn, 2)
+    setnames!(ll, ["mean", "sd", ["q_$i" for i in qq]...], 3)
+    ll.dimnames = (:substance, :losses, :stats)
+
+    summaries["functional_group_losses"] = ll
 
     # --  entered
     summaries["entered"] = entered(M_in, sys)
