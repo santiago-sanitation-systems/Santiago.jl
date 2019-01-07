@@ -543,12 +543,12 @@ function prefilterTechList{T1 <: AbstractTech, T2 <: AbstractTech}(currentSource
     push!(otherSourcesProduct, "^[.]") # this is a dummy patter to ensure that filter works if otherSourcesProduct is empty
 
 
-    # Additional Filter. REMOVE HARD CODING OF PRODUCT NAMES
-    for tproduct in otherSourcesProduct
-        if tproduct == "excreta"
-            append!(otherSourcesProduct, ["pithumus"])
-        end
-    end
+    # # Additional Filter. REMOVE HARD CODING OF PRODUCT NAMES
+    # for tproduct in otherSourcesProduct
+    #     if tproduct == "excreta"
+    #         append!(otherSourcesProduct, ["pithumus"])
+    #     end
+    # end
 
     # check of any the String in otherSourcesProduct is part of an input products name
     function ffilter(x)
