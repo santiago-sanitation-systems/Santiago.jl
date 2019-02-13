@@ -231,5 +231,5 @@ allSys[2].properties["mf_stats"]["recovered"]
 
 allSys[2].properties["mf_stats"]["lost"][:,"air loss",:]
 allSys[2].properties["mf_stats"]["lost"][:,:,"mean"]
-allSys[2].properties["mf_stats"]["lost"][:,:,"q_0.2"]
+allSys[2].properties["mf_stats"]["lost"][:,:,"q_0.5"]
 ```
