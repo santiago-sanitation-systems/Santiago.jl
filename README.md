@@ -4,8 +4,8 @@
 Extension of the
 [SanitationSystemBuilder](https://github.com/Eawag-SWW/SanitationSystemBuilder.jl)
 package. It enables to
-- finds all possible systems given a set of sanitation technologies
-- calculates a (optionally stochastic) mass flow analysis for each system.
+- find all possible systems given a set of sanitation technologies
+- calculate (optionally stochastic) the mass flows for each system for total `phosphor`, total `nitrogen`, `totalsolids`, and `water`.
 
 
 # Installation
