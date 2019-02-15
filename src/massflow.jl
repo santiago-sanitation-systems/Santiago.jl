@@ -1,6 +1,7 @@
 # -----------
 # massflow
 
+using LinearAlgebra
 using Distributions
 using NamedArrays
 
@@ -71,7 +72,7 @@ function massflow(sys::System, M_in::Dict{String, Dict{String, T}};
         else
             cnames = vcat(outprod_names, ["airloss", "soilloss", "waterloss"])
         end
-        masses = NamedArray(zeros(NSUBSTANCE, length(cnames))-1,
+        masses = NamedArray(zeros(NSUBSTANCE, length(cnames)) .- 1,
                             (SUBSTANCE_NAMES, cnames),
                             ("substance", "product"))
 
@@ -83,7 +84,7 @@ function massflow(sys::System, M_in::Dict{String, Dict{String, T}};
             for prod in outprod_names
                 ouput_con = collect(filter(c -> c[1]==Product(prod) && c[2] == t, sys.connections))[1]
 
-                prod_tmp = Product(replace(prod, "transported", ""))
+                prod_tmp = Product(replace(prod, "transported" => ""))
 
                 if haskey(t.transC[substance], prod_tmp)
                     tc = t.transC[substance][prod_tmp]
@@ -125,7 +126,7 @@ function get_adj_mat(sys::System, substance::String)
     for c in sys.connections
         prod, from_tech, to_tech = c
         # transC are the same for transported or non-transported products
-        prod_tmp = Product(replace(String(prod.name), "transported", ""))
+        prod_tmp = Product(replace(String(prod.name), "transported" => ""))
 
         if haskey(from_tech.transC[substance], prod_tmp)
             tc = from_tech.transC[substance][prod_tmp]
@@ -182,7 +183,7 @@ function calc_massflows(P::AbstractArray, inp::AbstractVector)
     inp = inp.array
 
     inp = inp'
-    m = inp*P * inv(eye(P) - P) # not an optimal implementation from a numerical point of view...
+    m = inp*P * inv(I - P) # not an optimal implementation from a numerical point of view...
 
     flows = [(m+inp)[i]*P[i,j] for i=1:size(P,1), j=1:size(P,1)]
 

@@ -3,6 +3,7 @@ using NamedArrays
 
 import DataStructures
 import Combinatorics
+import Dates
 import Base.show
 import Base.getindex
 import Base.copy
@@ -182,7 +183,7 @@ function get_outputs(sys::System)
     outs = get_outputs(sys.techs)
 
     for c in sys.connections
-        idx = find(outs .== c[1]) # get index of appl products mathing c
+        idx = findall(outs .== c[1]) # get index of appl products mathing c
         deleteat!(outs, idx[1])   # remove one product
     end
     return outs
@@ -296,7 +297,7 @@ function build_system!(sys::System, completesystems::Array{System},
         for sys_ext in sys_exts
             if sys_ext.complete && !(sys_ext in completesystems)
                 push!(completesystems, sys_ext)
-                println(logfile, now())
+                println(logfile, Dates.now())
                 println(logfile, sys_ext)
                 flush(logfile)
             elseif !sys_ext.complete && islegal(sys_ext) && !(hash(sys_ext) in hashset)
@@ -314,7 +315,7 @@ Returns an Array of all possible `System`s starting with `source`. A source can 
 """
 function build_all_systems(source::Array{T1}, techs::Array{T2};
                            islegal::Function=x -> true,
-                           logfile::IO=STDOUT) where T1 <: AbstractTech where T2 <: AbstractTech
+                           logfile=stdout) where T1 <: AbstractTech where T2 <: AbstractTech
 
     completesystems = System[]
     build_system!(System(source), completesystems, techs, islegal,
@@ -337,7 +338,7 @@ function split_techcombined!(sys)
     filter!(t -> typeof(t) != TechCombined, sys.techs)
 
     # remove connection to/from TechCombineds
-    allConn_TechCombs = filter(c -> any(contains.([c[2].name, c[3].name], "::")),
+    allConn_TechCombs = filter(c -> any(occursin.("::", [c[2].name, c[3].name])),
                                sys.connections)
     filter!(c -> !(c in allConn_TechCombs), sys.connections)
 
@@ -350,7 +351,7 @@ function split_techcombined!(sys)
     # add connection from/to internal techs
     for c in allConn_TechCombs
         prod, from_tech, to_tech = c
-        if contains(from_tech.name, "::")
+        if occursin("::", from_tech.name)
 
             int_con_prod = collect(filter(c -> c[1] == prod, from_tech.internal_connections))
             ffilter = function (t::AbstractTech)
@@ -360,7 +361,7 @@ function split_techcombined!(sys)
 
             from_tech = collect(filter(ffilter, from_tech.internal_techs))
         end
-        if contains(to_tech.name, "::")
+        if occursin("::", to_tech.name)
 
             int_con_prod = collect(filter(c -> c[1] == prod, to_tech.internal_connections))
             ffilter = function (t::AbstractTech)
