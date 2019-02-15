@@ -33,6 +33,8 @@ show(io::Base.IO, p::Product) = print(io, "$(p.name)")
 
 isless(p1::Product, p2::Product) = isless(p1.name, p2.name)
 
+Broadcast.broadcastable(p::Product) = Ref(p)
+
 abstract type AbstractTech end
 
 @auto_hash_equals struct Tech <: AbstractTech
@@ -183,6 +185,7 @@ function get_outputs(sys::System)
     outs = get_outputs(sys.techs)
 
     for c in sys.connections
+
         idx = findall(outs .== c[1]) # get index of appl products mathing c
         deleteat!(outs, idx[1])   # remove one product
     end

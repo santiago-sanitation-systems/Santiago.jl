@@ -203,7 +203,6 @@ transC_error["totalsolids"] = Dict(Product("recovered") => 0.0,
 @test_throws ErrorException Tech(["a1", "a2", "b1"], String[], "G", "group1", 0.5, transC_error, transC_rel)
 
 # --
-
 @test length(SSB.get_inputs([A])) == 0
 @test length(SSB.get_inputs([A,D])) == 2
 @test length(SSB.get_inputs([A,D,E])) == 4
