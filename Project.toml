@@ -1,3 +1,8 @@
+name = "SanitationSystemMassFlow"
+uuid = "6e151eee-3103-11e9-2069-eb88a8db2529"
+version = "1.0.0"
+authors = ["Andreas Scheidegger <andreas.scheidegger@eawag.ch>"]
+
 [compat]
 julia = "1.0"
 
