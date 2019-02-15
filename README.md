@@ -21,114 +21,115 @@ package. It enables to
 # Usage
 
 ```Julia
-
 using SanitationSystemMassFlow
 
 # -----------
-# define techs (this is typically not done by hand)
+# define a few techs (this is typically not done by hand)
 
+#-- defines the concetration factors of the transfer coefficients,
+#   i.e. the larger the more uncertain are we about the values.
 transC_rel = Dict{String, Float64}("phosphor" => 5.0,
-                                       "nitrogen" => 20.0,
-                                        "water" => 100.0,
-                                       "totalsolids" => 1000.0)
+                                   "nitrogen" => 20.0,
+                                   "water" => 100.0,
+                                   "totalsolids" => 1000.0)
 
-    # --
-    transC_A = Dict{String, Dict{Product, Float64}}()
-    transC_A["phosphor"] = Dict(Product("a1") => 0.5,
-                                Product("a2") => 0.5,
-                                Product("airloss") => 0.0,
-                                Product("soilloss") => 0.0,
-                                Product("waterloss") => 0.0)
-    transC_A["nitrogen"] = Dict(Product("a1") => 0.5,
-                                Product("a2") => 0.5,
-                                Product("airloss") => 0.0,
-                                Product("soilloss") => 0.0,
-                                Product("waterloss") => 0.0)
-    transC_A["water"] = Dict(Product("a1") => 0.5,
-                             Product("a2") => 0.5,
-                             Product("airloss") => 0.0,
-                             Product("soilloss") => 0.0,
-                             Product("waterloss") => 0.0)
-    transC_A["totalsolids"] = Dict(Product("a1") => 0.5,
-                                   Product("a2") => 0.5,
-                                   Product("airloss") => 0.0,
-                                   Product("soilloss") => 0.0,
-                                   Product("waterloss") => 0.0)
+# --
+transC_A = Dict{String, Dict{Product, Float64}}()
+transC_A["phosphor"] = Dict(Product("a1") => 0.5,
+                            Product("a2") => 0.5,
+                            Product("airloss") => 0.0,
+                            Product("soilloss") => 0.0,
+                            Product("waterloss") => 0.0)
+transC_A["nitrogen"] = Dict(Product("a1") => 0.5,
+                            Product("a2") => 0.5,
+                            Product("airloss") => 0.0,
+                            Product("soilloss") => 0.0,
+                            Product("waterloss") => 0.0)
+transC_A["water"] = Dict(Product("a1") => 0.5,
+                         Product("a2") => 0.5,
+                         Product("airloss") => 0.0,
+                         Product("soilloss") => 0.0,
+                         Product("waterloss") => 0.0)
+transC_A["totalsolids"] = Dict(Product("a1") => 0.5,
+                               Product("a2") => 0.5,
+                               Product("airloss") => 0.0,
+                               Product("soilloss") => 0.0,
+                               Product("waterloss") => 0.0)
 
 
-    A = Tech(String[], ["a1", "a2"], "A", "group1", 0.5,
-             transC_A,
-             transC_rel)
+A = Tech(String[], ["a1", "a2"], "A", "group1", 0.5,
+         transC_A,
+         transC_rel)
 
-    # --
-    transC_B = Dict{String, Dict{Product, Float64}}()
-    transC_B["phosphor"] = Dict(Product("b1") => 1.0,
-                                Product("airloss") => 0.0,
-                                Product("soilloss") => 0.0,
-                                Product("waterloss") => 0.0)
-    transC_B["nitrogen"] = Dict(Product("b1") => 1.0,
-                                Product("airloss") => 0.0,
-                                Product("soilloss") => 0.0,
-                                Product("waterloss") => 0.0)
-    transC_B["water"] = Dict(Product("b1") => 1.0,
-                             Product("airloss") => 0.0,
-                             Product("soilloss") => 0.0,
-                             Product("waterloss") => 0.0)
-    transC_B["totalsolids"] = Dict(Product("b1") => 1.0,
-                                   Product("airloss") => 0.0,
-                                   Product("soilloss") => 0.0,
-                                   Product("waterloss") => 0.0)
+# --
+transC_B = Dict{String, Dict{Product, Float64}}()
+transC_B["phosphor"] = Dict(Product("b1") => 1.0,
+                            Product("airloss") => 0.0,
+                            Product("soilloss") => 0.0,
+                            Product("waterloss") => 0.0)
+transC_B["nitrogen"] = Dict(Product("b1") => 1.0,
+                            Product("airloss") => 0.0,
+                            Product("soilloss") => 0.0,
+                            Product("waterloss") => 0.0)
+transC_B["water"] = Dict(Product("b1") => 1.0,
+                         Product("airloss") => 0.0,
+                         Product("soilloss") => 0.0,
+                         Product("waterloss") => 0.0)
+transC_B["totalsolids"] = Dict(Product("b1") => 1.0,
+                               Product("airloss") => 0.0,
+                               Product("soilloss") => 0.0,
+                               Product("waterloss") => 0.0)
 
-    B = Tech(String[], ["b1"], "B", "group1", 0.5, transC_B, transC_rel)
+B = Tech(String[], ["b1"], "B", "group1", 0.5, transC_B, transC_rel)
 
-    # --
-    transC_C = Dict{String, Dict{Product, Float64}}()
-    transC_C["phosphor"] = Dict(Product("c1") => 0.5,
-                                Product("airloss") => 0.2,
-                                Product("soilloss") => 0.3,
-                                Product("waterloss") => 0.0)
-    transC_C["nitrogen"] = Dict(Product("c1") => 1.0,
-                                Product("airloss") => 0.0,
-                                Product("soilloss") => 0.0,
-                                Product("waterloss") => 0.0)
-    transC_C["water"] = Dict(Product("c1") => 0.6,
-                             Product("airloss") => 0.0,
-                             Product("soilloss") => 0.0,
-                             Product("waterloss") => 0.4)
-    transC_C["totalsolids"] = Dict(Product("c1") => 1.0,
-                                   Product("airloss") => 0.0,
-                                   Product("soilloss") => 0.0,
-                                   Product("waterloss") => 0.0)
-    C = Tech(["a1"], ["c1"], "C", "group1", 0.5,
-             transC_C, transC_rel)
+# --
+transC_C = Dict{String, Dict{Product, Float64}}()
+transC_C["phosphor"] = Dict(Product("c1") => 0.5,
+                            Product("airloss") => 0.2,
+                            Product("soilloss") => 0.3,
+                            Product("waterloss") => 0.0)
+transC_C["nitrogen"] = Dict(Product("c1") => 1.0,
+                            Product("airloss") => 0.0,
+                            Product("soilloss") => 0.0,
+                            Product("waterloss") => 0.0)
+transC_C["water"] = Dict(Product("c1") => 0.6,
+                         Product("airloss") => 0.0,
+                         Product("soilloss") => 0.0,
+                         Product("waterloss") => 0.4)
+transC_C["totalsolids"] = Dict(Product("c1") => 1.0,
+                               Product("airloss") => 0.0,
+                               Product("soilloss") => 0.0,
+                               Product("waterloss") => 0.0)
+C = Tech(["a1"], ["c1"], "C", "group1", 0.5,
+         transC_C, transC_rel)
 
-    # --
+# --
 
-    transC_D = Dict{String, Dict{Product, Float64}}()
-    transC_D["phosphor"] = Dict(Product("d1") => 0.1,
-                                Product("d2") => 0.1,
-                                Product("d3") => 0.8,
-                                Product("airloss") => 0.0,
-                                Product("soilloss") => 0.0,
-                                Product("waterloss") => 0.0)
-    transC_D["nitrogen"] = Dict(Product("d1") => 0.3,
-                                Product("d2") => 0.3,
-                                Product("d3") => 0.1,
-                                Product("airloss") => 0.0,
-                                Product("soilloss") => 0.3,
-                                Product("waterloss") => 0.0)
-    transC_D["water"] = Dict(Product("d1") => 0.0,
-                             Product("d2") => 0.0,
-                             Product("d3") => 1.0,
-                             Product("airloss") => 0.0,
-                             Product("soilloss") => 0.0,
-                             Product("waterloss") => 0.0)
-    transC_D["totalsolids"] = Dict(Product("d1") => 0.5,
-                                   Product("d2") => 0.5,
-                                   Product("d3") => 0.0,
-                                   Product("airloss") => 0.0,
-                                   Product("soilloss") => 0.0,
-                                   Product("waterloss") => 0.0)
+transC_D = Dict{String, Dict{Product, Float64}}()
+transC_D["phosphor"] = Dict(Product("d1") => 0.1,
+                            Product("d2") => 0.1,
+                            Product("d3") => 0.8,
+                            Product("airloss") => 0.0,
+                            Product("soilloss") => 0.0,
+                            Product("waterloss") => 0.0)
+transC_D["nitrogen"] = Dict(Product("d1") => 0.3,
+                            Product("d2") => 0.3,
+                            Product("d3") => 0.1,
+                            Product("airloss") => 0.0,
+                            Product("soilloss") => 0.3,
+                            Product("waterloss") => 0.0)
+transC_D["water"] = Dict(Product("d1") => 0.0,
+                         Product("d2") => 0.0,
+                         Product("d3") => 1.0,
+                         Product("airloss") => 0.0,
+                         Product("soilloss") => 0.0,
+                         Product("waterloss") => 0.0)
+transC_D["totalsolids"] = Dict(Product("d1") => 0.5,
+                               Product("d2") => 0.5,
+                               Product("d3") => 0.0,
+                               Product("airloss") => 0.0,
+                               Product("soilloss") => 0.0,
+                               Product("waterloss") => 0.0)
 
 D = Tech(["a2", "b1"], String["d1", "d2", "d3"], "D", "group1", 0.5,
          transC_D, transC_rel)
@@ -198,14 +199,18 @@ transC_G["totalsolids"] = Dict(Product("recovered") => 0.0,
 
 G = Tech(["a1", "a2", "b1"], String[], "G", "group1", 0.5, transC_G, transC_rel)
 
+
+
 # -----------
-# System
+# Find all systems
+
 
 # build systems
 allSys = build_all_systems([A, B], [C, D, E, F, G])
 
+
 # -----------
-# Mass flow
+# Calculate massflows
 
 # define input masses for each source
 M_in = Dict("A" => Dict("phosphor" => 600,
@@ -225,7 +230,6 @@ for sys in allSys
 end
 
 # example how to extract results
-
 allSys[2].properties["mf_stats"]["entered"]
 allSys[2].properties["mf_stats"]["recovery_ratio"]
 allSys[2].properties["mf_stats"]["recovered"]
