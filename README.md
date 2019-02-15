@@ -10,11 +10,11 @@ package. It enables to
 
 # Installation
 
-1. Install [Julia](https://julialang.org/) version 0.6.
+1. Install [Julia](https://julialang.org/) version 1.x.
 
-2. Then the `SanitationSystemMassFlow` package is installed with the Julia command:
+2. Then the `SanitationSystemMassFlow` package is installed from within the Julia:
 ```Julia
-Pkg.clone("https://gitlab.com/scheidan/SanitationSystemMassFlow.git")
+] add "https://gitlab.com/scheidan/SanitationSystemMassFlow.git"
 ```
 
 # Usage
@@ -200,7 +200,7 @@ G = Tech(["a1", "a2", "b1"], String[], "G", "group1", 0.5, transC_G, transC_rel)
 # -----------
 # System
 
-# build systems 
+# build systems
 allSys = build_all_systems([A, B], [C, D, E, F, G])
 
 # -----------
@@ -215,7 +215,7 @@ M_in = Dict("A" => Dict("phosphor" => 600,
                         "nitrogen" => 40,
                         "water" => 26,
                         "totalsolids" => 9))
-						
+
 
 # calculate massflow for each system
 for sys in allSys
