@@ -15,8 +15,8 @@ export issink
 
 const MassDict = Dict{Tech, NamedArray{Float64}}
 
-issource{T <: AbstractTech}(t::T) = length(t.inputs) == 0
-issink{T <: AbstractTech}(t::T) = length(t.outputs) == 0
+issource(t::T) where T <: AbstractTech = length(t.inputs) == 0
+issink(t::T) where T <: AbstractTech = length(t.outputs) == 0
 
 
 """
@@ -27,8 +27,8 @@ Arguments:
 - if `MC` is true, the transfer coefficients are sampled form Dirichlet distribution
 - `scale_reliability` a factor to scale the `transC_reliability` of all Techs.
 """
-function massflow{T <: Real}(sys::System, M_in::Dict{String, Dict{String, T}};
-                             MC::Bool=false, scale_reliability::Real=1.0)
+function massflow(sys::System, M_in::Dict{String, Dict{String, T}};
+                  MC::Bool=false, scale_reliability::Real=1.0) where T <: Real
 
     # --- calculate flows
     flow_mats = Dict{String, AbstractArray}()
@@ -249,7 +249,6 @@ end
 """
 Calculate summary statistics of a Monte Carlo massflow results
 """
-
 function massflow_summary(sys::System, M_in::Dict; MC::Bool=true, n::Int=100,
                           scale_reliability::Real=1.0)
 

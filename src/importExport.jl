@@ -295,7 +295,7 @@ end
      This function generates possible combinations of one source and all sourcesAdds
      returns all possible combinations.
     """
-function generateCombinations{T <: AbstractTech}(source::T, sourcesAdd::Array{T})
+function generateCombinations(source::T, sourcesAdd::Array{T}) where T <: AbstractTech
 
     src_comb = Array{Tech}[]
     push!(src_comb, [source])

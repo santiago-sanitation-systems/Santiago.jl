@@ -66,10 +66,10 @@ end
 The `Tech` type represents Technolgies.
 It consist of `inputs`, `outputs`, a `name`, a `functional_group`, and a transfer coefficients `transC`.
 """
-function Tech{T<:String}(inputs::Array{T}, outputs::Array{T}, name::T, functional_group::T,
-                         appscore::Float64,
-                         transC::Dict{String, Dict{Product, Float64}},
-                         transC_reliability::Dict{String, Float64})
+function Tech(inputs::Array{T}, outputs::Array{T}, name::T, functional_group::T,
+              appscore::Float64,
+              transC::Dict{String, Dict{Product, Float64}},
+              transC_reliability::Dict{String, Float64}) where T<:String
 
     # sanity check
     for sub in keys(transC)
@@ -140,10 +140,10 @@ end
 Base.hash(sys::System, h::UInt) = hash(sys.techs, hash(sys.connections, hash(sys.complete, hash(:System, h))))
 Base.:(==)(a::System, b::System) = isequal(a.techs, b.techs) && isequal(a.connections, b.connections) && isequal(a.complete, b.complete) && true
 
-System{T <: AbstractTech}(techs::Set{T}, con::Set{Connection}, complete::Bool) = System(techs, con, complete, Dict())
-System{T <: AbstractTech}(techs::Array{T}, con::Array{Connection}, complete::Bool) = System(Set(techs), Set(con), complete)
-System{T <: AbstractTech}(techs::Array{T}, con::Array{Connection}) = System(Set(techs), Set(con), false)
-System{T <: AbstractTech}(techs::Array{T}) = System(Set(techs), Set(Connection[]), false)
+System(techs::Set{T}, con::Set{Connection}, complete::Bool) where T <: AbstractTech = System(techs, con, complete, Dict())
+System(techs::Array{T}, con::Array{Connection}, complete::Bool)  where T <: AbstractTech = System(Set(techs), Set(con), complete)
+System(techs::Array{T}, con::Array{Connection}) where T <: AbstractTech = System(Set(techs), Set(con), false)
+System(techs::Array{T})  where T <: AbstractTech = System(Set(techs), Set(Connection[]), false)
 
 
 # Function to copy a System
@@ -164,7 +164,7 @@ end
 # -----------
 # helper functions
 
-function get_outputs{T2<:Union{Array{T1}, Set{T1}} where T1<:AbstractTech}(techs::T2)
+function get_outputs(techs::T2) where T2<:Union{Array{T1}, Set{T1}}  where T1<:AbstractTech
     outs = Product[]
     for t in techs
         append!(outs, t.outputs)
@@ -188,7 +188,7 @@ function get_outputs(sys::System)
     return outs
 end
 
-function get_inputs{T2<:Union{Array{T1}, Set{T1}} where T1<:AbstractTech}(techs::T2)
+function get_inputs(techs::T2) where T2<:Union{Array{T1}, Set{T1}} where T1<:AbstractTech
     ins = Product[]
     for t in techs
         append!(ins, t.inputs)
@@ -258,7 +258,7 @@ function get_openin_techs(sys::System, prod::Product)
 end
 
 # pre filter the tech list
-function get_candidates{T <: AbstractTech}(s::Array{T}, outs, k)
+function get_candidates(s::Array{T}, outs, k) where T <: AbstractTech
     # Limitation!
     # This function guaranties, that we never add a techs, which leads to new open inputs.
     # However, this banns not only loops, but also "triangles". E.g if only "A is given"
@@ -283,9 +283,9 @@ end
 # functions to find all systems
 
 # Return a vector of Systems
-function build_system!{T <: AbstractTech}(sys::System, completesystems::Array{System},
-                                          techs::Array{T}, islegal::Function,
-                                          logfile::IO, hashset::Set{UInt64})
+function build_system!(sys::System, completesystems::Array{System},
+                       techs::Array{T}, islegal::Function,
+                       logfile::IO, hashset::Set{UInt64}) where T <: AbstractTech
 
     # get Array of matching Techs Arrays
     candidates = get_candidates(sys, techs)
@@ -312,10 +312,9 @@ end
 """
 Returns an Array of all possible `System`s starting with `source`. A source can be any technology with a least one output.
 """
-function build_all_systems{T1 <: AbstractTech,
-                           T2 <: AbstractTech}(source::Array{T1}, techs::Array{T2};
-                                               islegal::Function=x -> true,
-                                               logfile::IO=STDOUT)
+function build_all_systems(source::Array{T1}, techs::Array{T2};
+                           islegal::Function=x -> true,
+                           logfile::IO=STDOUT) where T1 <: AbstractTech where T2 <: AbstractTech
 
     completesystems = System[]
     build_system!(System(source), completesystems, techs, islegal,
@@ -388,7 +387,7 @@ end
 
 
 # converts a vecptr of TEchs and techsCombined to a purly Tech array
-function meltTechs{T <: AbstractTech}(techs::Union{Array{T}, Set{T}})
+function meltTechs(techs::Union{Array{T}, Set{T}}) where T <: AbstractTech
     flattechs = Tech[]
     for t in techs
         if typeof(t)==Tech
@@ -403,7 +402,7 @@ end
 
 
 # Returns techs that fit to an open system
-function get_candidates{T <: AbstractTech}(sys::System, techs::Array{T})
+function get_candidates(sys::System, techs::Array{T}) where T <: AbstractTech
 
     # filter out already used techs (also in TechCombined)
     systechs = meltTechs(sys.techs)
@@ -508,7 +507,7 @@ end
 """
 Return an array of all possible extension of `sys` with the candidate technology
 """
-function extend_system{T <: AbstractTech}(sys::System, tech_comb::Array{T})
+function extend_system(sys::System, tech_comb::Array{T}) where T <: AbstractTech
 
     sysi = copy(sys)
     union!(sysi.techs, tech_comb)
@@ -524,8 +523,8 @@ Return an array possible Technologies (subset of techlist) for the given Sources
 The number of technologies is reduced by removing Techs that require an input that is not available with
 the sources provided.
 """
-function prefilterTechList{T1 <: AbstractTech, T2 <: AbstractTech}(currentSources::Array{T1}, sources::Array{T2},
-                           sourcesAdd::Array{T2}, tech_list::Array{T2})
+function prefilterTechList(currentSources::Array{T1}, sources::Array{T2},
+                           sourcesAdd::Array{T2}, tech_list::Array{T2}) where T1 <: AbstractTech where T2 <: AbstractTech
 
     # All Products that can be created by available sources
     otherSourcesProduct = vcat([t.outputs for t in sources]...)
