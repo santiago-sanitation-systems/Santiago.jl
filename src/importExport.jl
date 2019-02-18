@@ -1,4 +1,6 @@
 using Combinatorics
+import DelimitedFiles
+
 export importTechFile
 export writedotfile
 export generateCombinations
@@ -23,7 +25,7 @@ and returns a tuple of an array with sources and an array of all technologies
 function importTechFile(techFile::String; sourceGroup::String="U",
                         sourceAddGroup::String="Uadd", sinkGroup::String="D")
 
-    techTable = readdlm(techFile, ';')
+    techTable = DelimitedFiles.readdlm(techFile, ';')
 
     ## Load the table into suitable Data Structure
     techList = MasterTech[]
