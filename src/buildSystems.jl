@@ -28,7 +28,7 @@ export prefilterTechList
 name::Symbol
 end
 
-Product(name::String) = Product(Symbol(name))
+Product(name::T) where T <: AbstractString = Product(Symbol(name))
 show(io::Base.IO, p::Product) = print(io, "$(p.name)")
 
 isless(p1::Product, p2::Product) = isless(p1.name, p2.name)

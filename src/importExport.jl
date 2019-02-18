@@ -36,8 +36,8 @@ function importTechFile(techFile::String; sourceGroup::String="U",
         currentTech.name = techTable[1,i]
         currentTech.functional_group = techTable[2,i]
         currentTech.appscore = parse(Float64, string(techTable[6,i]))
-        currentTech.inputs = Array{String, 1}(0)
-        currentTech.outputs = Array{String, 1}(0)
+        currentTech.inputs = Array{String, 1}(undef, 0)
+        currentTech.outputs = Array{String, 1}(undef, 0)
         currentTech.inrel = techTable[4,i]
         currentTech.outrel = techTable[5,i]
 
@@ -46,13 +46,13 @@ function importTechFile(techFile::String; sourceGroup::String="U",
         filter!(x -> x != "", tmp)
         j = 1
         while (j <= length(tmp)) && (tmp[j] != "->")
-            tmp[j] = replace(tmp[j], ",", "")
+            tmp[j] = replace(tmp[j], "," => "")
             push!(currentTech.inputs, tmp[j])
             j += 1
         end
         j += 1
         while j <= length(tmp)
-            tmp[j] = replace(tmp[j], ",", "")
+            tmp[j] = replace(tmp[j], "," => "")
             push!(currentTech.outputs, tmp[j])
             j += 1
         end
@@ -66,7 +66,7 @@ function importTechFile(techFile::String; sourceGroup::String="U",
 
         function make_transC_substance_dict(s::String)
             d = Dict{Product, Float64}()
-            tmp = [split(replace(x, " ", ""), '=') for x in split(s, ',')]
+            tmp = [split(replace(x, " " => ""), '=') for x in split(s, ',')]
             for t in tmp
                 d[Product(t[1])] = parse(Float64, t[2])
             end
@@ -88,7 +88,7 @@ function importTechFile(techFile::String; sourceGroup::String="U",
                 needed_keys = Set([Product("x"), Product("airloss"), Product("soilloss"), Product("waterloss")])
             else
                 if length(currentTech.outputs) > 0 # is not sink
-                    out_tmp = [replace(p, "transported", "") for p in currentTech.outputs]
+                    out_tmp = [replace(p, "transported" => "") for p in currentTech.outputs]
                     needed_keys = Set(vcat(Product.(out_tmp), [Product("airloss"), Product("soilloss"), Product("waterloss")]))
                 else                # is sink
                     needed_keys = Set([Product("recovered"), Product("airloss"), Product("soilloss"), Product("waterloss")])
@@ -112,8 +112,8 @@ function importTechFile(techFile::String; sourceGroup::String="U",
 
         if t.functional_group != Symbol(sinkGroup)      # of t is not a sink
             outs = t.outputs
-            out_transported = filter(p -> contains(string(p.name), "transported"), outs)
-            out_NOTtransported = filter(p -> !contains(string(p.name), "transported"), outs)
+            out_transported = filter(p -> occursin("transported", string(p.name)), outs)
+            out_NOTtransported = filter(p -> !occursin("transported", string(p.name)), outs)
 
             ## produce array of two Techs
             techs = Tech[Tech(t.inputs,
@@ -265,8 +265,8 @@ function islegal(t::Tech)
     inp  = [string(s.name) for s in t.inputs]
     outp = [string(s.name) for s in t.outputs]
 
-    inp_trans  = [contains(i, "transported") for i in inp]
-    outp_trans = [contains(i, "transported") for i in outp]
+    inp_trans  = [occursin("transported", i) for i in inp]
+    outp_trans = [occursin("transported", i) for i in outp]
 
     ##        is transport              |         everything is transported  | nothing is transported
     (t.functional_group == Symbol("C")) | (all(inp_trans) & all(outp_trans)) | (all(.!(inp_trans)) & all(.!(outp_trans)))
@@ -278,7 +278,7 @@ subTechFiltered = filter(islegal, subTechList)
 
 # Test if all technologies in the input file exist at least in one form in the final tech lists
 for t in techList
-    if !any(contains(x.name, t.name) for x in subTechFiltered)
+    if !any(occursin(t.name, x.name) for x in subTechFiltered)
         error("Tech '$(t.name)' is not imported! Check csv file carefully!")
     end
 end
@@ -325,7 +325,7 @@ end
 
  """
 function writedotfile(sys::System, file::String, no_group::Array{String}=["S", "C", "T"], options::String="")
-    make_legal(name::String) = replace(name, " :: ", "")
+    make_legal(name::String) = replace(name, " :: " => "")
 
     open(file, "w") do f
         println(f, "digraph system {")
@@ -353,19 +353,19 @@ function writedotfile(sys::System, file::String, no_group::Array{String}=["S", "
         for t in vcat(sys.techs...)
             label = "$(t.name)\n"
             label = label * "($(t.functional_group))"
-            println(f, replace("$(make_legal(t.name)) [shape=box, fillcolor=\"$(get(colors, t.functional_group, "# 999999"))\" label=\"$label\"];", ".", "_"))
-        end
-        ## edges
-        for c in sys.connections
-            println(f, replace("$(make_legal(c[2].name)) -> $(make_legal(c[3].name)) [label=\"$(c[1].name)\"];", ".", "_"))
-        end
+            println(f, replace("$(make_legal(t.name)) [shape=box, fillcolor=\"$(get(colors, t.functional_group, "# 999999"))\" label=\"$label\"];", "." => "_"))
+                               end
+                               ## edges
+                               for c in sys.connections
+                               println(f, replace("$(make_legal(c[2].name)) -> $(make_legal(c[3].name)) [label=\"$(c[1].name)\"];", "." => "_"))
+                               end
 
-        no_group = [Symbol(x) for x in no_group]
-        ## group according to functional groups
-        for fg in filter(x -> !(x in no_group), fgroups)
+                               no_group = [Symbol(x) for x in no_group]
+                               ## group according to functional groups
+                               for fg in filter(x -> !(x in no_group), fgroups)
             names = [t.name for t in sys.techs if t.functional_group==fg]
-            names = map(n -> make_legal(replace(n, ".", "_")), names)
-            println(f, "{ rank=same $(join(names, ' ')) }")
+                               names = map(n -> make_legal(replace(n, "." => "_")), names)
+                               println(f, "{ rank=same $(join(names, ' ')) }")
         end
 
         println(f, "}")
