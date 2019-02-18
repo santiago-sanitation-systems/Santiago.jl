@@ -273,6 +273,7 @@ function massflow_summary(sys::System, M_in::Dict; MC::Bool=true, n::Int=100,
 
     # --  recovery ratio
     tmp = hcat((recovery_ratio(m, M_in, sys) for m in m_outs)...)
+
     rr = hcat(mean(tmp, dims=2),
               std(tmp, dims=2),
               NamedArray(mapslices(x -> quantile(x, qq), tmp.array, dims=2)))
@@ -296,12 +297,12 @@ function massflow_summary(sys::System, M_in::Dict; MC::Bool=true, n::Int=100,
 
 
     # --  losses
-    tmp = cat(3, (lost(m) for m in m_outs)...)
+    tmp = cat((lost(m) for m in m_outs)..., dims=3)
 
-    ll = NamedArray(cat(3,
-                        mean(tmp.array, dims=3),
+    ll = NamedArray(cat(mean(tmp.array, dims=3),
                         std(tmp.array, dims=3),
-                        mapslices(x-> quantile(x, qq), tmp.array, dims=3)))
+                        mapslices(x-> quantile(x, qq), tmp.array, dims=3),
+                        dims=3))
 
     setnames!(ll, SUBSTANCE_NAMES, 1)
     setnames!(ll, ["air loss", "soil loss", "water loss"],2)
@@ -311,12 +312,12 @@ function massflow_summary(sys::System, M_in::Dict; MC::Bool=true, n::Int=100,
     summaries["lost"] = ll
 
     # -- losses per functional group
-    tmp = cat(3, (functional_group_losses(m, M_in, sys) for m in m_outs)...)
+    tmp = cat((functional_group_losses(m, M_in, sys) for m in m_outs)..., dims=3)
 
-    ll = NamedArray(cat(3,
-                        mean(tmp.array, dims=3),
+    ll = NamedArray(cat(mean(tmp.array, dims=3),
                         std(tmp.array, dims=3),
-                        mapslices(x-> quantile(x, qq), tmp.array, dims=3)))
+                        mapslices(x-> quantile(x, qq), tmp.array, dims=3),
+                        dims=3))
 
     setnames!(ll, SUBSTANCE_NAMES, 1)
     functional_groups = [:U, :S, :C, :T, :D]
