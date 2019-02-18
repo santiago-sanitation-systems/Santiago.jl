@@ -251,7 +251,15 @@ for sys in allSys
     @test isapprox(entered(M_in, sys) - recovered(m_outs) - sum(lost(m_outs), dims=2),
                    [0.0, 0.0, 0.0, 0.0], atol=1e-12)
 
+    # summary function
+    m1 = massflow_summary(sys, M_in,
+                          MC=true, n=10)
+    @test length(m1) == 5
+
 end
+
+
+
 
 
 
