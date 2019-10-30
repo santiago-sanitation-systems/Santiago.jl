@@ -2,7 +2,8 @@
 # massflow
 
 using LinearAlgebra
-using Distributions
+using Statistics
+using Distributions: Dirichlet
 using NamedArrays
 
 export massflow
@@ -166,7 +167,7 @@ function sample_P(P::AbstractArray, transC_reliability::AbstractArray)
     for i in 1:size(P,1)
         i_zero = P[i,:] .<= 0.0
         alpha = P[i,.!i_zero] * transC_reliability[i]
-        P2[i,.!i_zero] = rand( Dirichlet(alpha.array), 1 )
+        P2[i,.!i_zero] = rand(Dirichlet(alpha.array), 1)
     end
     P2
 end
