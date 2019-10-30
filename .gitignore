@@ -3,3 +3,5 @@
 *.jl.mem
 *.juliahistory
 log.txt
+.DS_Store
+/Manifest.toml
