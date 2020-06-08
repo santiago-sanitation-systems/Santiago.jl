@@ -20,6 +20,8 @@ package. It enables to
 
 # Usage
 
+Note, starting Julia with multiple threads may speed up the execution.
+
 ```Julia
 using SanitationSystemMassFlow
 
