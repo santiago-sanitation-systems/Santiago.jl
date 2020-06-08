@@ -289,24 +289,30 @@ end
 # Return a vector of Systems
 function build_system!(sys::System, completesystems::Array{System},
                        techs::Array{T}, islegal::Function,
-                       logfile::IO, hashset::Set{UInt64}) where T <: AbstractTech
+                       logfile::IO, hashset::Set{UInt64}, threadlock) where T <: AbstractTech
 
     # get Array of matching Techs Arrays
     candidates = get_candidates(sys, techs)
 
-    for candidate in candidates
+    Base.Threads.@threads for candidate in candidates
         # extend systems
-        sys_exts = extend_system(sys, candidate)
+        sys_exts = extend_system(sys, candidate) # Do we need a lock for 'sys'???
         for sys_ext in sys_exts
-            if sys_ext.complete && !(sys_ext in completesystems)
-                push!(completesystems, sys_ext)
-                println(logfile, Dates.now())
-                println(logfile, sys_ext)
-                flush(logfile)
+            if sys_ext.complete
+                lock(threadlock) do
+                    if !(sys_ext in completesystems)
+                        push!(completesystems, sys_ext)
+                    end
+                    # println(logfile, Dates.now())
+                    # println(logfile, sys_ext)
+                    # flush(logfile)
+                end
             elseif !sys_ext.complete && islegal(sys_ext) && !(hash(sys_ext) in hashset)
-                push!(hashset, hash(sys_ext))
+                lock(threadlock) do
+                    push!(hashset, hash(sys_ext))
+                end
                 build_system!(sys_ext, completesystems,
-                              techs, islegal, logfile, hashset)
+                              techs, islegal, logfile, hashset, threadlock)
             end
         end
     end
@@ -321,8 +327,9 @@ function build_all_systems(source::Array{T1}, techs::Array{T2};
                            logfile=stdout) where T1 <: AbstractTech where T2 <: AbstractTech
 
     completesystems = System[]
+    threadlock = ReentrantLock()
     build_system!(System(source), completesystems, techs, islegal,
-                  logfile, Set{UInt64}())
+                  logfile, Set{UInt64}(), threadlock)
 
 
     # split TechCombineds
