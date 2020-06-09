@@ -20,7 +20,11 @@ package. It enables to
 
 # Usage
 
-Note, starting Julia with multiple threads may speed up the execution.
+Note, starting Julia with multiple threads may speed up the
+execution through parallelization.
+
+
+## Minimal Example
 
 ```Julia
 using SanitationSystemMassFlow
@@ -204,12 +208,11 @@ G = Tech(["a1", "a2", "b1"], String[], "G", "group1", 0.5, transC_G, transC_rel)
 
 
 # -----------
-# Find all systems
+# Build all systems
 
 
 # build systems
-allSys = build_all_systems([A, B], [C, D, E, F, G])
-
+allSys = santiago_build_systems([A, B], [C, D, E, F, G], additional_sources=[B])
 
 # -----------
 # Calculate massflows
@@ -239,4 +242,36 @@ allSys[2].properties["mf_stats"]["recovered"]
 allSys[2].properties["mf_stats"]["lost"][:,"air loss",:]
 allSys[2].properties["mf_stats"]["lost"][:,:,"mean"]
 allSys[2].properties["mf_stats"]["lost"][:,:,"q_0.5"]
+```
+
+## Logging
+
+By default, `SanitationSystemMassFlow` is quite
+less talkative. This can be adapted by the logging level. It is
+recommend to install the package `LoggingExtras.jl` for convenience:
+
+```Julia
+using Logging
+using LoggingExtras
+
+# - show only warings and errors
+mylogger1 = MinLevelLogger(SimpleLogger(), Logging.Warn)
+global_logger(mylogger1)
+
+... use SanitationSystemMassFlow functions ...
+
+# - show only debug informatinformation, infos, warings and errors
+mylogger2 = MinLevelLogger(SimpleLogger(), Logging.Debug)
+global_logger(mylogger2)
+
+... use SanitationSystemMassFlow functions ...
+
+# - show only warings and errors, and log all infos into the log file 'info.log'
+mylogger3 = TeeLogger(
+    MinLevelLogger(FileLogger("info.log"), Logging.Info),  # logs to file
+    MinLevelLogger(SimpleLogger(), Logging.Warn)           # logs to STDOUT
+)
+global_logger(mylogger3)
+
+... use SanitationSystemMassFlow functions ...
 ```
