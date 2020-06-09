@@ -9,6 +9,8 @@ const SUBSTANCE_NAMES = ["phosphor", "nitrogen", "water", "totalsolids"]
 include("buildSystems.jl")
 include("massflow.jl")
 include("importExport.jl")
+include("properties.jl")
 
+include("interface.jl")
 
 end
