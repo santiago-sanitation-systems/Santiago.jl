@@ -303,9 +303,7 @@ function build_system!(sys::System, completesystems::Array{System},
                     if !(sys_ext in completesystems)
                         push!(completesystems, sys_ext)
                     end
-                    # println(logfile, Dates.now())
-                    # println(logfile, sys_ext)
-                    # flush(logfile)
+                    @info "$sys_ext"
                 end
             elseif !sys_ext.complete && islegal(sys_ext) && !(hash(sys_ext) in hashset)
                 lock(threadlock) do
@@ -560,11 +558,10 @@ function prefilterTechList(currentSources::Array{T1}, sources::Array{T2},
     #     end
     # end
 
-    # check of any the String in otherSourcesProduct is part of an input products name
+    # check that non of the String in otherSourcesProduct is part of an input products name
     function ffilter(x)
         inputs = map(x -> "$(x.name)", x.inputs)
-        match_inputs = filter(Regex(join(otherSourcesProduct, '|')), inputs)
-        length(match_inputs) == 0
+        all(.!occursin.(Regex(join(otherSourcesProduct, '|')), inputs))
     end
 
     sub_tech_list = filter(ffilter, tech_list)
