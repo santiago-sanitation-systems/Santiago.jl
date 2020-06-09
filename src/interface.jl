@@ -9,15 +9,16 @@ export santiago_build_systems
 # Build all systems from a given the sources and and a set of technologies.
 
 
-```santiago_build_systems(sources, additional_sources::Array{T1},
-                          technologies;
-                          additional_sources=T1[]
-                          addlooptechs::Bool=true, looptechgroup=[:S, :T])
+```
+santiago_build_systems(sources::Array{T},
+                      technologies::Array{T};
+                      additional_sources::Array{T}=T[]
+                      addlooptechs::Bool=true, looptechgroup=[:S, :T]) where T <: AbstractTech
 ```
 ## Parameters
-sources:            An Array of sources technologies
-technologies:       Array of sanitation technologies
-additional_sources: optional array of source technolgies that can be added to the main sources (such as kitch sink)
+- sources:            An array of sources technologies
+- technologies:       Array of sanitation technologies
+- additional_sources: optional array of source technolgies that can be added to the main sources (such as kitch sink)
 
 ## Values
 An array of all found sanitation systems.
@@ -78,7 +79,8 @@ function santiago_build_systems(sources::Array{T},
         append!(allSys, newSys)
     end
 
-    # compute some porperties of system
+    ## ------
+    ## Compute some system properties
     for (i,s) in enumerate(allSys)
         s.properties["ID"] = i
         s.properties["sysappscore"] = sysappscore(s)
