@@ -28,250 +28,93 @@ execution through parallelization.
 
 ```Julia
 using SanitationSystemMassFlow
+using Logging
 
 # -----------
-# define a few techs (this is typically not done by hand)
+# 0) define log level
 
-#-- defines the concetration factors of the transfer coefficients,
-#   i.e. the larger the more uncertain are we about the values.
-transC_rel = Dict{String, Float64}("phosphor" => 5.0,
-                                   "nitrogen" => 20.0,
-                                   "water" => 100.0,
-                                   "totalsolids" => 1000.0)
-
-# --
-transC_A = Dict{String, Dict{Product, Float64}}()
-transC_A["phosphor"] = Dict(Product("a1") => 0.5,
-                            Product("a2") => 0.5,
-                            Product("airloss") => 0.0,
-                            Product("soilloss") => 0.0,
-                            Product("waterloss") => 0.0)
-transC_A["nitrogen"] = Dict(Product("a1") => 0.5,
-                            Product("a2") => 0.5,
-                            Product("airloss") => 0.0,
-                            Product("soilloss") => 0.0,
-                            Product("waterloss") => 0.0)
-transC_A["water"] = Dict(Product("a1") => 0.5,
-                         Product("a2") => 0.5,
-                         Product("airloss") => 0.0,
-                         Product("soilloss") => 0.0,
-                         Product("waterloss") => 0.0)
-transC_A["totalsolids"] = Dict(Product("a1") => 0.5,
-                               Product("a2") => 0.5,
-                               Product("airloss") => 0.0,
-                               Product("soilloss") => 0.0,
-                               Product("waterloss") => 0.0)
-
-
-A = Tech(String[], ["a1", "a2"], "A", "group1", 0.5,
-         transC_A,
-         transC_rel)
-
-# --
-transC_B = Dict{String, Dict{Product, Float64}}()
-transC_B["phosphor"] = Dict(Product("b1") => 1.0,
-                            Product("airloss") => 0.0,
-                            Product("soilloss") => 0.0,
-                            Product("waterloss") => 0.0)
-transC_B["nitrogen"] = Dict(Product("b1") => 1.0,
-                            Product("airloss") => 0.0,
-                            Product("soilloss") => 0.0,
-                            Product("waterloss") => 0.0)
-transC_B["water"] = Dict(Product("b1") => 1.0,
-                         Product("airloss") => 0.0,
-                         Product("soilloss") => 0.0,
-                         Product("waterloss") => 0.0)
-transC_B["totalsolids"] = Dict(Product("b1") => 1.0,
-                               Product("airloss") => 0.0,
-                               Product("soilloss") => 0.0,
-                               Product("waterloss") => 0.0)
-
-B = Tech(String[], ["b1"], "B", "group1", 0.5, transC_B, transC_rel)
-
-# --
-transC_C = Dict{String, Dict{Product, Float64}}()
-transC_C["phosphor"] = Dict(Product("c1") => 0.5,
-                            Product("airloss") => 0.2,
-                            Product("soilloss") => 0.3,
-                            Product("waterloss") => 0.0)
-transC_C["nitrogen"] = Dict(Product("c1") => 1.0,
-                            Product("airloss") => 0.0,
-                            Product("soilloss") => 0.0,
-                            Product("waterloss") => 0.0)
-transC_C["water"] = Dict(Product("c1") => 0.6,
-                         Product("airloss") => 0.0,
-                         Product("soilloss") => 0.0,
-                         Product("waterloss") => 0.4)
-transC_C["totalsolids"] = Dict(Product("c1") => 1.0,
-                               Product("airloss") => 0.0,
-                               Product("soilloss") => 0.0,
-                               Product("waterloss") => 0.0)
-C = Tech(["a1"], ["c1"], "C", "group1", 0.5,
-         transC_C, transC_rel)
-
-# --
-
-transC_D = Dict{String, Dict{Product, Float64}}()
-transC_D["phosphor"] = Dict(Product("d1") => 0.1,
-                            Product("d2") => 0.1,
-                            Product("d3") => 0.8,
-                            Product("airloss") => 0.0,
-                            Product("soilloss") => 0.0,
-                            Product("waterloss") => 0.0)
-transC_D["nitrogen"] = Dict(Product("d1") => 0.3,
-                            Product("d2") => 0.3,
-                            Product("d3") => 0.1,
-                            Product("airloss") => 0.0,
-                            Product("soilloss") => 0.3,
-                            Product("waterloss") => 0.0)
-transC_D["water"] = Dict(Product("d1") => 0.0,
-                         Product("d2") => 0.0,
-                         Product("d3") => 1.0,
-                         Product("airloss") => 0.0,
-                         Product("soilloss") => 0.0,
-                         Product("waterloss") => 0.0)
-transC_D["totalsolids"] = Dict(Product("d1") => 0.5,
-                               Product("d2") => 0.5,
-                               Product("d3") => 0.0,
-                               Product("airloss") => 0.0,
-                               Product("soilloss") => 0.0,
-                               Product("waterloss") => 0.0)
-
-D = Tech(["a2", "b1"], String["d1", "d2", "d3"], "D", "group1", 0.5,
-         transC_D, transC_rel)
-
-# --
-transC_E = Dict{String, Dict{Product, Float64}}()
-transC_E["phosphor"] = Dict(Product("recovered") => 1.0,
-                            Product("airloss") => 0.0,
-                            Product("soilloss") => 0.0,
-                            Product("waterloss") => 0.0)
-transC_E["nitrogen"] = Dict(Product("recovered") => 1.0,
-                            Product("airloss") => 0.0,
-                            Product("soilloss") => 0.0,
-                            Product("waterloss") => 0.0)
-transC_E["water"] = Dict(Product("recovered") => 1.0,
-                         Product("airloss") => 0.0,
-                         Product("soilloss") => 0.0,
-                         Product("waterloss") => 0.0)
-transC_E["totalsolids"] = Dict(Product("recovered") => 0.8,
-                               Product("airloss") => 0.0,
-                               Product("soilloss") => 0.0,
-                               Product("waterloss") => 0.2)
-
-E = Tech(["c1", "d1"], String[], "E", "group1", 0.5, transC_E, transC_rel)
-
-# --
-
-transC_F = Dict{String, Dict{Product, Float64}}()
-transC_F["phosphor"] = Dict(Product("recovered") => 1.0,
-                            Product("airloss") => 0.0,
-                            Product("soilloss") => 0.0,
-                            Product("waterloss") => 0.0)
-transC_F["nitrogen"] = Dict(Product("recovered") => 1.0,
-                            Product("airloss") => 0.0,
-                            Product("soilloss") => 0.0,
-                            Product("waterloss") => 0.0)
-transC_F["water"] = Dict(Product("recovered") => 0.5,
-                         Product("airloss") => 0.5,
-                         Product("soilloss") => 0.0,
-                         Product("waterloss") => 0.0)
-transC_F["totalsolids"] = Dict(Product("recovered") => 1.0,
-                               Product("airloss") => 0.0,
-                               Product("soilloss") => 0.0,
-                               Product("waterloss") => 0.0)
-
-F = Tech(["d2", "d3"], String[], "F", "group1", 0.5, transC_F, transC_rel)
-
-# --
-
-transC_G = Dict{String, Dict{Product, Float64}}()
-transC_G["phosphor"] = Dict(Product("recovered") => 0.0,
-                            Product("airloss") => 0.0,
-                            Product("soilloss") => 0.0,
-                            Product("waterloss") => 1.0)
-transC_G["nitrogen"] = Dict(Product("recovered") => 0.0,
-                            Product("airloss") => 0.0,
-                            Product("soilloss") => 0.0,
-                            Product("waterloss") => 1.0)
-transC_G["water"] = Dict(Product("recovered") => 0.0,
-                         Product("airloss") => 0.5,
-                         Product("soilloss") => 0.5,
-                         Product("waterloss") => 0.0)
-transC_G["totalsolids"] = Dict(Product("recovered") => 0.0,
-                               Product("airloss") => 1.0,
-                               Product("soilloss") => 0.0,
-                               Product("waterloss") => 0.0)
-
-G = Tech(["a1", "a2", "b1"], String[], "G", "group1", 0.5, transC_G, transC_rel)
-
+global_logger(ConsoleLogger(stderr, Logging.Warn))
 
 
 # -----------
-# Build all systems
+# 1) Import tech file
 
+# we use the test data that come with the package
+input_tech_file_csv = joinpath(pkgdir(SanitationSystemMassFlow), "test/example_techs.csv")
 
-# build systems
-allSys = santiago_build_systems([A, B], [C, D, E, F, G], additional_sources=[B])
+sources, additional_sources, techs = importTechFile(input_tech_file_csv,
+                                                    sourceGroup = "U",
+                                                    sourceAddGroup = "Uadd",
+                                                    sinkGroup = "D")
+
+# number of available technologies (more than in "example_techs.csv", some are auto generated)
+length(techs)
+
 
 # -----------
-# Calculate massflows
+# 2) Build all systems
 
-# define input masses for each source
-M_in = Dict("A" => Dict("phosphor" => 600,
-                        "nitrogen" => 400,
-                        "water" => 260,
-                        "totalsolids" => 90),
-            "B" => Dict("phosphor" => 60,
-                        "nitrogen" => 40,
-                        "water" => 26,
-                        "totalsolids" => 9))
+allSys = santiago_build_systems(sources, techs);
+
+# number of found systems
+length(allSys)
 
 
-# calculate massflow for each system
-for sys in allSys
-    sys.properties["mf_stats"] = massflow_summary(sys, M_in,
-                                                  MC=true, n=30)
-end
+# -----------
+# 3) Calculate (or update) system properties
 
-# example how to extract results
-allSys[2].properties["mf_stats"]["entered"]
-allSys[2].properties["mf_stats"]["recovery_ratio"]
-allSys[2].properties["mf_stats"]["recovered"]
+sysappscore!.(allSys)
+connectivity!.(allSys)
+ntechs!.(allSys)
+template!.(allSys)
 
-allSys[2].properties["mf_stats"]["lost"][:,"air loss",:]
-allSys[2].properties["mf_stats"]["lost"][:,:,"mean"]
-allSys[2].properties["mf_stats"]["lost"][:,:,"q_0.5"]
+# see all properties of the first system
+allSys[1].properties
+
+
+# -----------
+# 3) Mass flows
+
+input_masses = Dict("Dry.toilet" => Dict("phosphor" => 548.0,
+                                         "nitrogen" => 4550.0,
+                                         "water" => 22447113.5,
+                                         "totalsolids" => 32120.0),
+                    "Pour.flush" => Dict("phosphor" => 548.0,
+                                         "nitrogen" => 4550.0,
+                                         "water" => 1277113.465,
+                                         "totalsolids" => 32120.0)
+                    )
+
+# calculate mass flows for all systems and save to system properties
+massflow_summary!.(allSys, Ref(input_masses), n=20)
+
+# Examples how to extract results
+allSys[2].properties["massflow_stats"]["entered"]
+allSys[2].properties["massflow_stats"]["recovery_ratio"]
+allSys[2].properties["massflow_stats"]["recovered"]
+
+allSys[2].properties["massflow_stats"]["lost"][:,"air loss",:]
+allSys[2].properties["massflow_stats"]["lost"][:,:,"mean"]
+allSys[2].properties["massflow_stats"]["lost"][:,:,"q_0.5"]
 ```
 
 ## Logging
 
-By default, `SanitationSystemMassFlow` is quite
-less talkative. This can be adapted by the logging level. It is
-recommend to install the package `LoggingExtras.jl` for convenience:
+By default, `SanitationSystemMassFlow` is less talkative. This can be
+adapted by the logging level. With the package `LoggingExtras.jl` must
+be installed extra)
+different logging levels can be used for the console output and the log file:
 
 ```Julia
 using Logging
 using LoggingExtras
 
-# - show only warings and errors
-mylogger1 = MinLevelLogger(SimpleLogger(), Logging.Warn)
-global_logger(mylogger1)
-
-... use SanitationSystemMassFlow functions ...
-
-# - show only debug informatinformation, infos, warings and errors
-mylogger2 = MinLevelLogger(SimpleLogger(), Logging.Debug)
-global_logger(mylogger2)
-
-... use SanitationSystemMassFlow functions ...
-
-# - show only warings and errors, and log all infos into the log file 'info.log'
-mylogger3 = TeeLogger(
-    MinLevelLogger(FileLogger("info.log"), Logging.Info),  # logs to file
-    MinLevelLogger(SimpleLogger(), Logging.Warn)           # logs to STDOUT
+# - on console show only warings and errors, write everything in the logfile 'info.log'
+mylogger = TeeLogger(
+    MinLevelLogger(FileLogger("info.log"), Logging.Debug),  # logs to file
+    MinLevelLogger(ConsoleLogger(), Logging.Warn)           # logs to console
 )
-global_logger(mylogger3)
+global_logger(mylogger)
 
 ... use SanitationSystemMassFlow functions ...
 ```
