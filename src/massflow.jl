@@ -11,7 +11,7 @@ export lost
 export recovered
 export entered
 export recovery_ratio
-export massflow_summary
+export massflow_summary, massflow_summary!
 export issource
 export issink
 
@@ -336,4 +336,11 @@ function massflow_summary(sys::System, M_in::Dict; MC::Bool=true, n::Int=100,
     summaries["entered"] = entered(M_in, sys)
 
     return(summaries)
+end
+
+"""
+Add summary statistics of a Monte Carlo massflow to system properties
+"""
+function massflow_summary!(s, args...; kwargs...)
+    s.properties["massflow_stats"] = massflow_summary(s, args...; kwargs...)
 end
