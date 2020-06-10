@@ -15,9 +15,6 @@ import StatsBase
 
 export AbstractTech, Tech, TechCombined, Product, System
 export build_all_systems
-export add_loop_techs!
-export writedotfile
-export prefilterTechList
 
 
 # -----------
