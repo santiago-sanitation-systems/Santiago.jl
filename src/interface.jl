@@ -79,11 +79,9 @@ function santiago_build_systems(sources::Array{T},
         append!(allSys, newSys)
     end
 
-    ## ------
-    ## Compute some system properties
+    ## add ID
     for (i,s) in enumerate(allSys)
         s.properties["ID"] = i
-        s.properties["sysappscore"] = sysappscore(s)
     end
 
     return allSys
