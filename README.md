@@ -10,7 +10,7 @@ package. It enables to
 
 # Installation
 
-1. Install [Julia](https://julialang.org/) version 1.x.
+1. Install [Julia](https://julialang.org/) version >= 1.4.
 
 2. Then the `SanitationSystemMassFlow` package is installed from within the Julia:
 ```Julia
@@ -20,8 +20,8 @@ package. It enables to
 
 # Usage
 
-Note, starting Julia with multiple threads may speed up the
-execution through parallelization.
+Some functions of `SanitationSystemMassFlow` are parallelized. To use
+this feature start Julia with multiple threads.
 
 
 ## Minimal Example
@@ -100,7 +100,7 @@ allSys[2].properties["massflow_stats"]["lost"][:,:,"q_0.5"]
 
 ## Logging
 
-By default, `SanitationSystemMassFlow` is less talkative. This can be
+By default, `SanitationSystemMassFlow` is rather talkative. This can be
 adapted by the logging level. With the package `LoggingExtras.jl` must
 be installed extra)
 different logging levels can be used for the console output and the log file:
