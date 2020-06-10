@@ -90,26 +90,29 @@ function template(s::System)
     is_onsite_pit = any(occursin.("single", lowercase.(all_tech_names)))
 
     # -----------
-    # --- assigns templates
-    system_templates = String[]
+    # --- assigns template
+    template = "not defined"
 
     # -----------
     # onsite simple systems
 
     if onsite_sludge & ! urine & ! transported_blackwater & ! effluent_transport & ! biogas_briq_char & ! transported_biogas_briq_char &
         is_onsite_pit
-        push!(system_templates, "ST.1 Dry onsite storage with sludge production without effluent transport")
+        tt = "ST.1 Dry onsite storage with sludge production without effluent transport"
+        template = template == "not defined" ? tt : error("More than one template matchs system:\n$(template) \n(tt)")
     end
 
     if onsite_sludge & ! urine & ! transported_blackwater & effluent_transport & ! biogas_briq_char & ! transported_biogas_briq_char &
         is_onsite_pit
-        push!(system_templates, "ST.2 Dry onsite storage with sludge production with effluent transport")
+        tt = "ST.2 Dry onsite storage with sludge production with effluent transport"
+        template = template == "not defined" ? tt : error("More than one template matchs system:\n$(template) \n(tt)")
     end
 
     if dry_material & ! onsite_sludge & ! urine & ! transported_blackwater &
         ! blackwater & ! biogas_briq_char & ! transported_biogas_briq_char &
         ! is_onsite_pit
-        push!(system_templates, "ST.3 Dry onsite storage and treatment without sludge production")
+        tt = "ST.3 Dry onsite storage and treatment without sludge production"
+        template = template == "not defined" ? tt : error("More than one template matchs system:\n$(template) \n(tt)")
     end
 
     # -----------
@@ -117,47 +120,56 @@ function template(s::System)
     if onsite_sludge & urine & ! transported_blackwater &
         ! effluent_transport & ! biogas_briq_char & ! transported_biogas_briq_char &
         is_onsite_pit
-        push!(system_templates, "ST.4 Dry onsite storage without treatment with urine diversion without effluent transport")
+        tt = "ST.4 Dry onsite storage without treatment with urine diversion without effluent transport"
+        template = template == "not defined" ? tt : error("More than one template matchs system:\n$(template) \n(tt)")
     end
 
     if onsite_sludge & urine & ! transported_blackwater &
         effluent_transport & ! biogas_briq_char & ! transported_biogas_briq_char &
         is_onsite_pit
-        push!(system_templates, "ST.5 Dry onsite storage without treatment with urine diversion with effluent transport")
+        tt = "ST.5 Dry onsite storage without treatment with urine diversion with effluent transport"
+        template = template == "not defined" ? tt : error("More than one template matchs system:\n$(template) \n(tt)")
     end
 
     if dry_material & ! onsite_sludge & urine & ! transported_blackwater & ! blackwater &
         ! biogas_briq_char & ! transported_biogas_briq_char & ! is_onsite_pit
-        push!(system_templates, "ST.6 Dry onsite storage and treatment with urine diversion")
+        tt = "ST.6 Dry onsite storage and treatment with urine diversion"
+        template = template == "not defined" ? tt : error("More than one template matchs system:\n$(template) \n(tt)")
     end
 
     if dry_material & ! onsite_sludge & urine & ! transported_blackwater & blackwater &
         ! biogas_briq_char & ! transported_biogas_briq_char
-        push!(system_templates, "ST.7 Onsite blackwater without sludge and with urine diversion")
+        tt = "ST.7 Onsite blackwater without sludge and with urine diversion"
+        template = template == "not defined" ? tt : error("More than one template matchs system:\n$(template) \n(tt)")
     end
 
     if urine & transported_blackwater & blackwater &
         ! biogas_briq_char & ! transported_biogas_briq_char
-        push!(system_templates, "ST.8 Offsite blackwater treatment with urine diversion")
+        tt = "ST.8 Offsite blackwater treatment with urine diversion"
+        template = template == "not defined" ? tt : error("More than one template matchs system:\n$(template) \n(tt)")
     end
 
     # -----------
     # biogas templates
 
     if ! transported_blackwater & ! effluent_transport & biogas_briq_char & ! transported_biogas_briq_char
-        push!(system_templates, "ST.9 Onsite biogas, briquettes or biochar without effluent transport")
+        tt = "ST.9 Onsite biogas, briquettes or biochar without effluent transport"
+        template = template == "not defined" ? tt : error("More than one template matchs system:\n$(template) \n(tt)")
     end
 
     if ! transported_blackwater & effluent_transport & biogas_briq_char & ! transported_biogas_briq_char
-        push!(system_templates, "ST.10 Onsite biogas, briquettes or biochar with effluent transport")
+        tt = "ST.10 Onsite biogas, briquettes or biochar with effluent transport"
+        template = template == "not defined" ? tt : error("More than one template matchs system:\n$(template) \n(tt)")
     end
 
     if ! transported_blackwater & transported_biogas_briq_char
-        push!(system_templates, "ST.11 Offsite biogas, briquettes or biochar without blackwater transport")
+        tt = "ST.11 Offsite biogas, briquettes or biochar without blackwater transport"
+        template = template == "not defined" ? tt : error("More than one template matchs system:\n$(template) \n(tt)")
     end
 
     if transported_blackwater & transported_biogas_briq_char
-        push!(system_templates, "ST.12 Offsite biogas, briquettes or biochar with blackwater transport")
+        tt = "ST.12 Offsite biogas, briquettes or biochar with blackwater transport"
+        template = template == "not defined" ? tt : error("More than one template matchs system:\n$(template) \n(tt)")
     end
 
     # -----------
@@ -166,53 +178,54 @@ function template(s::System)
     if dry_material & ! onsite_sludge & ! urine & ! transported_blackwater & blackwater &
         ! effluent_transport & ! biogas_briq_char & ! transported_biogas_briq_char &
         ! is_onsite_pit
-        push!(system_templates, "ST.13 Onsite blackwater without sludge and without effluent transport")
+        tt = "ST.13 Onsite blackwater without sludge and without effluent transport"
+        template = template == "not defined" ? tt : error("More than one template matchs system:\n$(template) \n(tt)")
     end
 
     if dry_material & ! onsite_sludge & ! urine & ! transported_blackwater & blackwater &
         effluent_transport & ! biogas_briq_char & ! transported_biogas_briq_char &
         ! is_onsite_pit
-        push!(system_templates, "ST.14 Onsite blackwater without sludge and with effluent transport")
+        tt = "ST.14 Onsite blackwater without sludge and with effluent transport"
+        template = template == "not defined" ? tt : error("More than one template matchs system:\n$(template) \n(tt)")
     end
 
     if onsite_sludge & ! transported_blackwater & blackwater &
         ! effluent_transport & ! biogas_briq_char & ! transported_biogas_briq_char &
         ! is_onsite_pit
-        push!(system_templates, "ST.15 Onsite blackwater with sludge without effluent transport")
+        tt = "ST.15 Onsite blackwater with sludge without effluent transport"
+        template = template == "not defined" ? tt : error("More than one template matchs system:\n$(template) \n(tt)")
     end
 
     if onsite_sludge & ! transported_blackwater & blackwater &
         effluent_transport & ! biogas_briq_char & ! transported_biogas_briq_char &
         ! is_onsite_pit
-        push!(system_templates, "ST.16 Onsite blackwater with sludge and effluent transport")
+        tt = "ST.16 Onsite blackwater with sludge and effluent transport"
+        template = template == "not defined" ? tt : error("More than one template matchs system:\n$(template) \n(tt)")
     end
 
     if ! dry_material & ! onsite_sludge & ! transported_blackwater & blackwater &
         ! effluent_transport & ! biogas_briq_char & ! transported_biogas_briq_char &
         ! is_onsite_pit
-        push!(system_templates, "ST.17 Onsite blackwater treatment without effluent transport")
+        tt = "ST.17 Onsite blackwater treatment without effluent transport"
+        template = template == "not defined" ? tt : error("More than one template matchs system:\n$(template) \n(tt)")
     end
 
     if ! dry_material & ! onsite_sludge & ! transported_blackwater & blackwater &
         effluent_transport & ! biogas_briq_char & ! transported_biogas_briq_char &
         ! is_onsite_pit
-        push!(system_templates, "ST.18 Onsite blackwater treatment with effluent transport")
+        tt = "ST.18 Onsite blackwater treatment with effluent transport"
+        template = template == "not defined" ? tt : error("More than one template matchs system:\n$(template) \n(tt)")
     end
 
     if ! onsite_sludge & ! urine & transported_blackwater & blackwater &
         ! biogas_briq_char & ! transported_biogas_briq_char &
         ! is_onsite_pit
-        push!(system_templates, "ST.19 Offsite blackwater treatment")
+        tt = "ST.19 Offsite blackwater treatment"
+        template = template == "not defined" ? tt : error("More than one template matchs system:\n$(template) \n(tt)")
     end
 
-    # -----------
-    # no template (NA)
 
-    if length(system_templates)==0
-        push!(system_templates, "not defined")
-    end
-
-    return system_templates
+    return template
 end
 
 """Add template to system properties"""
