@@ -183,8 +183,10 @@ function calc_massflows(P::AbstractArray, inp::AbstractVector)
     P = P.array
     inp = inp.array
 
-    inp = inp'
-    m = inp*P * inv(I - P) # not an optimal implementation from a numerical point of view...
+    # same as m = inp*P * inv(I - P), but numerically better
+    b = P'*inp
+    A = (I - P)'
+    m = A \ b
 
     flows = [(m+inp)[i]*P[i,j] for i=1:size(P,1), j=1:size(P,1)]
 
