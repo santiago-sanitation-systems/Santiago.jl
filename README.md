@@ -5,7 +5,9 @@ Extension of the
 [SanitationSystemBuilder](https://github.com/Eawag-SWW/SanitationSystemBuilder.jl)
 package. It enables to
 - find all possible systems given a set of sanitation technologies
-- calculate (optionally stochastic) the mass flows for each system for total `phosphor`, total `nitrogen`, `totalsolids`, and `water`.
+- calculate (optionally stochastic) the mass flows for each system for
+  total `phosphor`, total `nitrogen`, `totalsolids`, and `water`.
+- select a desired number of diverse but appropriate systems.
 
 
 # Installation
@@ -107,7 +109,7 @@ selectedSys = select_systems(allSys, 8)
 ## Logging
 
 By default, `SanitationSystemMassFlow` is rather talkative. This can be
-adapted by the logging level. With the package `LoggingExtras.jl` must
+adapted by the logging level. With the package `LoggingExtras.jl` (must
 be installed extra)
 different logging levels can be used for the console output and the log file:
 
