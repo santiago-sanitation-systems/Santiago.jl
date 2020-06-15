@@ -10,6 +10,7 @@ include("buildSystems.jl")
 include("massflow.jl")
 include("importExport.jl")
 include("properties.jl")
+include("selection.jl")
 
 include("interface.jl")
 

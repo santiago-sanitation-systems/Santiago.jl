@@ -61,3 +61,14 @@ input_masses = Dict("Dry.toilet" => Dict("phosphor" => 548.0,
 massflow_summary!.(allSys, Ref(input_masses), n=20)
 @test "massflow_stats" in keys(allSys[1].properties)
 @test length(keys(allSys[1].properties["massflow_stats"])) == 5
+
+
+
+# -----------
+# 4) select systems
+
+for n in 1:length(allSys)
+    @test n == length(select_systems(allSys, n))
+end
+
+@test_throws ErrorException select_systems(allSys, length(allSys) + 1)

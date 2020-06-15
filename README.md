@@ -96,6 +96,12 @@ allSys[2].properties["massflow_stats"]["recovered"]
 allSys[2].properties["massflow_stats"]["lost"][:,"air loss",:]
 allSys[2].properties["massflow_stats"]["lost"][:,:,"mean"]
 allSys[2].properties["massflow_stats"]["lost"][:,:,"q_0.5"]
+
+# -----------
+# 4) select a subset of systems
+
+# select 8 systems
+selectedSys = select_systems(allSys, 8)
 ```
 
 ## Logging
