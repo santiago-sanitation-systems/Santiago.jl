@@ -6,12 +6,10 @@
 # 1) Import tech file
 
 # we use the test data that come with teh package
-input_tech_file_csv = joinpath(pkgdir(SanitationSystemMassFlow), "test/example_techs.csv")
+input_tech_file = joinpath(pkgdir(SanitationSystemMassFlow), "test/example_techs.json")
 
-sources, additional_sources, techs = importTechFile(input_tech_file_csv,
-                                                    sourceGroup = "U",
-                                                    sourceAddGroup = "Uadd",
-                                                    sinkGroup = "D")
+sources, additional_sources, techs = importTechFile(input_tech_file)
+
 @test length(sources) == 2
 @test length(additional_sources) == 0
 @test length(techs) == 264
