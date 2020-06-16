@@ -209,6 +209,6 @@ transC_error["totalsolids"] = Dict(Product("recovered") => 0.0,
 @test length(SSB.get_outputs([A,D,E])) == 5
 
 
-# system without  triangle
-allSys = build_all_systems([A, B], [C, D, E, F, G])
+# system without triangle
+allSys = SSB.build_all_systems([A, B], [C, D, E, F, G])
 @test length(allSys) == 2
