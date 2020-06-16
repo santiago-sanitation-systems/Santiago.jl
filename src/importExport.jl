@@ -3,7 +3,6 @@ import DelimitedFiles
 
 export importTechFile
 export writedotfile
-export generateCombinations
 
 mutable struct MasterTech
     name::String
