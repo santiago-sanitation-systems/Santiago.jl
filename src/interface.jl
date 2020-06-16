@@ -2,7 +2,7 @@
 # high level interface
 
 
-export santiago_build_systems
+export build_systems
 
 
 """
@@ -10,10 +10,10 @@ export santiago_build_systems
 
 
 ```
-santiago_build_systems(sources::Array{T},
-                      technologies::Array{T};
-                      additional_sources::Array{T}=T[]
-                      addlooptechs::Bool=true, looptechgroup=[:S, :T]) where T <: AbstractTech
+build_systems(sources::Array{T},
+              technologies::Array{T};
+              additional_sources::Array{T}=T[]
+              addlooptechs::Bool=true, looptechgroup=[:S, :T]) where T <: AbstractTech
 ```
 ## Parameters
 - sources:            An array of sources technologies
@@ -23,10 +23,10 @@ santiago_build_systems(sources::Array{T},
 ## Values
 An array of all found sanitation systems.
 """
-function santiago_build_systems(sources::Array{T},
-                                technologies::Array{T};
-                                additional_sources::Array{T}=T[],
-                                addlooptechs::Bool=true, looptechgroup=[:S, :T]) where T <: AbstractTech
+function build_systems(sources::Array{T},
+                       technologies::Array{T};
+                       additional_sources::Array{T}=T[],
+                       addlooptechs::Bool=true, looptechgroup=[:S, :T]) where T <: AbstractTech
 
     ## ------
     ## Generate looptechs

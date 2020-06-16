@@ -20,7 +20,7 @@ sources, additional_sources, techs = importTechFile(input_tech_file_csv,
 # -----------
 # 2) Build all systems
 
-allSys = santiago_build_systems(sources, techs);
+allSys = build_systems(sources, techs);
 @test length(allSys) == 35
 
 

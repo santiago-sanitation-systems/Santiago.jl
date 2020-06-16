@@ -56,7 +56,7 @@ length(techs)
 # -----------
 # 2) Build all systems
 
-allSys = santiago_build_systems(sources, techs);
+allSys = build_systems(sources, techs);
 
 # number of found systems
 length(allSys)
