@@ -1,8 +1,8 @@
 using Combinatorics
 import JSON3
 
-export importTechFile
-export writedotfile
+export import_technologies
+    export writedotfile
 
 # ---------------------------------
 # import of tech files
@@ -61,11 +61,12 @@ end
 
 
 """
-This function reads a .json file with technology and relationships
-and returns a tuple of an array with sources and an array of all technologies
+This function reads a `json` file defing the technologies
+and returns i) array with sources, ii) array with additional sources,
+ and iii) an array of all technologies.
 """
-function importTechFile(techFile::String; sourceGroup::String="U",
-                        sourceAddGroup::String="Uadd", sinkGroup::String="D")
+function import_technologies(techFile::String; sourceGroup::String="U",
+                             sourceAddGroup::String="Uadd", sinkGroup::String="D")
 
     ## Read json file
     rawtechs = open(techFile,"r") do f
@@ -267,6 +268,7 @@ end
 
  """
 function writedotfile(sys::System, file::String, no_group::Array{String}=["S", "C", "T"], options::String="")
+
     make_legal(name::String) = replace(name, " :: " => "")
 
     open(file, "w") do f

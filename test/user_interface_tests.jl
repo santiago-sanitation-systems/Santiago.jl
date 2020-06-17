@@ -8,7 +8,7 @@
 # we use the test data that come with teh package
 input_tech_file = joinpath(pkgdir(SanitationSystemMassFlow), "test/example_techs.json")
 
-sources, additional_sources, techs = importTechFile(input_tech_file)
+sources, additional_sources, techs = import_technologies(input_tech_file)
 
 @test length(sources) == 2
 @test length(additional_sources) == 0

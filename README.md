@@ -44,7 +44,7 @@ global_logger(ConsoleLogger(stderr, Logging.Warn))
 # we use the test data that come with the package
 input_tech_file = joinpath(pkgdir(SanitationSystemMassFlow), "test/example_techs.json")
 
-sources, additional_sources, techs = importTechFile(input_tech_file)
+sources, additional_sources, techs = import_technologies(input_tech_file)
 
 # number of available technologies (more than in "example_techs.csv", some are auto generated)
 length(techs)
