@@ -1,9 +1,7 @@
 using AutoHashEquals
-using NamedArrays
 
 import DataStructures
 import Combinatorics
-import Dates
 import Base.show
 import Base.getindex
 import Base.copy
