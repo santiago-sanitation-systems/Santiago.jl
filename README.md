@@ -16,7 +16,7 @@ package. It enables to
 
 2. Then the `SanitationSystemMassFlow` package is installed from within the Julia:
 ```Julia
-] add https://gitlab.com/scheidan/SanitationSystemMassFlow.git#updateJulia1.0
+] add https://gitlab.com/scheidan/SanitationSystemMassFlow.git#santiago
 
 ```
 
