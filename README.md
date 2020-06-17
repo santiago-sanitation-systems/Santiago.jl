@@ -101,6 +101,15 @@ allSys[2].properties["massflow_stats"]["lost"][:,:,"q_0.5"]
 
 # select 8 systems
 selectedSys = select_systems(allSys, 8)
+
+# -----------
+# 5) write some properties in a DataFrame for further analysis
+
+df = properties_dataframe(selectedSys,
+                          massflow_selection = ["recovered | water | mean",
+                                                "recovered | water | sd",
+                                                "lost | water | air loss| q_0.5",
+                                                "entered | water"])
 ```
 
 ## Logging

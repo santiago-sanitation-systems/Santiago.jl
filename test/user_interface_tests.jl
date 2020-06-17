@@ -40,10 +40,12 @@ ntechs!.(allSys)
 template!.(allSys)
 @test "template" in keys(allSys[1].properties)
 
-
+# no mass flow information yet
+@test_throws ErrorException properties_dataframe(allSys,
+                                                 massflow_selection = ["recovered | water | mean"])
 
 # -----------
-# 3) Mass flows
+# 4) Mass flows
 
 input_masses = Dict("Dry.toilet" => Dict("phosphor" => 548.0,
                                          "nitrogen" => 4550.0,
@@ -63,10 +65,26 @@ massflow_summary!.(allSys, Ref(input_masses), n=20)
 
 
 # -----------
-# 4) select systems
+# 5) select systems
 
 for n in 1:length(allSys)
     @test n == length(select_systems(allSys, n))
 end
 
 @test_throws ErrorException select_systems(allSys, length(allSys) + 1)
+
+
+# -----------
+# 6) DataFrame properties
+
+df = properties_dataframe(allSys,
+                          massflow_selection = ["recovered|water|mean",
+                                                "recovered|  water |sd",
+                                                "lost | water   |  air loss| q_0.5",
+                                                "entered | water"])
+@test size(df,1) == length(allSys)
+@test "ID" in names(df)
+@test "recovered_water_mean" in names(df)
+@test "recovered_water_sd" in names(df)
+@test "lost_water_air loss_q_0.5" in names(df)
+@test "entered_water" in names(df)

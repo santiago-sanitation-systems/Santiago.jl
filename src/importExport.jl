@@ -1,8 +1,9 @@
 using Combinatorics
 import JSON3
+using DataFrames
 
-export import_technologies
-    export writedotfile
+export import_technologies, properties_dataframe
+export writedotfile
 
 # ---------------------------------
 # import of tech files
@@ -27,7 +28,7 @@ function TCr_dict(jsontech::JSON3.Object)
     dTC_r
 end
 
-## helper function to generate two Techs with only "transported" or "not transported" output products
+# helper function to generate two Techs with only "transported" or "not transported" output products
 function make2(t::Tech, sinkGroup)
 
     if t.functional_group != Symbol(sinkGroup)      # if t is not a sink
@@ -238,7 +239,7 @@ end
 """
      This function generates possible combinations of one source and all sourcesAdds
      returns all possible combinations.
-    """
+"""
 function generateCombinations(source::T, sourcesAdd::Array{T}) where T <: AbstractTech
 
     src_comb = Array{Tech}[]
@@ -253,6 +254,61 @@ function generateCombinations(source::T, sourcesAdd::Array{T}) where T <: Abstra
 end
 
 
+## ---------------------------------
+## export system properties
+
+"""
+# Extract systems properties into a DataFrame
+
+```
+properties_datafram(systems::Array{System};
+                    massflow_selection=AbstractString[])
+```
+The mass flow calculation produce many results stored as `NamedArray`s in
+a dictionary. With the argument `massflow_selection` we can select which information should be extracted.
+
+### Example:
+`massflow_selection = ["recovered | water | mean", "lost | water| air loss | q_0.5"]`
+This will extract the mean value of the reconvered water and the 50% quantile of the water lost to air. Note, the order of the values must match teh dimensions!
+"""
+function properties_dataframe(systems::Array{System}; massflow_selection=AbstractString[])
+
+    if length(massflow_selection)>0 && ("massflow_stats" ∉ keys(systems[1].properties))
+        error("The systems have no mass flow information. Run `massflow_summary!.(systems, Ref(input_masses), n=20)`.")
+    end
+
+    # all properties except 'massflow_stats'
+    cnames = Symbol.(keys(systems[1].properties))
+    ctypes = typeof.(values(systems[1].properties))
+    no_massflow_idx = cnames .!= :massflow_stats
+    ctypes = ctypes[no_massflow_idx]
+    cnames = cnames[no_massflow_idx]
+
+    # massflow properties
+    massflow_selection = replace.(massflow_selection, r"[ ]*\|[ ]*" => "|") # clean spaces
+    ssplit = split.(massflow_selection, "|")  # split massflow_selection
+
+    cnames = [cnames; Symbol.(replace.(massflow_selection, "|" => "_"))]
+    ctypes = [ctypes; fill(Float64, length(massflow_selection))]
+
+    d = DataFrame(ctypes, cnames)
+
+    for sys in systems
+        newrow = collect(values(sys.properties))[no_massflow_idx]
+        for sel in ssplit
+            namarr = sys.properties["massflow_stats"][sel[1]]   # select NamedArray
+            if sel[1] != "entered"
+                push!(newrow, namarr[String.(sel[2:end])...]) # select value
+            else
+                push!(newrow, namarr[String.(sel[2]), "entered"])
+            end
+        end
+        push!(d, newrow)
+    end
+
+    select!(d, :ID, :)          # make ID first column
+    d
+end
 
 
 ## ---------------------------------
