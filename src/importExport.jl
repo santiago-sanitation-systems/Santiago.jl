@@ -262,6 +262,22 @@ end
 ## ---------------------------------
 ## JSON export
 
+# helper to convert a NamedArray into a nested Dict. Needed for JSON export
+function Dict(na::NamedArray)
+    ndim = length(size(na))
+    if ndim == 1
+        return Dict(names(na)[1][i] => na[i] for i in 1:length(na))
+    else
+        d = Dict()
+        for i in 1:size(na, 1)
+            idx = [i; fill(:, ndim-1)]
+            d[names(na)[1][i]] = Dict(na[idx...])
+        end
+        return d
+    end
+end
+
+
 StructTypes.StructType(::Type{Product}) = StructTypes.StringType()
 
 # Techs
@@ -273,14 +289,19 @@ StructTypes.names(::Type{Tech}) = ((:transC, :TC), # rename some fields for expo
 # define a type to format the JSON export of Systems
 struct SystemJSON
     technologies::Array{String} # only names
-    properties::Dict            # BUG!!! multi-dim. Arrays....
+    properties::Dict
     graphizdot::String
 end
 
 function SystemJSON(sys::System)
+    # convert NamedArray's of massflow_stats
+    p = sys.properties
+    if haskey(p, "massflow_stats")
+        p["massflow_stats"] = Dict(k => Dict(v) for (k,v) in p["massflow_stats"])
+    end
     SystemJSON(
         [t.name for t in sys.techs],
-        sys.properties,
+        p,
         dot_string(sys)
     )
 end

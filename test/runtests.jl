@@ -14,6 +14,10 @@ end
     include("massflow_tests.jl")
 end
 
+@testset "Import/export" begin
+    include("import_export_test.jl")
+end
+
 @testset "User interface" begin
     include("user_interface_tests.jl")
 end
