@@ -1,9 +1,10 @@
 using Combinatorics
 import JSON3
+import StructTypes
 using DataFrames
 
 export import_technologies, properties_dataframe
-export writedotfile
+export dot_file, dot_string
 
 # ---------------------------------
 # import of tech files
@@ -314,6 +315,58 @@ end
 ## ---------------------------------
 ## write dot file for visualisation with graphviz
 
+
+function dot_format(sys::System, io::IO, no_group::Array{String}=["S", "C", "T"], options::String="")
+
+    make_legal(name::String) = replace(name, " :: " => "")
+
+
+    println(io, "digraph system {")
+    println(io, "rankdir=LR;")
+    println(io, "node[style=filled colorscheme=pastel15];") # accent5
+    if options!=""
+        println(io, "$(options);")
+    end
+
+    if haskey(sys.properties, "ID")
+        println(io, "label=\"ID: $(sys.properties["ID"])\";")
+        println(io, "labelfontsize=22.0;")
+        println(io, "labelloc=\"top\";")
+        println(io, "labeljust=left")
+    end
+
+    ## define colors for function groups
+    fgroups = sort(unique(t.functional_group for t in sys.techs))
+    colors = Dict(fgroups[i] => mod(i,5)+1 for i in 1:length(fgroups))
+
+    colors = Dict(:U => "# F15A31", :S => "# F99D34", :C => "# C1C430", :T => "# 70BF54", :D => "# 00B6CD")
+
+
+    ## define nodes
+    for t in vcat(sys.techs...)
+        label = "$(t.name)\n"
+        label = label * "($(t.functional_group))"
+        col = get(colors, t.functional_group, "# 999999")
+        println(io, replace("$(make_legal(t.name)) [shape=box, fillcolor=\"$(col)\" label=\"$label\"];", "." => "_"))
+    end
+    ## edges
+    for c in sys.connections
+        println(io, replace("$(make_legal(c[2].name)) -> $(make_legal(c[3].name)) [label=\"$(c[1].name)\"];", "." => "_"))
+    end
+
+    no_group = [Symbol(x) for x in no_group]
+    ## group according to functional groups
+    for fg in filter(x -> !(x in no_group), fgroups)
+        names = [t.name for t in sys.techs if t.functional_group==fg]
+        names = map(n -> make_legal(replace(n, "." => "_")), names)
+        println(io, "{ rank=same $(join(names, ' ')) }")
+    end
+
+    println(io, "}")
+
+end
+
+
 """
  Writes a DOT file of a `System`. The resulting file can be visualized with GraphViz, e,g.:
  ```
@@ -323,51 +376,20 @@ end
  nogroup    Array of functional groups which should not be grouped in the plot
 
  """
-function writedotfile(sys::System, file::String, no_group::Array{String}=["S", "C", "T"], options::String="")
-
-    make_legal(name::String) = replace(name, " :: " => "")
+function dot_file(sys::System, file::AbstractString, no_group::Array{String}=["S", "C", "T"], options::String="")
 
     open(file, "w") do f
-        println(f, "digraph system {")
-        println(f, "rankdir=LR;")
-        println(f, "node[style=filled colorscheme=pastel15];") # accent5
-        if options!=""
-            println(f, "$(options);")
-        end
-
-        if haskey(sys.properties, "ID")
-            println(f, "label=\"ID: $(sys.properties["ID"])\";")
-            println(f, "labelfontsize=22.0;")
-            println(f, "labelloc=\"top\";")
-            println(f, "labeljust=left")
-        end
-
-        ## define colors for function groups
-        fgroups = sort(unique(t.functional_group for t in sys.techs))
-        colors = Dict(fgroups[i] => mod(i,5)+1 for i in 1:length(fgroups))
-
-        colors = Dict(:U => "# F15A31", :S => "# F99D34", :C => "# C1C430", :T => "# 70BF54", :D => "# 00B6CD")
-
-
-        ## define nodes
-        for t in vcat(sys.techs...)
-            label = "$(t.name)\n"
-            label = label * "($(t.functional_group))"
-            println(f, replace("$(make_legal(t.name)) [shape=box, fillcolor=\"$(get(colors, t.functional_group, "# 999999"))\" label=\"$label\"];", "." => "_"))
-                               end
-                               ## edges
-                               for c in sys.connections
-                               println(f, replace("$(make_legal(c[2].name)) -> $(make_legal(c[3].name)) [label=\"$(c[1].name)\"];", "." => "_"))
-                               end
-
-                               no_group = [Symbol(x) for x in no_group]
-                               ## group according to functional groups
-                               for fg in filter(x -> !(x in no_group), fgroups)
-            names = [t.name for t in sys.techs if t.functional_group==fg]
-                               names = map(n -> make_legal(replace(n, "." => "_")), names)
-                               println(f, "{ rank=same $(join(names, ' ')) }")
-        end
-
-        println(f, "}")
+        dot_format(sys, f, no_group, options)
     end
+end
+
+"""
+ Returns a String representing `System` in the GraphViz's dot format.
+ ## Arguments
+ nogroup    Array of functional groups which should not be grouped in the plot
+ """
+function dot_string(sys::System, no_group::Array{String}=["S", "C", "T"], options::String="")
+    io = IOBuffer()
+    dot_format(sys, io, no_group, options)
+    String(take!(io))
 end
