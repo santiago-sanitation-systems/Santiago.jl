@@ -255,8 +255,41 @@ function generateCombinations(source::T, sourcesAdd::Array{T}) where T <: Abstra
 end
 
 
+
 ## ---------------------------------
-## export system properties
+## JSON export
+
+StructTypes.StructType(::Type{Product}) = StructTypes.StringType()
+
+# Techs
+StructTypes.StructType(::Type{Tech}) = StructTypes.Struct()
+StructTypes.excludes(::Type{Tech}) = (:n_inputs,)
+StructTypes.names(::Type{Tech}) = ((:transC, :TC), # rename some fields for export
+                                   (:transC_reliability, :k),)
+
+# define a type to format the JSON export of Systems
+struct SystemJSON
+    technologies::Array{String} # only names
+    properties::Dict            # BUG!!! multi dim Arrays....
+    graphizdot::String
+end
+
+function SystemJSON(sys::System)
+    SystemJSON(
+        [t.name for t in sys.techs],
+        sys.properties,
+        dot_string(sys)
+    )
+end
+
+StructTypes.StructType(::Type{SystemJSON}) = StructTypes.Struct()
+JSON3.write(sys::System) = JSON3.write(SystemJSON(sys))
+JSON3.write(sys::Array{System}) = JSON3.write([SystemJSON(s) for s in sys])
+
+
+
+## ---------------------------------
+## export system properties to DataFrame
 
 """
 # Extract systems properties into a DataFrame
