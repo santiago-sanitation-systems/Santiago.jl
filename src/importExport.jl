@@ -1,7 +1,10 @@
+using Reexport: @reexport
+@reexport using JSON3
+
 using Combinatorics
-import JSON3
 import StructTypes
 using DataFrames
+
 
 export import_technologies, properties_dataframe
 export dot_file, dot_string
@@ -270,7 +273,7 @@ StructTypes.names(::Type{Tech}) = ((:transC, :TC), # rename some fields for expo
 # define a type to format the JSON export of Systems
 struct SystemJSON
     technologies::Array{String} # only names
-    properties::Dict            # BUG!!! multi dim Arrays....
+    properties::Dict            # BUG!!! multi-dim. Arrays....
     graphizdot::String
 end
 
@@ -283,8 +286,12 @@ function SystemJSON(sys::System)
 end
 
 StructTypes.StructType(::Type{SystemJSON}) = StructTypes.Struct()
+
 JSON3.write(sys::System) = JSON3.write(SystemJSON(sys))
+JSON3.write(io::IO, sys::T; kw...) where T <: System = JSON3.write(io, SystemJSON(sys); kw...)
+
 JSON3.write(sys::Array{System}) = JSON3.write([SystemJSON(s) for s in sys])
+JSON3.write(io::IO, sys::Array{T}; kw...) where T <: System = JSON3.write(io, [SystemJSON(s) for s in sys]; kw...)
 
 
 

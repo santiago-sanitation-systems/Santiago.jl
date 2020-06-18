@@ -23,7 +23,7 @@ package. It enables to
 # Usage
 
 Some functions of `SanitationSystemMassFlow` are parallelized. To use
-this feature start Julia with multiple threads.
+this feature you need to start Julia with multiple threads.
 
 
 ## Minimal Example
@@ -110,6 +110,22 @@ df = properties_dataframe(selectedSys,
                                                 "recovered | water | sd",
                                                 "lost | water | air loss| q_0.5",
                                                 "entered | water"])
+
+
+# -----------
+# 6) export to JSON
+
+# Note, the JSON export is designed to interface other applications,
+# but not for serialization.
+
+open("tech_export.json", "w") do f
+    JSON3.write(f, techs)
+end
+
+open("system_export.json", "w") do f
+    JSON3.write(f, selectedSys)
+end
+
 ```
 
 ## Logging
