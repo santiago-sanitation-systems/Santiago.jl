@@ -1,12 +1,11 @@
-# SanitationSystemMassFlow
+# Santiago.jl
 
 
-Extension of the
-[SanitationSystemBuilder](https://github.com/Eawag-SWW/SanitationSystemBuilder.jl)
-package. It enables to
-- find all possible systems given a set of sanitation technologies
+A Julia package to generate approperiate sanitation system options. It is able to
+- assess the approperiateness of a technology in a given context;
+- find all possible systems given a set of sanitation technologies;
 - calculate (optionally stochastic) the mass flows for each system for
-  total `phosphor`, total `nitrogen`, `totalsolids`, and `water`.
+  total `phosphor`, total `nitrogen`, `totalsolids`, and `water`;
 - select a desired number of diverse but appropriate systems.
 
 
@@ -14,22 +13,21 @@ package. It enables to
 
 1. Install [Julia](https://julialang.org/) version >= 1.4.
 
-2. Then the `SanitationSystemMassFlow` package is installed from within the Julia:
+2. Then the `Santiago` package is installed from within the Julia:
 ```Julia
-] add https://gitlab.com/scheidan/SanitationSystemMassFlow.git#santiago
-
+] add https://github.com/santiago-sanitation-systems/Santiago.jl.git
 ```
 
 # Usage
 
-Some functions of `SanitationSystemMassFlow` are parallelized. To use
+Some functions of `Santiago` are parallelized. To use
 this feature you need to start Julia with multiple threads.
 
 
 ## Minimal Example
 
 ```Julia
-using SanitationSystemMassFlow
+using Santiago
 using Logging
 
 # -----------
@@ -130,8 +128,8 @@ end
 
 ## Logging
 
-By default, `SanitationSystemMassFlow` is rather talkative. This can be
-adapted by the logging level. With the package `LoggingExtras.jl` (must
+By default, `Santiago` is rather talkative. This can be
+adapted by the logging level. With the package `LoggingExtras.jl` (needs to
 be installed extra)
 different logging levels can be used for the console output and the log file:
 
@@ -146,5 +144,9 @@ mylogger = TeeLogger(
 )
 global_logger(mylogger)
 
-... use SanitationSystemMassFlow functions ...
+... use Santiago functions ...
 ```
+
+## References
+
+Spuhler, D., Scheidegger, A., Maurer, M., 2018. Generation of sanitation system options for urban planning considering novel technologies. Water Research 145, 259–278. https://doi.org/10.1016/j.watres.2018.08.021
