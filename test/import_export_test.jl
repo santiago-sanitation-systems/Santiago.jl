@@ -2,6 +2,15 @@
 ## import / export functions
 
 
+# -----------
+# simply tech names
+
+tnames = ["tt.tt", "tt.tt_1", "tt.tt_12", "tt.tt_123",
+          "tt.tt_trans", "tt.tt_1_trans", "tt.tt_12_trans", "tt.tt_123_trans"]
+
+for n in tnames
+    @test SSB.simplifytechname(n) == "tt.tt"
+end
 
 # -----------
 # Conversion of NamedArrays into nested Dicts

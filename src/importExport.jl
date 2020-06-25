@@ -220,11 +220,10 @@ function import_technologies(techFile::String; sourceGroup::String="U",
 
     subTechFiltered = filter(islegal, subTechList)
 
-
     # Test if all technologies in the input file exist at least in one form in the final tech lists
     for t in rawtechs
         if !any(occursin(t.name, x.name) for x in subTechFiltered)
-            error("Tech '$(t.name)' is not imported! Check csv file carefully!")
+            error("Tech '$(t.name)' is not imported! Check technology file carefully!")
         end
     end
 
@@ -233,6 +232,7 @@ function import_technologies(techFile::String; sourceGroup::String="U",
     sourcesAdd = filter(t -> t.functional_group == Symbol(sourceAddGroup), subTechFiltered)
     techs = filter(t -> (t.functional_group != Symbol(sourceGroup) && t.functional_group != Symbol(sourceAddGroup)), subTechFiltered)
 
+    @info "$(length(sources) + length(sourcesAdd) + length(techs) - length(rawtechs)) derived technolgies added."
 
     return sources, sourcesAdd, techs
 
@@ -261,6 +261,10 @@ end
 
 ## ---------------------------------
 ## JSON export
+
+# remove number and 'trans' from name
+simplifytechname(name) = replace(name, r"(_[0-9]*)?(_trans)?$" => "")
+
 
 # helper to convert a NamedArray into a nested Dict. Needed for JSON export
 function Dict(na::NamedArray)
@@ -300,7 +304,7 @@ function SystemJSON(sys::System)
         p["massflow_stats"] = Dict(k => Dict(v) for (k,v) in p["massflow_stats"])
     end
     SystemJSON(
-        [t.name for t in sys.techs],
+        [simplifytechname(t.name) for t in sys.techs],
         p,
         dot_string(sys)
     )
@@ -405,7 +409,7 @@ function dot_format(sys::System, io::IO, no_group::Array{String}=["S", "C", "T"]
 
     ## define nodes
     for t in vcat(sys.techs...)
-        label = "$(t.name)\n"
+        label = "$(simplifytechname(t.name))\n"
         label = label * "($(t.functional_group))"
         col = get(colors, t.functional_group, "# 999999")
         println(io, replace("$(make_legal(t.name)) [shape=box, fillcolor=\"$(col)\" label=\"$label\"];", "." => "_"))
