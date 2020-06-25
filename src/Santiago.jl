@@ -1,4 +1,4 @@
-module SanitationSystemMassFlow
+module Santiago
 
 # number of substance in the massflow analysis
 const NSUBSTANCE = 4

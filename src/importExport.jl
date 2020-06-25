@@ -15,7 +15,7 @@ export dot_file, dot_string
 # helpers to read out the dictionaries of the TC correctly
 function TC_dict(jsontech::JSON3.Object)
     dTC = Dict{String, Dict{Product, Float64}}()
-    for p in SanitationSystemMassFlow.SUBSTANCE_NAMES
+    for p in Santiago.SUBSTANCE_NAMES
         dTC[p] = Dict{Product, Float64}()
         for (k,v) in jsontech.massflow[Symbol(p)].TC
             dTC[p][Product(k)] = v
@@ -26,7 +26,7 @@ end
 
 function TCr_dict(jsontech::JSON3.Object)
     dTC_r = Dict{String, Float64}()
-    for p in SanitationSystemMassFlow.SUBSTANCE_NAMES
+    for p in Santiago.SUBSTANCE_NAMES
         dTC_r[p] = jsontech.massflow[Symbol(p)].k
     end
     dTC_r

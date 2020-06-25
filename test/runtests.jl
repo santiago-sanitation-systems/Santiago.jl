@@ -1,9 +1,9 @@
-using SanitationSystemMassFlow
+using Santiago
 using Test
 using Logging
 global_logger(ConsoleLogger(stderr, Logging.Error))
 
-const SSB = SanitationSystemMassFlow
+const SSB = Santiago
 
 
 @testset "System builder" begin

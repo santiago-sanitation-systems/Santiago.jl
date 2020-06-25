@@ -6,7 +6,7 @@
 # 1) Import tech file
 
 # we use the test data that come with teh package
-input_tech_file = joinpath(pkgdir(SanitationSystemMassFlow), "test/example_techs.json")
+input_tech_file = joinpath(pkgdir(Santiago), "test/example_techs.json")
 
 sources, additional_sources, techs = import_technologies(input_tech_file)
 

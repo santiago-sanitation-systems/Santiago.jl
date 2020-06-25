@@ -16,7 +16,7 @@ notifications:
   email: false
 
 after_success:
-  - julia -e 'if VERSION >= v"0.7.0-" using Pkg end; cd(Pkg.dir("SanitationSystemMassFlow")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())';
+  - julia -e 'if VERSION >= v"0.7.0-" using Pkg end; cd(Pkg.dir("Santiago")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())';
 
 
 jobs:
