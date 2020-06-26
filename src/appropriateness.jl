@@ -1,0 +1,100 @@
+using JSON3
+using QuadGK
+
+include("performanceFunctions.jl")
+
+export appropriateness
+
+
+# geometric mean
+function geomean(a)
+    s = 0.0
+    n = length(a)
+    for ai in a
+        @inbounds s += log(ai)
+    end
+    return exp(s / n)
+end
+
+# integrate between continous distributions
+function integrate(d1::T1, t1, d2::T2, t2) where T1 <: Continous where T2 <: Continous
+    f(x) = d1(x, t1)*d2(x, t2)
+    # integrate
+    lw = min(minimum(d1), minimum(d2))
+    up = max(maximum(d1), maximum(d2))
+    score, _ = quadgk(f, lw, up, rtol=1e-6)
+    score
+end
+
+# summation for categorical variables
+function integrate(d1::T1, t1, d2::T2, t2) where T1 <: Discrete where T2 <: Discrete
+    all(keys(d1.d) .== keys(d2.d)) || error("Categories do not match:\n $(keys(d1.d))\n $(keys(d2.d))")
+
+    score = 0.0
+    for k in keys(d1.d)
+        score += d1(k, t1) * d2(k, t2)
+    end
+    score
+end
+
+
+function get_distribution(attribute)
+    p = attribute[:parameters]
+    p = Dict((Symbol(k), v) for (k,v) in p) # convert keys to Symbols
+    ff = Symbol(uppercasefirst(attribute[:function]))
+    if ff == :Categorical
+        d = getfield(Santiago, ff)(p)
+    else
+        d = getfield(Santiago, ff)(; p...)
+    end
+    t = getfield(Santiago, Symbol(uppercasefirst(attribute[:type])))()
+    d, t
+end
+
+function techscore(techattributes, caseattributes)
+    attr = intersect(keys(techattributes), keys(caseattributes))
+    d = Dict{Symbol, AbstractFloat}()
+    for a in attr
+        @info "  $a"
+        d1, t1 = get_distribution(techattributes[a])
+        d2, t2 = get_distribution(caseattributes[a])
+
+        (((t1 isa Pdf) & (t2 isa Performance)) | ((t1 isa Performance) & (t2 isa Pdf))) ||
+            error("Only a 'Pdf'/'Pmf' and a 'Performance' function can be combined!")
+        d[a] = integrate(d1, t1, d2, t2)
+    end
+    d
+end
+
+"""
+# Calculate the technology appropriateness score (TAS) for each technology
+
+```
+appropriateness(technology_file::AbstractString, case_file::AbstractString)
+```
+
+## Parameters
+- `technology_file`: json file with technologie definitions
+- `case_file`: json file with case definition
+
+## Values
+Two dictionaries. The first one return the TAS for each technology,
+the second one the cores for each attribute.
+"""
+function appropriateness(technology_file::AbstractString, case_file::AbstractString)
+
+    techs = open(technology_file,"r") do f
+        JSON3.read(f)
+    end
+
+    case = open(case_file,"r") do f
+        JSON3.read(f)
+    end
+
+    TAS = Dict()
+    for t in techs
+        @info "Calculate TAS for $(t.name):"
+        TAS[t.name] = techscore(t.attributes, case.attributes)
+    end
+    Dict(k => geomean(values(v)) for (k,v) in TAS), TAS
+end
