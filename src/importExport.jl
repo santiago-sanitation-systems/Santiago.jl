@@ -278,7 +278,7 @@ function import_technologies(tech_file::String, case_file::String;
     sources, additional_sources, techs = import_technologies(tech_file)
     tas, _ = appropriateness(tech_file, case_file)
     update_appropriateness!(sources, tas)
-    update_appropriateness!(techs, tas)
+    update_appropriateness!(additional_sources, tas)
     update_appropriateness!(techs, tas)
 
     sources, additional_sources, techs

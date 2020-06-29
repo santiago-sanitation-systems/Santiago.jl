@@ -13,7 +13,7 @@ A Julia package to generate approperiate sanitation system options. It is able t
 
 1. Install [Julia](https://julialang.org/) version >= 1.4.
 
-2. Then the `Santiago` package is installed from within the Julia:
+2. Install the `Santiago` package from the Julia prompt:
 ```Julia
 ] add https://github.com/santiago-sanitation-systems/Santiago.jl.git
 ```
@@ -35,16 +35,17 @@ using Logging
 
 global_logger(ConsoleLogger(stderr, Logging.Warn))
 
-
 # -----------
-# 1) Import tech file
+# 1) Import technologies
 
 # we use the test data that come with the package
 input_tech_file = joinpath(pkgdir(Santiago), "test/example_techs.json")
+input_case_file = joinpath(pkgdir(Santiago), "test/example_case.json")
 
-sources, additional_sources, techs = import_technologies(input_tech_file)
+sources, additional_sources, techs = import_technologies(input_tech_file, input_case_file)
 
-# number of available technologies (more than in "example_techs.csv", some are auto generated)
+# number of available technologies
+# (more than in "example_techs.json" as some are auto generated)
 length(techs)
 
 
@@ -70,7 +71,7 @@ allSys[1].properties
 
 
 # -----------
-# 3) Mass flows
+# 4) Mass flows
 
 input_masses = Dict("Dry.toilet" => Dict("phosphor" => 548.0,
                                          "nitrogen" => 4550.0,
@@ -95,13 +96,13 @@ allSys[2].properties["massflow_stats"]["lost"][:,:,"mean"]
 allSys[2].properties["massflow_stats"]["lost"][:,:,"q_0.5"]
 
 # -----------
-# 4) select a subset of systems
+# 5) select a subset of systems
 
-# select 8 systems
+# For example, select eight systems for further investigation
 selectedSys = select_systems(allSys, 8)
 
 # -----------
-# 5) write some properties in a DataFrame for further analysis
+# 6) write some properties in a DataFrame for further analysis
 
 df = properties_dataframe(selectedSys,
                           massflow_selection = ["recovered | water | mean",
@@ -111,7 +112,7 @@ df = properties_dataframe(selectedSys,
 
 
 # -----------
-# 6) export to JSON
+# 8) export to JSON
 
 # Note, the JSON export is designed to interface other applications,
 # but not for serialization.
@@ -146,6 +147,35 @@ global_logger(mylogger)
 
 ... use Santiago functions ...
 ```
+
+## Update calculated systems with new case profile
+
+The generation of all systems is computationally intense. The code
+below demonstrates how to first generate all systems without case
+information and later update the system scores with case data.
+
+```Julia
+## 1) build systems without case information
+
+sources, additional_sources, techs = import_technologies(tech_file)
+allSys = build_systems(sources, techs)
+
+## 2) read case file and update sysappscore
+
+tas, tas_components = appropriateness(tech_file, case_file);
+update_appropriateness!(sources, tas)
+update_appropriateness!(additional_sources, tas)
+update_appropriateness!(techs, tas)
+
+sysappscore!.(allSys)
+
+## 3) select systems
+
+fewSys = select_systems(allSys, 6)
+
+```
+Only the first step is slow, you may want to cache the result. Step 2 ad 3 can be iterated quickly.
+
 
 ## References
 

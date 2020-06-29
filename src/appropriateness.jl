@@ -3,7 +3,7 @@ using QuadGK
 
 include("performanceFunctions.jl")
 
-export appropriateness
+export appropriateness, update_appropriateness!
 
 
 # geometric mean
@@ -100,10 +100,23 @@ function appropriateness(technology_file::AbstractString, case_file::AbstractStr
         JSON3.read(f)
     end
 
+    @info "Case: '$(case.name)':"
+
     TAS = Dict()
     for t in techs
         @info "Calculate TAS for $(t.name):"
         TAS[t.name] = techscore(t.attributes, case.attributes)
     end
     Dict(k => geomean(values(v)) for (k,v) in TAS), TAS
+end
+
+
+# ---------------------------------
+# update exiting techs with new TAS
+
+function update_appropriateness!(techs::Array{AbstractTech}, tas::Dict{String, Float64})
+    for t in techs
+        nn = simplifytechname(t.name)
+        nn ∈ keys(tas) ? t.appscore[1] = tas[nn] : error("Appropriateness for '$(nn)' not defined!")
+    end
 end
