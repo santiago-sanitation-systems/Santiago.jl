@@ -9,6 +9,11 @@ using DataFrames
 export import_technologies, properties_dataframe
 export dot_file, dot_string
 
+
+# remove number and 'trans' from name
+simplifytechname(name) = replace(name, r"(_[0-9]*)?(_trans)?$" => "")
+
+
 # ---------------------------------
 # import of tech files
 
@@ -92,7 +97,7 @@ function import_technologies(techFile::String; sourceGroup::String="U",
                               length(rtech.outputs.product)>0 ? Product.(rtech.outputs.product) : Product[],
                               rtech.name,
                               Symbol(rtech.functionalgroup),
-                              [rtech.appscore],
+                              [-1.0],
                               length(rtech.inputs.product),
                               TC_dict(rtech),
                               TCr_dict(rtech))
@@ -131,7 +136,7 @@ function import_technologies(techFile::String; sourceGroup::String="U",
                                               Product.([subTechOut]),
                                               subTechName,
                                               Symbol(rtech.functionalgroup),
-                                              [rtech.appscore],
+                                              [-1.0],
                                               length(subTechIn),
                                               TC_dict(rtech),
                                               TCr_dict(rtech))
@@ -155,7 +160,7 @@ function import_technologies(techFile::String; sourceGroup::String="U",
                                   Product.([subTechOut]),
                                   subTechName,
                                   Symbol(rtech.functionalgroup),
-                                  [rtech.appscore],
+                                  [-1.0],
                                   length(subTechIn),
                                   TC_dict(rtech),
                                   TCr_dict(rtech))
@@ -173,7 +178,7 @@ function import_technologies(techFile::String; sourceGroup::String="U",
                                       length(rtech.outputs.product)>0 ? Product.(rtech.outputs.product) : Product[],
                                       subTechName,
                                       Symbol(rtech.functionalgroup),
-                                      [rtech.appscore],
+                                      [-1.0],
                                       length(subTechIn),
                                       TC_dict(rtech),
                                       TCr_dict(rtech))
@@ -191,7 +196,7 @@ function import_technologies(techFile::String; sourceGroup::String="U",
                                   length(rtech.outputs.product)>0 ? Product.(rtech.outputs.product) : Product[],
                                   subTechName,
                                   Symbol(rtech.functionalgroup),
-                                  [rtech.appscore],
+                                  [-1.0],
                                   length(subTechIn),
                                   TC_dict(rtech),
                                   TCr_dict(rtech))
@@ -259,12 +264,30 @@ end
 
 
 
+"""
+This function reads a `json` file defing the technologies *and* a
+file defining the case to compute the appropriateness scores.
+
+It returns i) array with sources, ii) array
+with additional sources, and iii) an array of all technologies.  """
+function import_technologies(tech_file::String, case_file::String;
+                             sourceGroup::String="U", sourceAddGroup::String="Uadd",
+                             sinkGroup::String="D")
+
+
+    sources, additional_sources, techs = import_technologies(tech_file)
+    tas, _ = appropriateness(tech_file, case_file)
+    update_appropriateness!(sources, tas)
+    update_appropriateness!(techs, tas)
+    update_appropriateness!(techs, tas)
+
+    sources, additional_sources, techs
+
+end
+
+
 ## ---------------------------------
 ## JSON export
-
-# remove number and 'trans' from name
-simplifytechname(name) = replace(name, r"(_[0-9]*)?(_trans)?$" => "")
-
 
 # helper to convert a NamedArray into a nested Dict. Needed for JSON export
 function Dict(na::NamedArray)
