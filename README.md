@@ -148,7 +148,7 @@ global_logger(mylogger)
 ... use Santiago functions ...
 ```
 
-## Update calculated systems with new case profile
+## Update calculated systems for new case profile
 
 The generation of all systems is computationally intense. The code
 below demonstrates how to first generate all systems without case
@@ -159,6 +159,8 @@ information and later update the system scores with case data.
 
 sources, additional_sources, techs = import_technologies(tech_file)
 allSys = build_systems(sources, techs)
+
+sysappscore!.(allSys) # all are '-1.0' because no case profile was defined
 
 ## 2) read case file and update sysappscore
 
@@ -174,7 +176,7 @@ sysappscore!.(allSys)
 fewSys = select_systems(allSys, 6)
 
 ```
-Only the first step is slow, you may want to cache the result. Step 2 ad 3 can be iterated quickly.
+Only the first step is slow, so you may want to cache the result. Step 2 and 3 can be iterated quickly.
 
 
 ## References
