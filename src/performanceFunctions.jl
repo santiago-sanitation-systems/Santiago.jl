@@ -1,4 +1,4 @@
-
+## These functions are used in the appropriateness assessment
 
 # types to distinguish continuous and discrete functions
 abstract type Continous end

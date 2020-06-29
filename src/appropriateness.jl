@@ -41,15 +41,24 @@ end
 function get_distribution(attribute)
     p = attribute[:parameters]
     p = Dict((Symbol(k), v) for (k,v) in p) # convert keys to Symbols
-    ff = Symbol(uppercasefirst(attribute[:function]))
+    tt =     attribute[:type] |> lowercase |> uppercasefirst |> Symbol
+    ff = attribute[:function] |> lowercase |> uppercasefirst |> Symbol
     if ff == :Categorical
+        if tt == :Pdf
+            sum(abs, values(p)) ≈ 1.0 || error("Probabilities must sum to 1, not $(sum(abs, values(p)))!\n Attribute: '$attribute'")
+        elseif tt == :Performance
+            e = extrema(values(p))
+            (0 <= e[1] <= e[2] <= 1) || error("Performance must be ∈ [0,1], not $(e)!\n Attribute: '$attribute'")
+        end
         d = getfield(Santiago, ff)(p)
     else
         d = getfield(Santiago, ff)(; p...)
     end
-    t = getfield(Santiago, Symbol(uppercasefirst(attribute[:type])))()
+    t = getfield(Santiago, tt)()
     d, t
 end
+
+
 
 function techscore(techattributes, caseattributes)
     attr = intersect(keys(techattributes), keys(caseattributes))
@@ -60,7 +69,7 @@ function techscore(techattributes, caseattributes)
         d2, t2 = get_distribution(caseattributes[a])
 
         (((t1 isa Pdf) & (t2 isa Performance)) | ((t1 isa Performance) & (t2 isa Pdf))) ||
-            error("Only a 'Pdf'/'Pmf' and a 'Performance' function can be combined!")
+            error("Attribute '$a': Only a 'Pdf'/'Pmf' and a 'Performance' function can be combined! ")
         d[a] = integrate(d1, t1, d2, t2)
     end
     d
@@ -79,7 +88,7 @@ appropriateness(technology_file::AbstractString, case_file::AbstractString)
 
 ## Values
 Two dictionaries. The first one return the TAS for each technology,
-the second one the cores for each attribute.
+the second one contains the scores separately for each attribute.
 """
 function appropriateness(technology_file::AbstractString, case_file::AbstractString)
 

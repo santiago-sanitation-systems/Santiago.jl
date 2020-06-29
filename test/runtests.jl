@@ -5,8 +5,8 @@ global_logger(ConsoleLogger(stderr, Logging.Error))
 
 const SSB = Santiago
 
-@testset "Performance functions" begin
-    include("performance_functions_tests.jl")
+@testset "Appropriateness assessment" begin
+    include("appropriateness_test.jl")
 end
 
 @testset "System builder" begin
