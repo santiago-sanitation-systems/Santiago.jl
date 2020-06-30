@@ -130,3 +130,26 @@ end
     att[:parameters]["useless"] = 0.2
     @test_throws MethodError SSB.get_distribution(att)
 end
+
+
+@testset "TAS integrate" begin
+    # continous
+    d2 = Range(-10, 10)
+    @test isapprox(SSB.integrate(Range(-10, 10), Pdf(), d2, Performance()), 1.0, rtol=1e-6)
+    @test isapprox(SSB.integrate(Range(0.1, 0.2), Pdf(), d2, Performance()), 1.0, rtol=1e-6)
+    @test isapprox(SSB.integrate(Triangle(-10, 1, 10), Pdf(), d2, Performance()), 1.0, rtol=1e-6)
+    @test isapprox(SSB.integrate(Triangle(-1, -0.9, -0.8), Pdf(), d2, Performance()), 1.0, rtol=1e-6)
+    @test isapprox(SSB.integrate(Trapez(-10, 1, 2, 10), Pdf(), d2, Performance()), 1.0, rtol=1e-6)
+    @test isapprox(SSB.integrate(Trapez(-1, -0.9, -0.8, 0.1), Pdf(), d2, Performance()), 1.0, rtol=2e-6)
+    s1 = SSB.integrate(Trapez(-1, -0.9, -0.8, 0.1), Pdf(), d2, Performance())
+    s2 = SSB.integrate(d2, Performance(), Trapez(-1, -0.9, -0.8, 0.1), Pdf())
+    @test s1 ≈ s2
+
+    # discrete
+    d1 = Categorical(Dict(:a => 0.7, :b =>  0.3, :c => 1))
+    d2 = Categorical(Dict(:a => 0.1, :b =>  0.3, :c => 0.6))
+    @test SSB.integrate(d1, Performance(), d2, Pdf()) ≈ 0.1*0.7 + 0.3*0.3 + 0.6*1
+    @test SSB.integrate(d1, Performance(), d2, Pdf()) ≈ SSB.integrate(d2, Pdf(), d1, Performance())
+    d3 = Categorical(Dict(:a => 0.1, :b =>  0.3, :wrongkey => 0.6))
+    @test_throws ErrorException SSB.integrate(d1, Performance(), d3, Pdf())
+end
