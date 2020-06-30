@@ -58,17 +58,12 @@ end
 end
 
 @testset "Categorical" begin
-    n = ["n$i" for i in 1:4]
-    v = [0.1, 0.2, 0.4, 0.3]
-
-    @test_throws ErrorException Categorical(["n$i" for i in 1:3], v)
-    @test_throws ErrorException Categorical(["n$i" for i in 1:5], v)
-
-    d = Categorical(names=n, p=v)
-    for (i, ni) in enumerate(n)
-        @test d(Symbol(ni), Pdf()) == v[i]
-        @test d(Symbol(ni), Pmf()) == v[i]
-        @test d(Symbol(ni), Performance()) == v[i]
+    dd = Dict(Symbol("n$i") => rand() for i in 1:5)
+    d = Categorical(dd)
+    for (k, v) in dd
+        @test d(k, Pdf()) == v
+        @test d(k, Pmf()) == v
+        @test d(k, Performance()) == v
     end
 
 end

@@ -95,15 +95,9 @@ Base.maximum(t::Trapez) = t.d
 
 # --- categorical ---
 
-Base.@kwdef struct Categorical <: Discrete
+struct Categorical <: Discrete
     d::Dict{Symbol, Float64}
 end
-
-function Categorical(names::Array, p::Array)
-    length(names) == length(p) || error("Length of 'names' and 'p' doesn't match!")
-    Categorical(Dict(zip(Symbol.(names), p)))
-end
-Categorical(; names::Array, p::Array) = Categorical(names, p)
 
 function (d::Categorical)(x, type::Pdf)
     d.d[x]
