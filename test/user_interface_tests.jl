@@ -28,9 +28,9 @@ end
 
 
 # -----------
-# 1b) Import tech file and calcualte appropriateness together
+# 1b) Import tech file and calculate appropriateness together
 
-# We use the test data that come with the package
+# We use the test data that come with the package:
 # Original: https://www.dropbox.com/s/jxolpbcvpw2dfmj/didac-massflows.csv?dl=0
 input_tech_file = joinpath(pkgdir(Santiago), "test/example_techs.json")
 # Original: https://www.dropbox.com/s/tcfckrtqx66hbwb/Casedata_Katarnyia_DS-small.csv?dl=0
@@ -41,6 +41,31 @@ sources, additional_sources, techs = import_technologies(input_tech_file, input_
 @test length(sources) == 2
 @test length(additional_sources) == 0
 @test length(techs) == 264
+
+
+# Original appscores from "didac-massflows.csv"
+referencescores = Dict("Dry.toilet" => 0.9661523513,
+                       "Pour.flush" => 0.9700311062,
+                       "composting.chamber" => 0.9628832,
+                       "septic.tank" => 0.9874298977,
+                       "motorized.transport.dry" => 0.7294829241,
+                       "conventional.sewer" => 0.7106264134,
+                       "drying.bed" => 0.8115962817,
+                       "sbr" => 0.7274961311,
+                       "wsp" => 0.8112534455,
+                       "application.compost" => 0.9752523776,
+                       "application.stabilizedsludge" => 0.9812005795,
+                       "leach.field" => 0.9380634193,
+                       "soak.pit" => 0.9428899228)
+
+scores = Dict(unique((Santiago.simplifytechname(t.name) => t.appscore[1]) for t in [sources; techs]))
+
+@testset "TAS scores" begin
+    for k in keys(referencescores)
+        # we allow for 1% error as original scores are computed with Monte Carlo integration
+        @test isapprox(scores[k], referencescores[k], rtol=0.01)
+    end
+end
 
 
 # -----------
