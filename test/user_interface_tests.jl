@@ -30,8 +30,10 @@ end
 # -----------
 # 1b) Import tech file and calcualte appropriateness together
 
-# we use the test data that come with the package
+# We use the test data that come with the package
+# Original: https://www.dropbox.com/s/jxolpbcvpw2dfmj/didac-massflows.csv?dl=0
 input_tech_file = joinpath(pkgdir(Santiago), "test/example_techs.json")
+# Original: https://www.dropbox.com/s/tcfckrtqx66hbwb/Casedata_Katarnyia_DS-small.csv?dl=0
 input_case_file = joinpath(pkgdir(Santiago), "test/example_case.json")
 
 sources, additional_sources, techs = import_technologies(input_tech_file, input_case_file)
@@ -45,7 +47,7 @@ sources, additional_sources, techs = import_technologies(input_tech_file, input_
 # 2) Build all systems
 
 allSys = build_systems(sources, techs);
-@test length(allSys) == 35
+@test length(allSys) == 76
 
 
 # -----------
