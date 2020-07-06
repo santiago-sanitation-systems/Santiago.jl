@@ -148,17 +148,25 @@ global_logger(mylogger)
 ... use Santiago functions ...
 ```
 
-## Update calculated systems for new case profile
+## Update systems for a new case profile
 
 The generation of all systems is computationally intense. The code
 below demonstrates how to first generate all systems without case
 information and later update the system scores with case data.
 
 ```Julia
-## 1) build systems without case information
+using Serialization
+
+## 1) build systems without case information and cache result
 
 sources, additional_sources, techs = import_technologies(tech_file)
-allSys = build_systems(sources, techs)
+
+if isfile("mycachfile.jls")
+    allSys = deserialize("mycachfile.jls")
+else
+    allSys = build_systems(sources, techs)
+    serialize("mycachfile.jls", allSys)
+end
 
 sysappscore!.(allSys) # all are '-1.0' because no case profile was defined
 
@@ -176,7 +184,8 @@ sysappscore!.(allSys)
 fewSys = select_systems(allSys, 6)
 
 ```
-Only the first step is slow, so you may want to cache the result. Step 2 and 3 can be iterated quickly.
+The slowest part is `build_systems`, therefore we cache the output in
+this example. Steps 2 and 3 are fast and can be iterated quickly.
 
 
 ## References
