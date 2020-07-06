@@ -134,7 +134,7 @@ Typically the information on the case specification and the available
 technologies are provided via files. Santiago can only import JSON
 files. The structure must match the examples:
 
-- Technologies: [`example_techs.json`](test/example_techs.json
+- Technologies: [`example_techs.json`](test/example_techs.json)
 - Case: [`example_case.json`](test/example_case.json)
 
 Many tools are available to browse and edit JSON files. For example,
