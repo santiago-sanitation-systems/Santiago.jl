@@ -120,7 +120,7 @@ massflow_summary!.(allSys, Ref(input_masses), n=20)
 # -----------
 # 5) select systems
 
-for n in 1:length(allSys)
+for n in 0:length(allSys)
     @test n == length(select_systems(allSys, n))
 end
 

@@ -39,13 +39,27 @@ end
 
 
 """
-Filter sanitation systems to return `n_select` diverse systems with a good SAS.
+Select `n_select` diverse systems with a good SAS.
+
+Note, this function may modify the properties of the input systems! Any of
+the following properties will be added if missing:
+
+- "template"
+- "sysappscore"
+- "ntech"
+- "connectivity"
 """
 function select_systems(systems::Array{System}, n_select::Int)
 
     if length(systems) < n_select
         error("Cannot select $(n_select) systems from $(length(systems))!")
     end
+
+    # compute properties if they do not exists
+    haskey(systems[1].properties, "template") || template!.(systems)
+    haskey(systems[1].properties, "sysappscore") || sysappscore!.(systems)
+    haskey(systems[1].properties, "ntechs") || ntechs!.(systems)
+    haskey(systems[1].properties, "connectivity") || connectivity!.(systems)
 
     # extract system properties
     IDs = [s.properties["ID"] for s in systems]
@@ -57,7 +71,7 @@ function select_systems(systems::Array{System}, n_select::Int)
     templates_used = unique(templates)
 
     ## Calculate how many systems to select per template
-    ## based on the 90 quantiles of sysappscore per template
+    ## based on the 90% quantiles of sysappscore per template
     q_scores = [quantile(sas[templates .== t], 0.9)
                 for t in templates_used]
 
