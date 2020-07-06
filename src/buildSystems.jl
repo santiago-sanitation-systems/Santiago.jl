@@ -544,14 +544,6 @@ function prefilterTechList(currentSources::Array{T1}, sources::Array{T2},
     otherSourcesProduct = map(x -> "$(x.name)", otherSourcesProduct) # convert to Strings
     push!(otherSourcesProduct, "^[.]") # this is a dummy patter to ensure that filter works if otherSourcesProduct is empty
 
-
-    # # Additional Filter. REMOVE HARD CODING OF PRODUCT NAMES
-    # for tproduct in otherSourcesProduct
-    #     if tproduct == "excreta"
-    #         append!(otherSourcesProduct, ["pithumus"])
-    #     end
-    # end
-
     # check that non of the String in otherSourcesProduct is part of an input products name
     function ffilter(x)
         inputs = map(x -> "$(x.name)", x.inputs)

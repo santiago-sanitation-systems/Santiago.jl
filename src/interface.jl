@@ -30,7 +30,7 @@ function build_systems(sources::Array{T},
 
     ## ------
     ## Generate looptechs
-    if addlooptechs & length(additional_sources)>1
+    if addlooptechs
         # build looped techs
         ninit = nold = length(technologies)
         add_loop_techs!(technologies, groups = looptechgroup)
@@ -40,7 +40,7 @@ function build_systems(sources::Array{T},
             add_loop_techs!(technologies, groups = looptechgroup)
             i += 1
         end
-        @info "$(length(technologies) - ninit) looped techs added."
+        @debug "$(length(technologies) - ninit) looped techs added."
     end
 
     ## ------
