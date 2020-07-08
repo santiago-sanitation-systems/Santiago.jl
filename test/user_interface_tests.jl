@@ -74,6 +74,10 @@ end
 allSys = build_systems(sources, techs);
 @test length(allSys) == 76
 
+# test that techs are not modified
+@test length(sources) == 2
+@test length(additional_sources) == 0
+@test length(techs) == 264
 
 # -----------
 # 3) Calculate (or update) system properties

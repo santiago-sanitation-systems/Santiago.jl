@@ -28,19 +28,22 @@ function build_systems(sources::Array{T},
                        additional_sources::Array{T}=T[],
                        addlooptechs::Bool=true, looptechgroup=[:S, :T]) where T <: AbstractTech
 
+
+    technologies2 = copy(technologies) # we do not want to modify the inputs
+
     ## ------
     ## Generate looptechs
     if addlooptechs
         # build looped techs
-        ninit = nold = length(technologies)
-        add_loop_techs!(technologies, groups = looptechgroup)
+        ninit = nold = length(technologies2)
+        add_loop_techs!(technologies2, groups = looptechgroup)
         i = 1
-        while nold < length(technologies) & i < 2
-            nold = length(technologies)
-            add_loop_techs!(technologies, groups = looptechgroup)
+        while nold < length(technologies2) & i < 2
+            nold = length(technologies2)
+            add_loop_techs!(technologies2, groups = looptechgroup)
             i += 1
         end
-        @debug "$(length(technologies) - ninit) looped techs added."
+        @debug "$(length(technologies2) - ninit) looped techs added."
     end
 
     ## ------
@@ -57,7 +60,7 @@ function build_systems(sources::Array{T},
         ## sub_technologies contains technologies which do have only
         ## inputs that are generated with the current source.
 
-        sub_technologies = prefilterTechList(ss, sources, additional_sources, technologies)
+        sub_technologies = prefilterTechList(ss, sources, additional_sources, technologies2)
 
         # get source name
         names_ss = []
