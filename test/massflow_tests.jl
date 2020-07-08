@@ -32,3 +32,23 @@ for sys in allSys
                           MC=true, n=10)
     @test length(m1) == 5
 end
+
+
+# test scaling
+
+@test_throws ErrorException scale_massflows(allSys[1], 100) # massflow summary is not yet computed
+massflow_summary!.(allSys, Ref(M_in), n=10);
+
+allSys2 = scale_massflows.(allSys, 100) # copy
+for i in 1:length(allSys)
+    for (k, v) in allSys2[i].properties["massflow_stats"]
+        @test  all(v .≈ (allSys[i].properties["massflow_stats"][k] .* 100))
+    end
+end
+
+scale_massflows!.(allSys, 0)    # inplace
+for i in 1:length(allSys)
+    for (k, v) in allSys[i].properties["massflow_stats"]
+        @test all(v .≈ 0.0)
+    end
+end

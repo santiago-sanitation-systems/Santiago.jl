@@ -197,9 +197,14 @@ sysappscore!.(allSys)
 
 fewSys = select_systems(allSys, 6)
 
+## 4) scale massflows for 100 units
+##    (This is a rough apporximantion only!)
+
+fewSys = scale_massflows.(fewSys, 100)
+
 ```
 The slowest part is `build_systems`, therefore we cache the output in
-this example. Steps 2 and 3 are fast and can be iterated quickly.
+this example. Steps 2 and 4 are fast and can be iterated quickly.
 
 
 ## References

@@ -12,6 +12,7 @@ export recovered
 export entered
 export recovery_ratio
 export massflow_summary, massflow_summary!
+export scale_massflows, scale_massflows!
 export issource
 export issink
 
@@ -346,3 +347,23 @@ Add summary statistics of a Monte Carlo massflow to system properties
 function massflow_summary!(s, args...; kwargs...)
     s.properties["massflow_stats"] = massflow_summary(s, args...; kwargs...)
 end
+
+
+"""
+Scale all summary statistics by a `n_units`. This is only a crude approximation!
+
+"""
+function scale_massflows!(sys::System, n_units::Int)
+    haskey(sys.properties, "massflow_stats") || error("`massflow_stats` are not  yet calulated! Run `massflow_summary!(system)`.")
+    for v in values(sys.properties["massflow_stats"])
+        v .*= n_units
+    end
+    sys
+end
+
+"""
+Scale all summary statistics by a `n_units` and return a independent
+copy of the updated system.
+This is only a crude approximation!
+"""
+scale_massflows(sys::System, n_units::Int) = scale_massflows!(deepcopy(sys), n_units)
