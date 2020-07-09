@@ -31,7 +31,7 @@ Broadcast.broadcastable(p::Product) = Ref(p)
 
 abstract type AbstractTech end
 
-@auto_hash_equals struct Tech <: AbstractTech
+struct Tech <: AbstractTech
     inputs::Array{Product}
     outputs::Array{Product}
     name::String
@@ -41,6 +41,11 @@ abstract type AbstractTech end
     transC::Dict{String, Dict{Product, Float64}}
     transC_reliability::Dict{String, Float64}
 end
+
+# A tech is uniquley defined by it's name only -> speeds up comparison a lot!
+Base.hash(t::Tech, h::UInt) = hash(t.name, hash(:Tech, h))
+Base.:(==)(a::Tech, b::Tech) = isequal(a.name, b.name)
+
 
 const Source = Tech
 const Sink = Tech
@@ -120,7 +125,6 @@ Type of combined (looped) Techs.
     internal_techs::Set{Tech}
     internal_connections::Set{Connection}
 end
-
 
 
 """
