@@ -283,7 +283,7 @@ end
 # Return a vector of Systems
 function build_system!(sys::System, completesystems::Array{System},
                        techs::Array{T}, islegal::Function,
-                       logfile::IO, hashset::Set{UInt64}, threadlock) where T <: AbstractTech
+                       hashset::Set{UInt64}, threadlock) where T <: AbstractTech
 
     # get Array of matching Techs Arrays
     candidates = get_candidates(sys, techs)
@@ -304,7 +304,7 @@ function build_system!(sys::System, completesystems::Array{System},
                     push!(hashset, hash(sys_ext))
                 end
                 build_system!(sys_ext, completesystems,
-                              techs, islegal, logfile, hashset, threadlock)
+                              techs, islegal, hashset, threadlock)
             end
         end
     end
@@ -315,13 +315,12 @@ end
 Returns an Array of all possible `System`s starting with `source`. A source can be any technology with a least one output.
 """
 function build_all_systems(source::Array{T1}, techs::Array{T2};
-                           islegal::Function=x -> true,
-                           logfile=stdout) where T1 <: AbstractTech where T2 <: AbstractTech
+                           islegal::Function=x -> true) where T1 <: AbstractTech where T2 <: AbstractTech
 
     completesystems = System[]
     threadlock = ReentrantLock()
     build_system!(System(source), completesystems, techs, islegal,
-                  logfile, Set{UInt64}(), threadlock)
+                  Set{UInt64}(), threadlock)
 
 
     # split TechCombineds
