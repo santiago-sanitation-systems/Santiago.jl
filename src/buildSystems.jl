@@ -282,8 +282,7 @@ end
 
 # Return a vector of Systems
 function build_system!(sys::System, completesystems::Array{System},
-                       techs::Array{T}, islegal::Function,
-                       hashset::Set{UInt64}, threadlock) where T <: AbstractTech
+                       techs::Array{T}, hashset::Set{UInt64}, threadlock) where T <: AbstractTech
 
     # get Array of matching Techs Arrays
     candidates = get_candidates(sys, techs)
@@ -299,12 +298,12 @@ function build_system!(sys::System, completesystems::Array{System},
                     end
                     @info "$sys_ext"
                 end
-            elseif !sys_ext.complete && islegal(sys_ext) && !(hash(sys_ext) in hashset)
+            elseif !sys_ext.complete && !(hash(sys_ext) in hashset)
                 lock(threadlock) do
                     push!(hashset, hash(sys_ext))
                 end
                 build_system!(sys_ext, completesystems,
-                              techs, islegal, hashset, threadlock)
+                              techs, hashset, threadlock)
             end
         end
     end
@@ -314,12 +313,11 @@ end
 """
 Returns an Array of all possible `System`s starting with `source`. A source can be any technology with a least one output.
 """
-function build_all_systems(source::Array{T1}, techs::Array{T2};
-                           islegal::Function=x -> true) where T1 <: AbstractTech where T2 <: AbstractTech
+function build_all_systems(source::Array{T1}, techs::Array{T2}) where T1 <: AbstractTech where T2 <: AbstractTech
 
     completesystems = System[]
     threadlock = ReentrantLock()
-    build_system!(System(source), completesystems, techs, islegal,
+    build_system!(System(source), completesystems, techs,
                   Set{UInt64}(), threadlock)
 
 
