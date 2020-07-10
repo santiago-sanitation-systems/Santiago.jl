@@ -22,7 +22,6 @@ end
 
 Product(name::T) where T <: AbstractString = Product(Symbol(name))
 show(io::Base.IO, p::Product) = print(io, "$(p.name)")
-
 isless(p1::Product, p2::Product) = isless(p1.name, p2.name)
 
 Broadcast.broadcastable(p::Product) = Ref(p)
@@ -542,8 +541,8 @@ function prefilterTechList(currentSources::Array{T1}, sources::Array{T2},
         append!(output_list, ss_c.outputs)
     end
 
-    otherSourcesProduct = filter(x -> !(x in output_list), otherSourcesProduct)
-    otherSourcesProduct = map(x -> "$(x.name)", otherSourcesProduct) # convert to Strings
+    filter!(x -> !(x in output_list), otherSourcesProduct)
+    otherSourcesProduct = map(x -> String(x.name), otherSourcesProduct) # convert to Strings
     push!(otherSourcesProduct, "^[.]") # this is a dummy patter to ensure that filter works if otherSourcesProduct is empty
 
     # check that non of the String in otherSourcesProduct is part of an input products name

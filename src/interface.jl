@@ -63,7 +63,7 @@ function build_systems(sources::Array{T},
         sub_technologies = prefilterTechList(ss, sources, additional_sources, technologies2)
 
         # get source name
-        names_ss = []
+        names_ss = String[]
         for s in ss
             push!(names_ss, s.name)
         end
