@@ -1,5 +1,3 @@
-using AutoHashEquals
-
 import DataStructures
 import Combinatorics
 import Base.show
@@ -18,8 +16,8 @@ export AbstractTech, Tech, TechCombined, Product, System
 # define types
 
 
-@auto_hash_equals struct Product
-name::Symbol
+struct Product
+    name::Symbol
 end
 
 Product(name::T) where T <: AbstractString = Product(Symbol(name))
@@ -115,7 +113,7 @@ const Connection = Tuple{Product, AbstractTech, AbstractTech}
 """
 Type of combined (looped) Techs.
 """
-@auto_hash_equals struct TechCombined <: AbstractTech
+struct TechCombined <: AbstractTech
     inputs::Array{Product}
     outputs::Array{Product}
     name::String
@@ -125,6 +123,9 @@ Type of combined (looped) Techs.
     internal_techs::Set{Tech}
     internal_connections::Set{Connection}
 end
+
+Base.hash(a::TechCombined, h::UInt) = hash(a.name, hash(a.inputs))
+Base.:(==)(a::TechCombined, b::TechCombined) = isequal(a.name, b.name) && (isequal(a.inputs, b.inputs) && true)
 
 
 """
