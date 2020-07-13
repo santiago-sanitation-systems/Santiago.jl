@@ -163,12 +163,18 @@ end
 
 # Sample a random adjacent matrix. Each row is Dirichlet distributed
 function sample_P(P::AbstractArray, transC_reliability::AbstractArray)
-    # m = zeros(P)
+
     P2 = 0.0*P
     for i in 1:size(P,1)
-        i_zero = P[i,:] .<= 0.0
-        alpha = P[i,.!i_zero] * transC_reliability[i]
-        P2[i,.!i_zero] = rand(Dirichlet(alpha.array), 1)
+        alpha = Float64[]
+        i_zero = fill(true, size(P,2))
+        for j in 1:size(P,2)
+            if P[i,j] > 0.0
+                i_zero[j] = false
+                push!(alpha, P[i,j]*transC_reliability[i])
+            end
+        end
+        P2[i,.!i_zero] = rand(Dirichlet(alpha), 1)
     end
     P2
 end
@@ -189,7 +195,10 @@ function calc_massflows(P::AbstractArray, inp::AbstractVector)
     A = (I - P)'
     m = A \ b
 
-    flows = [(m+inp)[i]*P[i,j] for i=1:size(P,1), j=1:size(P,1)]
+    flows = similar(P, Float64)
+    @inbounds for i=1:size(P,1), j=1:size(P,1)
+        flows[i,j] = (m[i]+inp[i])*P[i,j]
+    end
 
     return NamedArray(flows, (names, names), ("from", "to"))
 
