@@ -280,7 +280,7 @@ function massflow_summary(sys::System, M_in::Dict; MC::Bool=true, n::Int=100,
     #  -- compute masses
     ns = MC ? n : 1             # make only one run if MC == false
     m_outs = Array{MassDict}(undef, ns)
-    Base.Threads.@threads for i in 1:ns
+    for i in 1:ns
         m_outs[i] = massflow(sys, M_in, MC=MC, scale_reliability=scale_reliability)
     end
 
