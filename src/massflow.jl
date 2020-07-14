@@ -5,6 +5,7 @@ using LinearAlgebra
 using Statistics
 using Distributions: Dirichlet
 using NamedArrays
+using SparseArrays
 
 export massflow
 export lost
@@ -193,7 +194,7 @@ function calc_massflows(P::AbstractArray, inp::AbstractVector)
     # same as m = inp*P * inv(I - P), but numerically better
     b = P'*inp
     A = (I - P)'
-    m = A \ b
+    m = sparse(A) \ b
 
     flows = similar(P, Float64)
     @inbounds for i=1:size(P,1), j=1:size(P,1)
