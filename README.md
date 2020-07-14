@@ -18,6 +18,10 @@ A Julia package to generate approperiate sanitation system options. It is able t
 ] add https://github.com/santiago-sanitation-systems/Santiago.jl.git
 ```
 
+To edit Julia files you may also want to install [VS Code](https://code.visualstudio.com/) with
+the [Julia Extension](https://www.julia-vscode.org/). See the [Julia
+home page](https://julialang.org/) for support for other editors.
+
 # Usage
 
 Some functions of `Santiago` are parallelized. To use
