@@ -71,7 +71,12 @@ end
 
 
 """
-This function reads a `json` file defing the technologies
+```
+import_technologies(techFile::String; sourceGroup::String="U",
+                    sourceAddGroup::String="Uadd", sinkGroup::String="D")
+```
+
+Reads a `json` file defing the technologies
 and returns i) array with sources, ii) array with additional sources,
  and iii) an array of all technologies.
 """
@@ -246,8 +251,9 @@ end
 
 
 """
-     This function generates possible combinations of one source and all sourcesAdds
-     returns all possible combinations.
+    $TYPEDSIGNATURES
+
+Generates all possible combinations of a single `source` and all `sourcesAdds`.
 """
 function generateCombinations(source::T, sourcesAdd::Array{T}) where T <: AbstractTech
 
@@ -265,11 +271,19 @@ end
 
 
 """
-This function reads a `json` file defing the technologies *and* a
-file defining the case to compute the appropriateness scores.
+```
+import_technologies(techFile::String, case_file::String;
+                    sourceGroup::String="U", sourceAddGroup::String="Uadd",
+                    sinkGroup::String="D")
+```
+
+
+Import a `json` file defining the technologies *and* a
+file defining the case. The latter is used to compute the appropriateness scores.
 
 It returns i) array with sources, ii) array
-with additional sources, and iii) an array of all technologies.  """
+with additional sources, and iii) an array of all technologies with TAS scores.
+"""
 function import_technologies(tech_file::String, case_file::String;
                              sourceGroup::String="U", sourceAddGroup::String="Uadd",
                              sinkGroup::String="D")
@@ -347,18 +361,17 @@ JSON3.write(io::IO, sys::Array{T}; kw...) where T <: System = JSON3.write(io, [S
 ## export system properties to DataFrame
 
 """
-# Extract systems properties into a DataFrame
+    $TYPEDSIGNATURES
 
-```
-properties_datafram(systems::Array{System};
-                    massflow_selection=AbstractString[])
-```
-The mass flow calculation produce many results stored as `NamedArray`s in
-a dictionary. With the argument `massflow_selection` we can select which information should be extracted.
+Extract systems properties into a `DataFrame`.
+
+With the argument `massflow_selection` we can select which information should be extracted from the massflow calulation.
 
 ### Example:
 `massflow_selection = ["recovered | water | mean", "lost | water| air loss | q_0.5"]`
-This will extract the mean value of the reconvered water and the 50% quantile of the water lost to air. Note, the order of the values must match teh dimensions!
+This will extract the mean value of the recovered water and the 50% quantile of the
+water lost to air. Note, the order of the values must match the dimensions of the
+ `NamedArray` stored in the system propertes!
 """
 function properties_dataframe(systems::Array{System}; massflow_selection=AbstractString[])
 
@@ -403,8 +416,9 @@ end
 ## functions to relate templates and technolgies
 
 """
-List for every technology the system templates it was used in.
+    $TYPEDSIGNATURES
 
+List for every technology the system templates it was used in.
 Note, only technologies that are used in at least one system are listed.
 """
 function templates_per_tech(systems::Array{System})
@@ -423,6 +437,8 @@ function templates_per_tech(systems::Array{System})
 end
 
 """
+    $TYPEDSIGNATURES
+
 List all technologies that systems of the same templates have used.
 """
 function techs_per_template(systems::Array{System})
@@ -497,12 +513,16 @@ end
 
 
 """
- Writes a DOT file of a `System`. The resulting file can be visualized with GraphViz, e,g.:
+   $TYPEDSIGNATURES
+
+Writes a DOT file of a `System`. The resulting file can be visualized with GraphViz, e.g.:
  ```
  dot -Tpng file.dot -o graph.png
  ```
- ## Arguments
- nogroup    Array of functional groups which should not be grouped in the plot
+
+## Arguments
+ - `no_group`: Array of functional groups which should not be grouped in the plot
+ - `options`: String of _graphviz_ options
 
  """
 function dot_file(sys::System, file::AbstractString, no_group::Array{String}=["S", "C", "T"], options::String="")
@@ -513,9 +533,13 @@ function dot_file(sys::System, file::AbstractString, no_group::Array{String}=["S
 end
 
 """
- Returns a String representing `System` in the GraphViz's dot format.
- ## Arguments
- nogroup    Array of functional groups which should not be grouped in the plot
+    $TYPEDSIGNATURES
+
+Returns a `String`` representing `System` in the GraphViz's dot format.
+
+## Arguments
+ - `no_group`: Array of functional groups which should not be grouped in the plot
+ - `options`: String of _graphviz_ options
  """
 function dot_string(sys::System, no_group::Array{String}=["S", "C", "T"], options::String="")
     io = IOBuffer()

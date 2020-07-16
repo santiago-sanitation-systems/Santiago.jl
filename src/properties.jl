@@ -7,8 +7,14 @@ export sysappscore, sysappscore!,
     template, template!
 
 # -----------
-""" Compute the SAS of a system."""
-function sysappscore(s::System; alpha::Float64 = 0.5)::Float64
+"""
+    $TYPEDSIGNATURES
+
+Compute the system appropriateness score (SAS).
+`α` ∈ [0, 1] gradually changes from the arithmetic mean (α=0) to the
+ a geometric mean (`α=1`).
+"""
+function sysappscore(s::System; α = 0.5)::Float64
 
     appscores = Float64[]
     for component in s.techs
@@ -20,32 +26,52 @@ function sysappscore(s::System; alpha::Float64 = 0.5)::Float64
 
     n = length(appscores)
     logsum = sum(Base.log.(appscores))
-    score = exp( logsum/(alpha*(n-1.0) + 1.0) )
+    score = exp( logsum/(α*(n-1.0) + 1.0) )
     return score
 end
 
-"""Add SAS to system properties"""
-sysappscore!(s::System) = s.properties["sysappscore"] = sysappscore(s)
+"""
+    $TYPEDSIGNATURES
+
+Add the system appropriateness score (SAS) to a system. `α` ∈ [0, 1] gradually
+changes from the arithmetic mean (α=0) to the a geometric mean (`α=1`).
+"""
+sysappscore!(s::System; α = 0.5) = s.properties["sysappscore"] = sysappscore(s, α=α)
 
 
 # -----------
-"""Calculate number of technologies"""
+"""
+    $TYPEDSIGNATURES
+Calculate number of technologies.
+"""
 ntechs(s::System) = length(s.techs)
 
-"""Add number of technologies to system properties"""
+"""
+    $TYPEDSIGNATURES
+Add number of technologies to system properties.
+"""
 ntechs!(s::System) = s.properties["ntechs"] = ntechs(s)
 
 
 # -----------
-"""Calculate number of connection per technology"""
+"""
+    $TYPEDSIGNATURES
+Calculate average number of connection per technology.
+"""
 connectivity(s::System) = length(s.connections) / ntechs(s)
 
-"""Add number of connection per technology to system properties"""
+"""
+    $TYPEDSIGNATURES
+Add average number of connection per technology to system properties.
+"""
 connectivity!(s::System) = s.properties["connectivity"] = connectivity(s)
 
 
 # -----------
-"""Identify to which template a sytem belongs"""
+"""
+    $TYPEDSIGNATURES
+Identifies the template a sytem belongs to.
+"""
 function template(s::System)
 
     # -----------
@@ -231,5 +257,8 @@ function template(s::System)
     return template
 end
 
-"""Add template to system properties"""
+"""
+    $TYPEDSIGNATURES
+Add the template to system properties.
+"""
 template!(s::System) = s.properties["template"] = template(s)

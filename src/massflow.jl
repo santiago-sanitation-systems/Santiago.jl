@@ -24,12 +24,15 @@ issink(t::T) where T <: AbstractTech = length(t.outputs) == 0
 
 
 """
+    $TYPEDSIGNATURES
+
 Compute massflows of a system. Optionally with Monte Carlo (MC) simulation.
 
-Arguments:
-- if `MC` is false, the transfer coefficients are the expected values of the Dirichlet distribution
-- if `MC` is true, the transfer coefficients are sampled form Dirichlet distribution
-- `scale_reliability` a factor to scale the `transC_reliability` of all Techs.
+## Arguments:
+- `M_in`: a dictionary containing for each source the inflows of each substance.
+- `MC`: if false, the expected values of the Dirichlet distribution is used as transfer.
+   coefficients. Else, the transfer coefficients are sampled from a Dirichlet distribution.
+- `scale_reliability`: factor to scale the `transC_reliability` of all `Techs`.
 """
 function massflow(sys::System, M_in::Dict{String, Dict{String, T}};
                   MC::Bool=false, scale_reliability::Real=1.0) where T <: Real
@@ -262,7 +265,17 @@ end
 
 
 """
-Calculate summary statistics of a Monte Carlo massflow results
+    $TYPEDSIGNATURES
+
+Performs Monte Carlo massflow calculations and provides the summary statistics of a the main results.
+
+## Arguments:
+- `M_in`: a dictionary containing for each source the inflows of each substance.
+- `MC`: if false, the expected values of the Dirichlet distribution is used as transfer
+   coefficients. Else, the transfer coefficients are sampled from a Dirichlet distribution.
+- `n`: number of Monte Carlo simulations. Ignored if `MC=false`.
+- `scale_reliability`: factor to scale the `transC_reliability` of all `Techs`.
+
 """
 function massflow_summary(sys::System, M_in::Dict; MC::Bool=true, n::Int=100,
                           scale_reliability::Real=1.0)
@@ -351,8 +364,19 @@ function massflow_summary(sys::System, M_in::Dict; MC::Bool=true, n::Int=100,
     return(summaries)
 end
 
+
 """
-Add summary statistics of a Monte Carlo massflow to system properties
+    $TYPEDSIGNATURES
+
+Performs Monte Carlo massflow calculations and add the summary statistics to
+the system properties.
+
+## Arguments:
+- `M_in`: a dictionary containing for each source the inflows of each substance.
+- `MC`: if false, the expected values of the Dirichlet distribution is used as transfer
+   coefficients. Else, the transfer coefficients are sampled from a Dirichlet distribution.
+- `n`: number of Monte Carlo simulations. Ignored if `MC=false`.
+- `scale_reliability`: factor to scale the `transC_reliability` of all `Techs`.
 """
 function massflow_summary!(s, args...; kwargs...)
     s.properties["massflow_stats"] = massflow_summary(s, args...; kwargs...)
@@ -360,10 +384,11 @@ end
 
 
 """
-Scale all summary statistics by a `n_units`. This is only a crude approximation!
+    $TYPEDSIGNATURES
 
+Scale all massflow summary statistics by `n_units`.
 """
-function scale_massflows!(sys::System, n_units::Int)
+function scale_massflows!(sys::System, n_units::Real)
     haskey(sys.properties, "massflow_stats") || error("`massflow_stats` are not  yet calulated! Run `massflow_summary!(system)`.")
     for v in values(sys.properties["massflow_stats"])
         v .*= n_units
@@ -372,8 +397,9 @@ function scale_massflows!(sys::System, n_units::Int)
 end
 
 """
-Scale all summary statistics by a `n_units` and return a independent
+    $TYPEDSIGNATURES
+
+Scale all massflow summary statistics by `n_units` and return an independent
 copy of the updated system.
-This is only a crude approximation!
 """
-scale_massflows(sys::System, n_units::Int) = scale_massflows!(deepcopy(sys), n_units)
+scale_massflows(sys::System, n_units::Real) = scale_massflows!(deepcopy(sys), n_units)

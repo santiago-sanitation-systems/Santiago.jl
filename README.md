@@ -202,7 +202,6 @@ sysappscore!.(allSys)
 fewSys = select_systems(allSys, 6)
 
 ## 4) scale massflows for 100 units
-##    (This is a rough apporximantion only!)
 
 fewSys = scale_massflows.(fewSys, 100)
 

@@ -39,15 +39,18 @@ end
 
 
 """
-Select `n_select` diverse systems with a good SAS.
+    $TYPEDSIGNATURES
+
+Select a subset of `n_select` systems. The function aims to identify systems
+ that are divers and have a good SAS.
 
 Note, this function may modify the properties of the input systems! Any of
 the following properties will be added if missing:
 
-- "template"
-- "sysappscore"
-- "ntech"
-- "connectivity"
+- `template`
+- `sysappscore`
+- `ntech`
+- `connectivity`
 """
 function select_systems(systems::Array{System}, n_select::Int)
 

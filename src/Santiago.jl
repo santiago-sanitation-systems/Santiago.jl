@@ -1,5 +1,7 @@
 module Santiago
 
+using DocStringExtensions: SIGNATURES, TYPEDSIGNATURES
+
 # number of substance in the massflow analysis
 const NSUBSTANCE = 4
 const SUBSTANCE_NAMES = ["phosphor", "nitrogen", "water", "totalsolids"]
