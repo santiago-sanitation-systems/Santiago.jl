@@ -34,6 +34,8 @@ for sys in allSys
 end
 
 
+
+
 # test scaling
 
 @test_throws ErrorException scale_massflows(allSys[1], 100) # massflow summary is not yet computed
@@ -45,6 +47,13 @@ for i in 1:length(allSys)
         @test  all(v .≈ (allSys[i].properties["massflow_stats"][k] .* 100))
     end
 end
+
+# test that the RGN is not accidentally resetted
+r1 = allSys[1].properties["massflow_stats"]["lost"][3,1,1]
+massflow_summary!(allSys[1], M_in, n=10)
+r2 = allSys[1].properties["massflow_stats"]["lost"][3,1, 1]
+@test r1 != r2
+
 
 scale_massflows!.(allSys, 0)    # inplace
 for i in 1:length(allSys)

@@ -6,6 +6,7 @@ using Statistics
 using Distributions: Dirichlet
 using NamedArrays
 using SparseArrays
+using Random: AbstractRNG, GLOBAL_RNG
 
 export massflow
 export lost
@@ -33,9 +34,11 @@ Compute massflows of a system. Optionally with Monte Carlo (MC) simulation.
 - `MC`: if false, the expected values of the Dirichlet distribution is used as transfer.
    coefficients. Else, the transfer coefficients are sampled from a Dirichlet distribution.
 - `scale_reliability`: factor to scale the `transC_reliability` of all `Techs`.
+- `rng`: optional, a random generator. This is only needed for multi-threading to obtain thread-safety.
 """
 function massflow(sys::System, M_in::Dict{String, Dict{String, T}};
-                  MC::Bool=false, scale_reliability::Real=1.0) where T <: Real
+                  MC::Bool=false, scale_reliability::Real=1.0,
+                  rng::AbstractRNG=GLOBAL_RNG) where T <: Real
 
     # --- calculate flows
     flow_mats = Dict{String, AbstractArray}()
@@ -48,7 +51,7 @@ function massflow(sys::System, M_in::Dict{String, Dict{String, T}};
         Pmean, rel_vect = get_adj_mat(sys, substance)
 
         if MC
-            P = sample_P(Pmean, rel_vect)
+            P = sample_P(Pmean, rel_vect, rng)
         else
             P = Pmean
         end
@@ -166,7 +169,7 @@ end
 
 
 # Sample a random adjacent matrix. Each row is Dirichlet distributed
-function sample_P(P::AbstractArray, transC_reliability::AbstractArray)
+function sample_P(P::AbstractArray, transC_reliability::AbstractArray, rng::AbstractRNG)
 
     P2 = 0.0*P
     for i in 1:size(P,1)
@@ -178,7 +181,7 @@ function sample_P(P::AbstractArray, transC_reliability::AbstractArray)
                 push!(alpha, P[i,j]*transC_reliability[i])
             end
         end
-        P2[i,.!i_zero] = rand(Dirichlet(alpha), 1)
+        P2[i,.!i_zero] = rand(rng, Dirichlet(alpha), 1)
     end
     P2
 end
@@ -275,10 +278,11 @@ Performs Monte Carlo massflow calculations and provides the summary statistics o
    coefficients. Else, the transfer coefficients are sampled from a Dirichlet distribution.
 - `n`: number of Monte Carlo simulations. Ignored if `MC=false`.
 - `scale_reliability`: factor to scale the `transC_reliability` of all `Techs`.
+- `rng`: optional, a random generator. This is only needed for multi-threading to obtain thread-safety.
 
 """
 function massflow_summary(sys::System, M_in::Dict; MC::Bool=true, n::Int=100,
-                          scale_reliability::Real=1.0)
+                          scale_reliability::Real=1.0, rng::AbstractRNG=GLOBAL_RNG)
 
 
     # -- convert M_in
@@ -294,8 +298,9 @@ function massflow_summary(sys::System, M_in::Dict; MC::Bool=true, n::Int=100,
     #  -- compute masses
     ns = MC ? n : 1             # make only one run if MC == false
     m_outs = Array{MassDict}(undef, ns)
+
     for i in 1:ns
-        m_outs[i] = massflow(sys, M_in, MC=MC, scale_reliability=scale_reliability)
+        m_outs[i] = massflow(sys, M_in, MC=MC, scale_reliability=scale_reliability, rng=rng)
     end
 
     ## quantiles to calculate
@@ -375,10 +380,12 @@ the system properties.
 - `M_in`: a dictionary containing for each source the inflows of each substance.
 - `MC`: if false, the expected values of the Dirichlet distribution is used as transfer
    coefficients. Else, the transfer coefficients are sampled from a Dirichlet distribution.
+## Keyword arguments
 - `n`: number of Monte Carlo simulations. Ignored if `MC=false`.
 - `scale_reliability`: factor to scale the `transC_reliability` of all `Techs`.
+- `rng`: optional, a random generator. This is only needed for multi-threading to obtain thread-safety.
 """
-function massflow_summary!(s, args...; kwargs...)
+function massflow_summary!(s::System, args...; kwargs...)
     s.properties["massflow_stats"] = massflow_summary(s, args...; kwargs...)
 end
 
