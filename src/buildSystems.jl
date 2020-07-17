@@ -25,14 +25,23 @@ Broadcast.broadcastable(p::Product) = Ref(p)
 
 abstract type AbstractTech end
 
+"""
+Represents a sanitation technology. `Source` and `Sink` are aliases.
+
+Has the following fields:
+$TYPEDFIELDS
+"""
 struct Tech <: AbstractTech
-    inputs::Array{Product}
-    outputs::Array{Product}
+    inputs::Array{Product, 1}
+    outputs::Array{Product, 1}
     name::String
     functional_group::Symbol
+    "Appropriateness score for a given case."
     appscore::Array{Float64}
     n_inputs::Int
+    "Transfer coefficients"
     transC::Dict{String, Dict{Product, Float64}}
+    "Uncertainty factor relating to transfer coefficients"
     transC_reliability::Dict{String, Float64}
 end
 
@@ -58,10 +67,6 @@ function Tech(inputs::Array{Product}, outputs::Array{Product},
 end
 
 
-"""
-The `Tech` type represents Technolgies.
-It consist of `inputs`, `outputs`, a `name`, a `functional_group`, and a transfer coefficients `transC`.
-"""
 function Tech(inputs::Array{T}, outputs::Array{T}, name::T, functional_group::T,
               appscore::Float64,
               transC::Dict{String, Dict{Product, Float64}},
@@ -101,7 +106,7 @@ end
 
 
 """
-A `Connection`is a Tuples{Product, sourceTech, sinkTech}.
+A `Tuples{Product, sourceTech, sinkTech}` defining the connection between two `Tech`s.
 """
 const Connection = Tuple{Product, AbstractTech, AbstractTech}
 
@@ -125,7 +130,10 @@ Base.:(==)(a::TechCombined, b::TechCombined) = isequal(a.name, b.name) && (isequ
 
 
 """
-A `System` consists of `techs` and `conncetions`.
+Represents a santiation system.
+
+Has the following fields:
+$TYPEDFIELDS
 """
 mutable struct System
     techs::Set{AbstractTech}

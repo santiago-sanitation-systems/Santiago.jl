@@ -1,6 +1,6 @@
 module Santiago
 
-using DocStringExtensions: SIGNATURES, TYPEDSIGNATURES
+using DocStringExtensions: SIGNATURES, TYPEDSIGNATURES, TYPEDFIELDS
 
 # number of substance in the massflow analysis
 const NSUBSTANCE = 4
