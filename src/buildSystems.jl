@@ -8,13 +8,10 @@ import Base.isless
 import Base.hash
 import StatsBase
 
-
-export AbstractTech, Tech, TechCombined, Product, System
-
+export Tech, Product, System
 
 # -----------
 # define types
-
 
 struct Product
     name::Symbol
