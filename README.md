@@ -46,12 +46,11 @@ global_logger(ConsoleLogger(stderr, Logging.Warn))
 input_tech_file = joinpath(pkgdir(Santiago), "test/example_techs.json")
 input_case_file = joinpath(pkgdir(Santiago), "test/example_case.json")
 
-sources, additional_sources, techs = import_technologies(input_tech_file, input_case_file)
+sources, additional_sources, techs = import_technologies(input_tech_file, input_case_file);
 
 # number of available technologies
 # (more than in "example_techs.json" as some are auto generated)
 length(techs)
-
 
 # -----------
 # 2) Build all systems
@@ -60,7 +59,6 @@ allSys = build_systems(sources, techs);
 
 # number of found systems
 length(allSys)
-
 
 # -----------
 # 3) Calculate (or update) system properties
@@ -72,7 +70,6 @@ template!.(allSys)
 
 # see all properties of the first system
 allSys[1].properties
-
 
 # -----------
 # 4) Mass flows
@@ -88,7 +85,7 @@ input_masses = Dict("Dry.toilet" => Dict("phosphor" => 548.0,
                     )
 
 # calculate mass flows for all systems and save to system properties
-massflow_summary!.(allSys, Ref(input_masses), n=20)
+massflow_summary!.(allSys, Ref(input_masses), n=20);
 
 # Examples how to extract results
 allSys[2].properties["massflow_stats"]["entered"]
@@ -113,7 +110,14 @@ df = properties_dataframe(selectedSys,
                                                 "recovered | water | sd",
                                                 "lost | water | air loss| q_0.5",
                                                 "entered | water"])
+# -----------
+# 7) create a pdf of a system
 
+# write a dot file
+dot_file(selectedSys[1], "system.dot")
+
+# convert to pdf (`graphviz` must be installed on the system)
+run(`dot -Tpdf system.dot -o system.pdf`)
 
 # -----------
 # 8) export to JSON
@@ -121,14 +125,9 @@ df = properties_dataframe(selectedSys,
 # Note, the JSON export is designed to interface other applications,
 # but not for serialization.
 
-open("tech_export.json", "w") do f
-    JSON3.write(f, techs)
-end
-
 open("system_export.json", "w") do f
     JSON3.write(f, selectedSys)
 end
-
 ```
 
 
