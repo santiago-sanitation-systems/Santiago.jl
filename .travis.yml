@@ -6,7 +6,7 @@ notifications:
   email: false
 
 julia:
-  - 1
+  - 1.4
   - nightly
 
 coveralls: true
