@@ -145,3 +145,13 @@ df = properties_dataframe(allSys,
 @test "recovered_water_sd" in names(df)
 @test "lost_water_air loss_q_0.5" in names(df)
 @test "entered_water" in names(df)
+
+# -----------
+# 7) (non-exported) helpers
+
+# number of techs
+nrealtechs = length(unique(Santiago.simplifytechname(t.name) for t in
+                           [sources; additional_sources; techs]))
+
+@test length(Santiago.templates_per_tech(allSys)) == nrealtechs
+@test length(Santiago.techs_per_template(allSys)) == 6
