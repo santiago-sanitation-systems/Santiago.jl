@@ -1,10 +1,11 @@
 # Santiago.jl
 
 
-A Julia package to generate approperiate sanitation system options. It is able to
-- assess the approperiateness of a technology in a given context;
+`Santiago` (SANitation sysTem Alternative GeneratOr) is a Julia package to generate appropriate sanitation system options. It is able to
 - find all possible systems given a set of sanitation technologies;
-- calculate (optionally stochastic) the mass flows for each system for
+- assess the appropriateness of a technology in a given context;
+- assess the overall appropriateness of a sanitation system in a given context;
+- calculate (optionally with uncertainly quantification) the massflows for each system for
   total `phosphor`, total `nitrogen`, `totalsolids`, and `water`;
 - select a desired number of diverse but appropriate systems.
 
@@ -134,7 +135,7 @@ end
 ## Input format
 
 Typically the information on the case specification and the available
-technologies are provided via files. Santiago can only import JSON
+technologies are provided via files. `Santiago` can only import JSON
 files. The structure must match the examples:
 
 - Technologies: [`example_techs.json`](test/example_techs.json)
