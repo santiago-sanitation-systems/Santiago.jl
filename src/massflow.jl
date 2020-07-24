@@ -393,12 +393,12 @@ end
 """
     $TYPEDSIGNATURES
 
-Scale all massflow summary statistics by `n_units`.
+Scale all massflow summary statistics by `n_users`.
 """
-function scale_massflows!(sys::System, n_units::Real)
+function scale_massflows!(sys::System, n_users::Real)
     haskey(sys.properties, "massflow_stats") || error("`massflow_stats` are not  yet calulated! Run `massflow_summary!(system)`.")
     for v in values(sys.properties["massflow_stats"])
-        v .*= n_units
+        v .*= n_users
     end
     sys
 end
@@ -406,7 +406,7 @@ end
 """
     $TYPEDSIGNATURES
 
-Scale all massflow summary statistics by `n_units` and return an independent
+Scale all massflow summary statistics by `n_users` and return an independent
 copy of the updated system.
 """
-scale_massflows(sys::System, n_units::Real) = scale_massflows!(deepcopy(sys), n_units)
+scale_massflows(sys::System, n_users::Real) = scale_massflows!(deepcopy(sys), n_users)
