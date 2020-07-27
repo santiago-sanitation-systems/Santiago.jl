@@ -18,18 +18,19 @@
 
 2. Install the `Santiago` package from the Julia prompt:
 ```Julia
-] add https://github.com/santiago-sanitation-systems/Santiago.jl.git
+] add Santiago
 ```
 
-To edit Julia files you may also want to install [VS Code](https://code.visualstudio.com/) with
+3. To edit Julia files you may also want to install [Visual Studio Code](https://code.visualstudio.com/) with
 the [Julia Extension](https://www.julia-vscode.org/docs/stable/). See the [Julia
 home page](https://julialang.org/) for support for other editors.
 
 # Usage
 
-Some functions of `Santiago` are parallelized. To use
-this feature you need to start Julia with multiple threads.
-
+The example below demonstrates the typical steps needed to identify
+sanitation systems appropriate for a given case. See the references below for a
+clarification of the terminology and the recommended embedding in the
+strategic planning process.
 
 ## Minimal Example
 
@@ -49,11 +50,7 @@ global_logger(ConsoleLogger(stderr, Logging.Warn))
 input_tech_file = joinpath(pkgdir(Santiago), "test/example_techs.json")
 input_case_file = joinpath(pkgdir(Santiago), "test/example_case.json")
 
-sources, additional_sources, techs = import_technologies(input_tech_file, input_case_file);
-
-# number of available technologies
-# (more than in "example_techs.json" as some are auto generated)
-length(techs)
+sources, additional_sources, techs = import_technologies(input_tech_file, input_case_file)
 
 # -----------
 # 2) Build all systems
@@ -77,17 +74,31 @@ allSys[1].properties
 # -----------
 # 4) Mass flows
 
-input_masses = Dict("Dry.toilet" => Dict("phosphor" => 548.0,
-                                         "nitrogen" => 4550.0,
-                                         "water" => 22447113.5,
-                                         "totalsolids" => 32120.0),
-                    "Pour.flush" => Dict("phosphor" => 548.0,
-                                         "nitrogen" => 4550.0,
-                                         "water" => 1277113.465,
-                                         "totalsolids" => 32120.0)
+
+# Inputs for different sources in kg/year/person equivalent.
+# See references below.
+input_masses = Dict("Dry.toilet" => Dict("phosphor" => 0.548,
+                                         "nitrogen" => 4.550,
+                                         "totalsolids" => 32.12,
+                                         "water" => 547.1),
+                    "Pour.flush" => Dict("phosphor" => 0.548,
+                                         "nitrogen" => 4.55,
+                                         "totalsolids" => 32.12,
+                                         "water" => 1277.1),
+                    "Cistern.flush" => Dict("phosphor" => 0.548,
+                                            "nitrogen" => 4.55,
+                                            "totalsolids" => 32.12,
+                                            "water" => 22447.1),
+                    # Urine diversion dry toilet
+                    "Uddt" => Dict("phosphor" => 0.548,
+                                   "nitrogen" => 4.55,
+                                   "totalsolids" => 32.12,
+                                   "water" => 547.1)
                     )
 
-# calculate mass flows for all systems and save to system properties
+
+# Calculate massflows with 20 Mont Carlo iterations (probably not enough)
+# for all systems and save to system properties
 massflow_summary!.(allSys, Ref(input_masses), n=20);
 
 # Examples how to extract results
@@ -113,14 +124,24 @@ df = properties_dataframe(selectedSys,
                                                 "recovered | water | sd",
                                                 "lost | water | air loss| q_0.5",
                                                 "entered | water"])
+
+size(df)
+names(df)
+
+# export as csv
+import CSV  # the package 'CSV' needs to be installed separately
+CSV.write("mysystems.csv", df)
+
+
 # -----------
 # 7) create a pdf of a system
 
-# write a dot file
+# First write a dot file
 dot_file(selectedSys[1], "system.dot")
 
-# convert to pdf (`graphviz` must be installed on the system)
+# Then, convert it to pdf (The program `graphviz` must be installed on the system)
 run(`dot -Tpdf system.dot -o system.pdf`)
+
 
 # -----------
 # 8) export to JSON
@@ -144,7 +165,7 @@ files. The structure must match the examples:
 - Case: [`example_case.json`](test/example_case.json)
 
 Many tools are available to browse and edit JSON files. For example,
-Firefox renders JSON files nicely.
+Firefox renders JSON files nicely, or Visual Studio allows for editing.
 
 
 ## Logging
@@ -212,9 +233,27 @@ The slowest part is `build_systems`, therefore we cache the output in
 this example. Steps 2 and 4 are fast and can be iterated quickly.
 
 
+## Multi-threading
+
+The function `build_systems` (and in future probably also
+`massflow_summary!`) can benefit from multi-threading. As this also
+involves some overhead, benchmarking is recommended. See the official
+[documentation](https://docs.julialang.org/en/v1/manual/parallel-computing/#man-multithreading-1)
+how to control the number of threads.
+
+
+
 # References
 
-Spuhler, D., Scheidegger, A., Maurer, M., 2018. Generation of sanitation system options for urban planning considering novel technologies. Water Research 145, 259–278. https://doi.org/10.1016/j.watres.2018.08.021
+Spuhler, D., Scheidegger, A., Maurer, M., 2018. Generation of
+sanitation system options for urban planning considering novel
+technologies. Water Research 145,
+259–278. https://doi.org/10.1016/j.watres.2018.08.021
+
+Spuhler, D., Scheidegger, A., Maurer, M., submitted. Ex-ante
+quantification of nutrient, total solids, and water flows in
+sanitation systems. Journal of Environmental Management.
+
 
 
 # License
