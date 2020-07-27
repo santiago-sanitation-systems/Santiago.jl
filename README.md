@@ -36,9 +36,9 @@ strategic planning process.
 Most functions have a documentation string attached that can be accessed with
 `?functionname` on the Julia prompt.
 
-For reproducibility it is a good idea to create a _Julia project_
+For reproducibility it is a good idea to create a separate _Julia project_
 (similar like `virtualenv` in Python) for
-each analysis, see [here](https://julialang.github.io/Pkg.jl/v1/environments/).
+every analysis, see [here](https://julialang.github.io/Pkg.jl/v1/environments/).
 
 ## Minimal Example
 
