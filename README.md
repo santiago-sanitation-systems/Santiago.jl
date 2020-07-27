@@ -21,8 +21,9 @@
 ] add Santiago
 ```
 
-3. To edit Julia files you may also want to install [Visual Studio Code](https://code.visualstudio.com/) with
-the [Julia Extension](https://www.julia-vscode.org/docs/stable/). See the [Julia
+3. To edit Julia files you may also want to install [Visual Studio
+Code](https://code.visualstudio.com/) and its [Julia
+Extension](https://www.julia-vscode.org/docs/stable/). Alternatively, see the [Julia
 home page](https://julialang.org/) for support for other editors.
 
 # Usage
@@ -32,7 +33,7 @@ sanitation systems appropriate for a given case. See the references below for a
 clarification of the terminology and the recommended embedding in the
 strategic planning process.
 
-Most functions have documentation attached that can be accessed with
+Most functions have a documentation string attached that can be accessed with
 `?functionname` on the Julia prompt.
 
 ## Minimal Example
@@ -76,7 +77,6 @@ allSys[1].properties
 
 # -----------
 # 4) Mass flows
-
 
 # Inputs for different sources in kg/year/person equivalent.
 # See references below.
@@ -137,7 +137,7 @@ CSV.write("mysystems.csv", df)
 
 
 # -----------
-# 7) create a pdf of a system
+# 7) create a visualzisation of a system as pdf
 
 # First write a dot file
 dot_file(selectedSys[1], "system.dot")
@@ -162,7 +162,7 @@ end
 
 Typically the information on the case specification and the available
 technologies are provided via files. `Santiago` can only import JSON
-files. The structure must match the examples:
+files. The structure must match these examples:
 
 - Technologies: [`example_techs.json`](test/example_techs.json)
 - Case: [`example_case.json`](test/example_case.json)
@@ -209,8 +209,8 @@ if isfile("mycachfile.jls")
     allSys = deserialize("mycachfile.jls")
 else
     allSys = build_systems(sources, techs)
-	...
-	massflow_summary!.(allSys, Ref(input_masses), n=100);
+    ...
+    massflow_summary!.(allSys, Ref(input_masses), n=100);
     ...
     serialize("mycachfile.jls", allSys)
 end
@@ -224,7 +224,7 @@ update_appropriateness!(sources, tas)
 update_appropriateness!(additional_sources, tas)
 update_appropriateness!(techs, tas)
 
-sysappscore!.(allSys)
+sysappscore!.(allSys)  # now we have the updated SAS
 
 ## 3) select systems
 
@@ -265,8 +265,6 @@ sanitation systems. Journal of Environmental Management.
 
 # License
 
-Copyright 2020, Eawag. Contact: Dorothee Spuhler, <Dorothee.Spuhler@eawag.ch>
-
 The `Santiago.jl` package is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
@@ -279,3 +277,5 @@ GNU Affero General Public License for more details.
 
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+Copyright 2020, Eawag. Contact: Dorothee Spuhler, <Dorothee.Spuhler@eawag.ch>
