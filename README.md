@@ -32,6 +32,9 @@ sanitation systems appropriate for a given case. See the references below for a
 clarification of the terminology and the recommended embedding in the
 strategic planning process.
 
+Most functions have documentation attached that can be accessed with
+`?functionname` on the Julia prompt.
+
 ## Minimal Example
 
 ```Julia
@@ -206,10 +209,13 @@ if isfile("mycachfile.jls")
     allSys = deserialize("mycachfile.jls")
 else
     allSys = build_systems(sources, techs)
+	...
+	massflow_summary!.(allSys, Ref(input_masses), n=100);
+    ...
     serialize("mycachfile.jls", allSys)
 end
 
-sysappscore!.(allSys) # all are '-1.0' because no case profile was defined
+sysappscore!.(allSys) # all are '-1.0' because no case profile was defined yet
 
 ## 2) read case file and update sysappscore
 
@@ -224,13 +230,14 @@ sysappscore!.(allSys)
 
 fewSys = select_systems(allSys, 6)
 
-## 4) scale massflows for 100 units
+## 4) scale massflows for 100 people
 
 fewSys = scale_massflows.(fewSys, 100)
 
 ```
-The slowest part is `build_systems`, therefore we cache the output in
-this example. Steps 2 and 4 are fast and can be iterated quickly.
+The slowest parts are `build_systems` and
+`massflow_summary!`. Therefore we could cache the output as shown in this
+example. Steps 2 and 4 are fast and can be quickly adapted to new cases.
 
 
 ## Multi-threading
