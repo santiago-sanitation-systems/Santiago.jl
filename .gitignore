@@ -6,3 +6,4 @@ log.txt
 .DS_Store
 /Manifest.toml
 /#Project.toml#
+.vscode

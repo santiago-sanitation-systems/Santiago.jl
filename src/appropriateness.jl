@@ -74,6 +74,17 @@ function techscore(techattributes, caseattributes)
     d
 end
 
+function appropriateness(techs::JSON3.Array, case::JSON3.Object)
+    @info "Case: '$(case.name)':"
+
+    TAS = Dict()
+    for t in techs
+        @info "Calculate TAS for $(t.name):"
+        TAS[t.name] = techscore(t.attributes, case.attributes)
+    end
+    Dict(k => geomean(values(v)) for (k,v) in TAS), TAS
+end
+
 """
 # Calculate the technology appropriateness score (TAS) for each technology
 
@@ -99,14 +110,7 @@ function appropriateness(technology_file::AbstractString, case_file::AbstractStr
         JSON3.read(f)
     end
 
-    @info "Case: '$(case.name)':"
-
-    TAS = Dict()
-    for t in techs
-        @info "Calculate TAS for $(t.name):"
-        TAS[t.name] = techscore(t.attributes, case.attributes)
-    end
-    Dict(k => geomean(values(v)) for (k,v) in TAS), TAS
+    appropriateness(tech, case)
 end
 
 
