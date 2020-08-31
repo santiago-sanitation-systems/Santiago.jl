@@ -265,6 +265,10 @@ Spuhler, D., Scheidegger, A., Maurer, M., submitted. Ex-ante
 quantification of nutrient, total solids, and water flows in
 sanitation systems. Journal of Environmental Management.
 
+Spuhler, D., Scheidegger, A., Maurer, M., 2020. Comparative analysis
+of sanitation systems for resource recovery: influence of
+configurations and single technology components. Water
+Research 116281. https://doi.org/10.1016/j.watres.2020.116281
 
 
 # License
