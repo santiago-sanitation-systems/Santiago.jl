@@ -74,6 +74,8 @@ function techscore(techattributes, caseattributes)
     d
 end
 
+
+
 function appropriateness(techs::JSON3.Array, case::JSON3.Object)
     @info "Case: '$(case.name)':"
 
@@ -93,8 +95,8 @@ appropriateness(technology_file::AbstractString, case_file::AbstractString)
 ```
 
 ## Parameters
-- `technology_file`: json file with technologie definitions
-- `case_file`: json file with case definition
+- `technology_file`: name of a json file with technologie definitions
+- `case_file`: name of a json file with case definition
 
 ## Values
 Two dictionaries. The first one return the TAS for each technology,
@@ -110,7 +112,7 @@ function appropriateness(technology_file::AbstractString, case_file::AbstractStr
         JSON3.read(f)
     end
 
-    appropriateness(tech, case)
+    appropriateness(techs, case)
 end
 
 
