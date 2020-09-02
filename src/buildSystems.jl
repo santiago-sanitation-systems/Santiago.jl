@@ -125,7 +125,7 @@ struct TechCombined <: AbstractTech
     internal_connections::Set{Connection}
 end
 
-Base.hash(a::TechCombined, h::UInt) = hash(a.name, hash(a.inputs))
+Base.hash(a::TechCombined, h::UInt) = hash(a.name, hash(a.inputs, hash(:TechCombined, h)))
 Base.:(==)(a::TechCombined, b::TechCombined) = isequal(a.name, b.name) && (isequal(a.inputs, b.inputs) && true)
 
 
