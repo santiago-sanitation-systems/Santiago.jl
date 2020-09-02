@@ -10,10 +10,11 @@ sources, additional_sources, techs = import_technologies(input_tech_file)
 
 @test length(sources) == 2
 @test length(additional_sources) == 0
-@test length(techs) == 264
+@test length(techs) == 279
 
 for t in techs
     @test t.appscore[1] ≈ -1.0 # default value
+    @test t.n_inputs == length(t.inputs)
 end
 
 # add appropriateness
@@ -40,7 +41,7 @@ sources, additional_sources, techs = import_technologies(input_tech_file, input_
 
 @test length(sources) == 2
 @test length(additional_sources) == 0
-@test length(techs) == 264
+@test length(techs) == 279
 
 
 # Original appscores from "didac-massflows.csv"
@@ -77,7 +78,7 @@ allSys = build_systems(sources, techs);
 # test that techs are not modified
 @test length(sources) == 2
 @test length(additional_sources) == 0
-@test length(techs) == 264
+@test length(techs) == 279
 
 # -----------
 # 3) Calculate (or update) system properties
@@ -153,5 +154,5 @@ df = properties_dataframe(allSys,
 nrealtechs = length(unique(Santiago.simplifytechname(t.name) for t in
                            [sources; additional_sources; techs]))
 
-@test length(Santiago.templates_per_tech(allSys)) == nrealtechs
+@test length(Santiago.templates_per_tech(allSys)) <= nrealtechs
 @test length(Santiago.techs_per_template(allSys)) == 6

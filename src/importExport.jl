@@ -161,12 +161,12 @@ function import_technologies(techFile::String; sourceGroup::String="U",
                 subTechName = join([rtech.name, i], "_")
                 subTechIn = rtech.inputs.product[i]
                 subTechOut = join(["transported", subTechIn], "")
-                newSubTech = Tech(Product.([subTechIn]),
+                newSubTech = Tech([Product(subTechIn)],
                                   Product.([subTechOut]),
                                   subTechName,
                                   Symbol(rtech.functionalgroup),
                                   [-1.0],
-                                  length(subTechIn),
+                                  1,
                                   TC_dict(rtech),
                                   TCr_dict(rtech))
                 push!(subTechList, newSubTech)
@@ -197,12 +197,12 @@ function import_technologies(techFile::String; sourceGroup::String="U",
             for i in 1:length(rtech.inputs.product)
                 subTechIn = rtech.inputs.product[i]
                 subTechName = join([rtech.name, i], "_")
-                newSubTech = Tech(Product.([subTechIn]),
+                newSubTech = Tech([Product(subTechIn)],
                                   length(rtech.outputs.product)>0 ? Product.(rtech.outputs.product) : Product[],
                                   subTechName,
                                   Symbol(rtech.functionalgroup),
                                   [-1.0],
-                                  length(subTechIn),
+                                  1,
                                   TC_dict(rtech),
                                   TCr_dict(rtech))
                 append!(subTechList, make2(newSubTech, sinkGroup))
