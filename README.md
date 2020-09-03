@@ -1,5 +1,6 @@
 # Santiago.jl
 
+[![version](https://juliahub.com/docs/Santiago/version.svg)](https://juliahub.com/ui/Packages/Santiago/JPJQH)
 [![Build Status](https://travis-ci.com/santiago-sanitation-systems/Santiago.jl.svg?branch=master)](https://travis-ci.com/santiago-sanitation-systems/Santiago.jl)
 [![Coverage Status](https://coveralls.io/repos/github/santiago-sanitation-systems/Santiago.jl/badge.svg?branch=master)](https://coveralls.io/github/santiago-sanitation-systems/Santiago.jl?branch=master)
 
@@ -141,7 +142,7 @@ CSV.write("mysystems.csv", df)
 
 
 # -----------
-# 7) create a visualzisation of a system as pdf
+# 7) create a visualization of a system as pdf
 
 # First write a dot file
 dot_file(selectedSys[1], "system.dot")
@@ -186,7 +187,7 @@ different logging levels can be used for the console output and the log file:
 using Logging
 using LoggingExtras
 
-# - on console show only warings and errors, write everything in the logfile 'info.log'
+# - on console show only warnings and errors, write everything in the logfile 'info.log'
 mylogger = TeeLogger(
     MinLevelLogger(FileLogger("info.log"), Logging.Debug),  # logs to file
     MinLevelLogger(ConsoleLogger(), Logging.Warn)           # logs to console
