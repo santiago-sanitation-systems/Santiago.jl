@@ -60,7 +60,8 @@ function build_systems(sources::Array{T},
         ## sub_technologies contains technologies which do have only
         ## inputs that are generated with the current source.
 
-        sub_technologies = prefilterTechList(ss, sources, additional_sources, technologies2)
+        # sub_technologies = prefilterTechList(ss, sources, additional_sources, technologies2)
+        sub_technologies = technologies2
 
         # get source name
         names_ss = String[]
