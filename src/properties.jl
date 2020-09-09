@@ -70,7 +70,7 @@ connectivity!(s::System) = s.properties["connectivity"] = connectivity(s)
 # -----------
 """
     $TYPEDSIGNATURES
-Identifies the template a sytem belongs to.
+Identifies the template a system belongs to.
 """
 function template(s::System)
 
@@ -219,28 +219,28 @@ function template(s::System)
         template = template == "not defined" ? tt : error("More than one template matchs system:\n$(template) \n(tt)")
     end
 
-    if onsite_sludge & ! transported_blackwater & blackwater &
+    if onsite_sludge & ! urine & ! transported_blackwater & blackwater &
         ! effluent_transport & ! biogas_briq_char & ! transported_biogas_briq_char &
         ! is_onsite_pit
         tt = "ST.15 Onsite blackwater with sludge without effluent transport"
         template = template == "not defined" ? tt : error("More than one template matchs system:\n$(template) \n(tt)")
     end
 
-    if onsite_sludge & ! transported_blackwater & blackwater &
+    if onsite_sludge & ! urine & ! transported_blackwater & blackwater &
         effluent_transport & ! biogas_briq_char & ! transported_biogas_briq_char &
         ! is_onsite_pit
         tt = "ST.16 Onsite blackwater with sludge and effluent transport"
         template = template == "not defined" ? tt : error("More than one template matchs system:\n$(template) \n(tt)")
     end
 
-    if ! dry_material & ! onsite_sludge & ! transported_blackwater & blackwater &
+    if ! dry_material & ! urine & ! onsite_sludge & ! transported_blackwater & blackwater &
         ! effluent_transport & ! biogas_briq_char & ! transported_biogas_briq_char &
         ! is_onsite_pit
         tt = "ST.17 Onsite blackwater treatment without effluent transport"
         template = template == "not defined" ? tt : error("More than one template matchs system:\n$(template) \n(tt)")
     end
 
-    if ! dry_material & ! onsite_sludge & ! transported_blackwater & blackwater &
+    if ! dry_material & ! urine & ! onsite_sludge & ! transported_blackwater & blackwater &
         effluent_transport & ! biogas_briq_char & ! transported_biogas_briq_char &
         ! is_onsite_pit
         tt = "ST.18 Onsite blackwater treatment with effluent transport"
