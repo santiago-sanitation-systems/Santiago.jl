@@ -6,14 +6,18 @@ include("performanceFunctions.jl")
 export appropriateness, update_appropriateness!
 
 
-# geometric mean
+# geometric mean (if length==0, returns 1)
 function geomean(a)
-    s = 0.0
     n = length(a)
-    for ai in a
-        @inbounds s += log(ai)
+    if n==0
+        return 1.0
+    else
+        s = 0.0
+        for ai in a
+            @inbounds s += log(ai)
+        end
+        return exp(s / n)
     end
-    return exp(s / n)
 end
 
 # integrate between continous distributions

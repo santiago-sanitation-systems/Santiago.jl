@@ -132,7 +132,14 @@ end
 end
 
 
-@testset "TAS integrate" begin
+@testset "TAS calculations" begin
+    @test Santiago.geomean([]) ≈ 1
+    @test Santiago.geomean(Float64[]) ≈ 1
+    @test Santiago.geomean([10.0, 10, 10]) ≈ 10
+end
+
+
+@testset "TAS integration" begin
     # continous
     d2 = Range(-10, 10)
     @test isapprox(SSB.integrate(Range(-10, 10), Pdf(), d2, Performance()), 1.0, rtol=1e-6)
