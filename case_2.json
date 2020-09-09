@@ -1,0 +1,145 @@
+{
+  "name": "name",
+  "description": "description",
+  "inhabitants": 1000,
+  "attributes": {
+    "O&M.skills": {
+      "type": "Performance",
+      "function": "Trapez",
+      "parameters": {
+        "a": 4.17146820823385E+307,
+        "b": 1.6240407195139046E+308,
+        "c": 1.6472270184450487E+308,
+        "d": 1.6734206485006595E+308
+      }
+    },
+    "Spare.parts.supply": {
+      "type": "Performance",
+      "function": "Categorical",
+      "parameters": {
+        "low.tech": 0.03973621322421128,
+        "specially.manufactured": 0.9263851693839922,
+        "technical.parts": 0.4748894450453095
+      }
+    },
+    "Water.supply": {
+      "type": "Pdf",
+      "function": "Categorical",
+      "parameters": {
+        "a": 0.11893229892750945,
+        "b": 0.11479289263082759,
+        "c": 0.05958313930007464,
+        "d": 0.7066916691415883
+      }
+    },
+    "Energy.supply": {
+      "type": "Pdf",
+      "function": "Triangle",
+      "parameters": {
+        "a": 1.3859066141525355E+308,
+        "b": 1.616087193005218E+308,
+        "c": 1.7028995432361512E+308
+      }
+    },
+    "Flooding": {
+      "type": "Pdf",
+      "function": "Triangle",
+      "parameters": {
+        "a": 5.261948944495663E+307,
+        "b": 1.0605869077340482E+308,
+        "c": 1.163903411187507E+308
+      }
+    },
+    "Slope": {
+      "type": "Pdf",
+      "function": "Range",
+      "parameters": {
+        "a": 1.0313081777131627E+308,
+        "b": 1.6656391666927436E+308
+      }
+    },
+    "Groundwater.depth": {
+      "type": "Pdf",
+      "function": "Triangle",
+      "parameters": {
+        "a": 1.135512017828191E+308,
+        "b": 1.5953223205769954E+308,
+        "c": 1.6548198514539877E+308
+      }
+    },
+    "Soil.type/hydraulic.conductivity": {
+      "type": "Pdf",
+      "function": "Categorical",
+      "parameters": {
+        "clay": 0.3023303647746387,
+        "gravel": 0.21048257689556216,
+        "sand": 0.4061448422336188,
+        "silt": 0.08104221609618034
+      }
+    },
+    "Frequency.of.O&M": {
+      "type": "Performance",
+      "function": "Range",
+      "parameters": {
+        "a": 9.454196180849232E+307,
+        "b": 1.5983172435884284E+308
+      }
+    },
+    "Vehicular.access": {
+      "type": "Pdf",
+      "function": "Triangle",
+      "parameters": {
+        "a": 6.913663660441207E+307,
+        "b": 8.230642725068034E+307,
+        "c": 1.7577899649591264E+308
+      }
+    },
+    "Excavation": {
+      "type": "Pdf",
+      "function": "Categorical",
+      "parameters": {
+        "easy": 0.46919751519192576,
+        "hard": 0.5308024848080742
+      }
+    },
+    "Temperature.range": {
+      "type": "Pdf",
+      "function": "Trapez",
+      "parameters": {
+        "a": 2.429458958268007E+307,
+        "b": 8.928958919958127E+307,
+        "c": 1.2023056115923215E+308,
+        "d": 1.4563487071899413E+308
+      }
+    },
+    "Design.skills": {
+      "type": "Performance",
+      "function": "Trapez",
+      "parameters": {
+        "a": 1.453508200058731E+308,
+        "b": 1.4950938916968794E+308,
+        "c": 1.5678742960342111E+308,
+        "d": 1.638481090469422E+308
+      }
+    },
+    "Management": {
+      "type": "Pdf",
+      "function": "Categorical",
+      "parameters": {
+        "household": 0.33470054514336534,
+        "public": 0.5489058695812808,
+        "shared": 0.11639358527535382
+      }
+    },
+    "Construction.skills": {
+      "type": "Performance",
+      "function": "Trapez",
+      "parameters": {
+        "a": 1.7395289639315627E+308,
+        "b": 1.7760072894629409E+308,
+        "c": 1.7887497829349915E+308,
+        "d": 1.7926587067068276E+308
+      }
+    }
+  }
+}

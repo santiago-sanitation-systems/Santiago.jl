@@ -1,0 +1,27 @@
+{
+  "name": "name",
+  "description": "description",
+  "inhabitants": 1000,
+  "attributes": {
+    "Soil.type/hydraulic.conductivity": {
+      "type": "Pdf",
+      "function": "Categorical",
+      "parameters": {
+        "clay": 0.2099231396412935,
+        "gravel": 0.04456864874243471,
+        "sand": 0.0055565701665027945,
+        "silt": 0.739951641449769
+      }
+    },
+    "Water.supply": {
+      "type": "Pdf",
+      "function": "Categorical",
+      "parameters": {
+        "a": 0.041991654503460096,
+        "b": 0.2537831792222083,
+        "c": 0.14199774188087833,
+        "d": 0.5622274243934533
+      }
+    }
+  }
+}
