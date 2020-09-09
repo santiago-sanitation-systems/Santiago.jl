@@ -21,7 +21,7 @@ function integrate(d1::T1, t1, d2::T2, t2) where T1 <: Continous where T2 <: Con
     f(x) = d1(x, t1)*d2(x, t2)
     lw, up = t1 isa Pdf ? (minimum(d1), maximum(d1)) : (minimum(d2), maximum(d2))
     # integrate
-    score, _ = quadgk(f, lw, up, rtol=1e-6)
+    score, _ = quadgk(f, lw, up, rtol=1e-6, atol=1e-6)
     score
 end
 
