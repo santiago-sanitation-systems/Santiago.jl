@@ -1,5 +1,5 @@
 # -----------
-# functios to asses and select systems
+# functions to asses and select systems
 
 export sysappscore, sysappscore!,
     ntechs, ntechs!,
@@ -86,7 +86,8 @@ function template(s::System)
     dry_material = any(occursin.("driedfaeces", all_product_names)) |
         any(occursin.("storedfaeces", all_product_names)) |
         any(occursin.("compost", all_product_names)) |
-        any(occursin.("pithumus", all_product_names))
+        any(occursin.("pithumus", all_product_names)) |
+        any(occursin.("arbor", lowercase.(all_tech_names)))
 
     # onsite_sludge (searches only for the word "sludge")
     onsite_sludge = any(occursin.(Ref(r"^sludge$"), all_product_names))
