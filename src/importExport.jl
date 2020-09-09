@@ -390,7 +390,7 @@ function properties_dataframe(systems::Array{System}; massflow_selection=Abstrac
     massflow_selection = replace.(massflow_selection, r"[ ]*\|[ ]*" => "|") # clean spaces
     ssplit = split.(massflow_selection, "|")  # split massflow_selection
 
-    cnames = [cnames; Symbol.(replace.(massflow_selection, "|" => "_"))]
+    cnames = Symbol.([cnames; replace.(massflow_selection, "|" => "_")])
     ctypes = [ctypes; fill(Float64, length(massflow_selection))]
 
     d = DataFrame(ctypes, cnames)
