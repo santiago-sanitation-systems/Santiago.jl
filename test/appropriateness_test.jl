@@ -8,6 +8,8 @@ using Santiago: Pdf, Pmf, Performance
 @testset "Range" begin
 
     @test_throws ErrorException Range(4, 3)
+    @test_throws ErrorException Range(4, 4)
+
 
     d = Range(2, 4)
     @test all(extrema(d) .≈ (2, 4))
@@ -25,6 +27,7 @@ end
 @testset "Triangle" begin
 
     @test_throws ErrorException Triangle(4, 6, 5)
+    @test_throws ErrorException Triangle(5, 5, 5)
 
     d = Triangle(1, 3, 5)
     @test all(extrema(d) .≈ (1, 5))
@@ -43,6 +46,7 @@ end
 @testset "Trapez" begin
 
     @test_throws ErrorException Trapez(4, 5, 6, 3)
+    @test_throws ErrorException Trapez(4, 4, 4, 4)
 
     d = Trapez(1, 2, 3, 5)
     @test all(extrema(d) .≈ (1, 5))

@@ -16,7 +16,7 @@ struct Performance end
 Base.@kwdef struct Range <: Continous
     a::Float64
     b::Float64
-    Range(a,b) = a > b ? error("'a' must be smaller than 'b', not ($a, $b)!") : new(a,b)
+    Range(a,b) = a >= b ? error("'a' must be smaller than 'b', not ($a, $b)!") : new(a,b)
 end
 
 function (r::Range)(x, type::Pdf)
@@ -38,7 +38,8 @@ Base.@kwdef struct Triangle <: Continous
     a::Float64
     b::Float64
     c::Float64
-    Triangle(a,b,c) = a <= b <= c ? new(a,b,c) : error("Parameters must be in order: a <= b <= c, not ($a, $b, $c)!")
+    Triangle(a,b,c) = a == b == c ? error("Parameters must not be: a == b == c") :
+        a <= b <= c ? new(a,b,c) : error("Parameters must be in order: a <= b <= c, not ($a, $b, $c)!")
 end
 
 function (t::Triangle)(x, type::Pdf)
