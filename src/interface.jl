@@ -56,6 +56,7 @@ function build_systems(sources::Array{T},
 
     allSys = System[]
     for ss in src_comb
+        @info "Find systems for source (combination): $(ss)"
 
         ## -----
         ## prefilter Techlist, returns sub_technologies

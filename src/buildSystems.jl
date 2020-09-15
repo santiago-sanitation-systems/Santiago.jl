@@ -1,5 +1,6 @@
 import DataStructures
 import Combinatorics
+import ProgressMeter
 import Base.show
 import Base.getindex
 import Base.copy
@@ -291,7 +292,7 @@ end
 
 # Return a vector of Systems
 function build_system!(sys::System, completesystems::Array{System},
-                       techs::Array{T}, hashset::Set{UInt64}, threadlock) where T <: AbstractTech
+                       techs::Array{T}, hashset::Set{UInt64}, threadlock, pmeter) where T <: AbstractTech
 
     # get Array of matching Techs Arrays
     candidates = get_candidates(sys, techs)
@@ -305,6 +306,7 @@ function build_system!(sys::System, completesystems::Array{System},
                     if !(sys_ext in completesystems)
                         push!(completesystems, sys_ext)
                     end
+                    ProgressMeter.next!(pmeter)
                     @debug "$sys_ext"
                 end
             elseif !sys_ext.complete && !(hash(sys_ext) in hashset)
@@ -312,7 +314,7 @@ function build_system!(sys::System, completesystems::Array{System},
                     push!(hashset, hash(sys_ext))
                 end
                 build_system!(sys_ext, completesystems,
-                              techs, hashset, threadlock)
+                              techs, hashset, threadlock, pmeter)
             end
         end
     end
@@ -326,9 +328,11 @@ function build_all_systems(source::Array{T1}, techs::Array{T2}) where T1 <: Abst
 
     completesystems = System[]
     threadlock = ReentrantLock()
+    pmeter = ProgressMeter.ProgressUnknown(desc="Systems found:", dt=1)
     build_system!(System(source), completesystems, techs,
-                  Set{UInt64}(), threadlock)
+                  Set{UInt64}(), threadlock, pmeter)
 
+    ProgressMeter.finish!(pmeter)
 
     # split TechCombineds
     split_techcombined!.(completesystems)
