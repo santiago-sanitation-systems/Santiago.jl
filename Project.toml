@@ -1,7 +1,7 @@
 name = "Santiago"
 uuid = "4c14ae50-faa6-54c0-b22f-5cc2de459edf"
 authors = ["Andreas Scheidegger <andreas.scheidegger@eawag.ch>", "Dorothee Spuhler  <dorothee.spuhler@eawag.ch>"]
-version = "0.2.2"
+version = "0.2.3"
 
 [deps]
 Clustering = "aaaa29a8-35af-508c-8bc3-b662a17a0fe5"
