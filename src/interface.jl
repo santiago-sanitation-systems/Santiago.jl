@@ -91,6 +91,6 @@ function build_systems(sources::Array{T},
         s.properties["ID"] = i
     end
 
-    @info "Systems found:\t\t\t$(lpad(length(allSys), 6))"
+    @info "Total number of systems (without duplicates): $(lpad(length(allSys), 6))"
     return allSys
 end
