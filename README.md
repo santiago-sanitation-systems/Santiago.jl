@@ -45,12 +45,6 @@ every analysis, see [here](https://julialang.github.io/Pkg.jl/v1/environments/).
 
 ```Julia
 using Santiago
-using Logging
-
-# -----------
-# 0) define log level
-
-global_logger(ConsoleLogger(stderr, Logging.Warn))
 
 # -----------
 # 1) Import technologies
@@ -178,7 +172,7 @@ Firefox renders JSON files nicely, or Visual Studio allows for editing.
 
 ## Logging
 
-By default, `Santiago` is rather talkative. This can be
+By default, `Santiago` prints only few information. This can be
 adapted by the logging level. With the package `LoggingExtras.jl` (needs to
 be installed extra)
 different logging levels can be used for the console output and the log file:
@@ -187,10 +181,10 @@ different logging levels can be used for the console output and the log file:
 using Logging
 using LoggingExtras
 
-# - on console show only warnings and errors, write everything in the logfile 'info.log'
+# - on console show only infos and errors, write everything in the logfile 'mylogfile.log'
 mylogger = TeeLogger(
-    MinLevelLogger(FileLogger("info.log"), Logging.Debug),  # logs to file
-    MinLevelLogger(ConsoleLogger(), Logging.Warn)           # logs to console
+    MinLevelLogger(FileLogger("mylogfile.log"), Logging.Debug),  # logs to file
+    MinLevelLogger(ConsoleLogger(), Logging.Info)                # logs to console
 )
 global_logger(mylogger)
 

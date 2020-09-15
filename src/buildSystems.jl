@@ -305,7 +305,7 @@ function build_system!(sys::System, completesystems::Array{System},
                     if !(sys_ext in completesystems)
                         push!(completesystems, sys_ext)
                     end
-                    @info "$sys_ext"
+                    @debug "$sys_ext"
                 end
             elseif !sys_ext.complete && !(hash(sys_ext) in hashset)
                 lock(threadlock) do

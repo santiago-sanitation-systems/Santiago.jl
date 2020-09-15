@@ -67,7 +67,7 @@ function techscore(techattributes, caseattributes)
     attr = intersect(keys(techattributes), keys(caseattributes))
     d = Dict{Symbol, AbstractFloat}()
     for a in attr
-        @info "  $a"
+        @debug "  $a"
         d1, t1 = get_distribution(techattributes[a])
         d2, t2 = get_distribution(caseattributes[a])
 
@@ -81,11 +81,11 @@ end
 
 
 function appropriateness(techs::JSON3.Array, case::JSON3.Object)
-    @info "Case: '$(case.name)':"
+    @info "Case: '$(case.name)'"
 
     TAS = Dict()
     for t in techs
-        @info "Calculate TAS for $(t.name):"
+        @debug "Calculate TAS for $(t.name):"
         TAS[t.name] = techscore(t.attributes, case.attributes)
     end
     Dict(k => geomean(values(v)) for (k,v) in TAS), TAS

@@ -43,14 +43,16 @@ function build_systems(sources::Array{T},
             add_loop_techs!(technologies2, groups = looptechgroup)
             i += 1
         end
-        @debug "$(length(technologies2) - ninit) looped techs added."
+        @info "additional looped techs:\t$(lpad(length(technologies2) - ninit, 6))"
     end
 
     ## ------
     ## Generate Combinations of U and Uadd
 
     src_comb = vcat([generateCombinations(src, additional_sources) for src in sources]...)
-    @debug "$(length(src_comb)) source combinations found."
+    if length(additional_sources) > 0
+        @info "The $(length(sources)) sources and $(length(additional_sources)) additional sources result in  $(length(src_comb)) combinations."
+    end
 
     allSys = System[]
     for ss in src_comb
@@ -88,5 +90,6 @@ function build_systems(sources::Array{T},
         s.properties["ID"] = i
     end
 
+    @info "Systems found:\t\t\t$(lpad(length(allSys), 6))"
     return allSys
 end
