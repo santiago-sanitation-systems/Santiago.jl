@@ -101,7 +101,10 @@ input_masses = Dict("Dry.toilet" => Dict("phosphor" => 0.548,
 
 # Calculate massflows with 20 Mont Carlo iterations (probably not enough)
 # for all systems and save to system properties
-massflow_summary!.(allSys, Ref(input_masses), n=20);
+massflow_summary_parallel!(allSys, Ref(input_masses), n=20);
+
+# Alternatively, the non-parallelized version can be used:
+# massflow_summary!.(allSys, Ref(input_masses), n=20);
 
 # Examples how to extract results
 allSys[2].properties["massflow_stats"]["entered"]
@@ -241,8 +244,8 @@ example. Steps 2 and 4 are fast and can be quickly adapted to new cases.
 
 ## Multi-threading
 
-The function `build_systems` (and in future probably also
-`massflow_summary!`) can benefit from multi-threading. As this also
+The functions `build_systems` and especially
+`massflow_summary_parallel!` benefit from multi-threading. As this may
 involves some overhead, benchmarking is recommended. See the official
 [documentation](https://docs.julialang.org/en/v1/manual/parallel-computing/#man-multithreading-1)
 how to control the number of threads.

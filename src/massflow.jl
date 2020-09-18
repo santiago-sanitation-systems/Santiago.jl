@@ -6,14 +6,16 @@ using Statistics
 using Distributions: Dirichlet
 using NamedArrays
 using SparseArrays
-using Random: AbstractRNG, GLOBAL_RNG
+using Random: AbstractRNG, GLOBAL_RNG, MersenneTwister
+import Future
+import ProgressMeter
 
 export massflow
 export lost
 export recovered
 export entered
 export recovery_ratio
-export massflow_summary, massflow_summary!
+export massflow_summary, massflow_summary!, massflow_summary_parallel!
 export scale_massflows, scale_massflows!
 export issource
 export issink
@@ -389,6 +391,41 @@ function massflow_summary!(s::System, args...; kwargs...)
     s.properties["massflow_stats"] = massflow_summary(s, args...; kwargs...)
 end
 
+"""
+    $TYPEDSIGNATURES
+
+Performs Monte Carlo massflow calculations and adds the summary statistics to
+the to each system _using multi-threading_.
+Make sure the that you start Julia with multiple threads!
+
+## Arguments:
+- `M_in`: a dictionary containing for each source the inflows of each substance.
+- `MC`: if false, the expected values of the Dirichlet distribution is used as transfer
+   coefficients. Else, the transfer coefficients are sampled from a Dirichlet distribution.
+## Keyword arguments
+- `n`: number of Monte Carlo simulations. Ignored if `MC=false`.
+- `scale_reliability`: factor to scale the `transC_reliability` of all `Techs`.
+- `rng`: optional, a random generator. This is only needed for multi-threading to obtain thread-safety.
+"""
+function massflow_summary_parallel!(systems::Vector{System}, M_in::Dict;
+                                    MC::Bool=true, n::Int=100,
+                                    scale_reliability::Real=1.0)
+
+    Threads.nthreads()==1 && @warn "Start Julia with multiple threads to benefit from parallelization!"
+
+    # define a separate random number generator for each thread
+    mt = MersenneTwister(1)
+    rngs = [mt; accumulate(Future.randjump, fill(big(10)^20, Threads.nthreads()-1), init=mt)]
+
+    p = ProgressMeter.Progress(length(systems), dt=1, desc="Compute massflows:")
+    Threads.@threads for s in systems
+        massflow_summary!(s, M_in, MC=MC, n=n,
+                          scale_reliability=scale_reliability,
+                          rng=rngs[Threads.threadid()])
+        ProgressMeter.next!(p)
+    end
+
+end
 
 """
     $TYPEDSIGNATURES
