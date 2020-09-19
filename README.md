@@ -101,7 +101,7 @@ input_masses = Dict("Dry.toilet" => Dict("phosphor" => 0.548,
 
 # Calculate massflows with 20 Mont Carlo iterations (probably not enough)
 # for all systems and save to system properties
-massflow_summary_parallel!(allSys, Ref(input_masses), n=20);
+massflow_summary_parallel!(allSys, input_masses, n=20);
 
 # Alternatively, the non-parallelized version can be used:
 # massflow_summary!.(allSys, Ref(input_masses), n=20);
