@@ -292,7 +292,7 @@ end
 
 # Return a vector of Systems
 function build_system!(sys::System, completesystems::Array{System},
-                       techs::Array{T}, hashset::Set{UInt64}, threadlock, pmeter) where T <: AbstractTech
+                       techs::Array{T}, threadlock, pmeter) where T <: AbstractTech
 
     # get Array of matching Techs Arrays
     candidates = get_candidates(sys, techs)
@@ -309,12 +309,9 @@ function build_system!(sys::System, completesystems::Array{System},
                     ProgressMeter.next!(pmeter)
                     @debug "$sys_ext"
                 end
-            elseif !sys_ext.complete && !(hash(sys_ext) in hashset)
-                lock(threadlock) do
-                    push!(hashset, hash(sys_ext))
-                end
+            else
                 build_system!(sys_ext, completesystems,
-                              techs, hashset, threadlock, pmeter)
+                              techs, threadlock, pmeter)
             end
         end
     end
@@ -330,7 +327,7 @@ function build_all_systems(source::Array{T1}, techs::Array{T2}) where T1 <: Abst
     threadlock = ReentrantLock()
     pmeter = ProgressMeter.ProgressUnknown(desc="Systems found:", dt=1)
     build_system!(System(source), completesystems, techs,
-                  Set{UInt64}(), threadlock, pmeter)
+                  threadlock, pmeter)
 
     ProgressMeter.finish!(pmeter)
 
