@@ -132,6 +132,24 @@ end
 @test_throws ErrorException select_systems(allSys, length(allSys) + 1)
 
 
+#test with conditions
+@test_throws ErrorException select_systems(allSys, 3,
+                                           techs_include=["Pour.flush"],
+                                           techs_exclude=["Pour.flush"])
+
+# exclude
+ss = select_systems(allSys, 3, techs_exclude=["Pour.flush", "wsp_3_trans"])
+
+@test .! any(["Pour.flush" ∈ Santiago.simplifytechname.(t.name for t in s.techs)  for s in ss])
+@test .! any(["sbr" ∈ Santiago.simplifytechname.(t.name for t in s.techs)  for s in ss])
+
+# include
+ss = select_systems(allSys, 3, techs_include=["Pour.flush", "sbr"])
+
+@test all(["Pour.flush" ∈ Santiago.simplifytechname.(t.name for t in s.techs)  for s in ss])
+@test all(["sbr" ∈ Santiago.simplifytechname.(t.name for t in s.techs)  for s in ss])
+
+
 # -----------
 # 6) DataFrame properties
 

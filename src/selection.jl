@@ -38,6 +38,16 @@ end
 
 
 
+# function to filter techs
+has_techs(techs_include, sys) = techs_include == ["ALL"] ?
+    true :
+    all(in.(techs_include, Ref(simplifytechname.(t.name for t in sys.techs))))
+
+has_not_techs(techs_exclude, sys) = length(techs_exclude)==0 ?
+    true :
+    ! any(in.(techs_exclude, Ref(simplifytechname.(t.name for t in sys.techs))))
+
+
 """
     $TYPEDSIGNATURES
 
@@ -52,10 +62,16 @@ the following properties will be added if missing:
 - `ntech`
 - `connectivity`
 """
-function select_systems(systems::Array{System}, n_select::Int)
+function select_systems(systems::Array{System}, n_select::Int;
+                        techs_include::Array{String}=["ALL"],
+                        techs_exclude::Array{String}=String[])
+
+    # filter techs
+    systems = filter(sys -> has_techs(techs_include, sys) && has_not_techs(techs_exclude,
+                                                                           sys), systems)
 
     if length(systems) < n_select
-        error("Cannot select $(n_select) systems from $(length(systems))!")
+        error("Cannot select $(n_select) systems. Only $(length(systems)) systems fullfill all conditions!")
     end
 
     # compute properties if they do not exists
@@ -63,6 +79,7 @@ function select_systems(systems::Array{System}, n_select::Int)
     haskey(systems[1].properties, "sysappscore") || sysappscore!.(systems)
     haskey(systems[1].properties, "ntechs") || ntechs!.(systems)
     haskey(systems[1].properties, "connectivity") || connectivity!.(systems)
+
 
     # extract system properties
     IDs = [s.properties["ID"] for s in systems]

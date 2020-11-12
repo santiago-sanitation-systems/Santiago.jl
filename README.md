@@ -121,6 +121,10 @@ allSys[2].properties["massflow_stats"]["lost"][:,:,"q_0.5"]
 # For example, select eight systems for further investigation
 selectedSys = select_systems(allSys, 8)
 
+# We can also include or exclude technologies
+select_systems(allSys, 3, techs_exclude=["Pour.flush", "wsp_3_trans"])
+select_systems(allSys, 3, techs_include=["Pour.flush"])
+
 # -----------
 # 6) write some properties in a DataFrame for further analysis
 
