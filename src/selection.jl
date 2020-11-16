@@ -92,18 +92,17 @@ end
 """
     $TYPEDSIGNATURES
 
-Select a subset of `n_select` systems. The function aims to identify
+Select a subset of maximal `n_select` systems. The function aims to identify
  systems that are divers and have a large (or small) target
  value. Diversity is mainly determined by the system templates.
 
 Most system properties can serve as target. The most commonly used one is the `sysappscore`.
 
 ## Arguments
-- `n_select::Int` Number of systems to select.
-
+- `n_select::Int` Number of systems to select (if possible)
 - `target = "sysappscore"` value used ot rank systems. Can be a string
   with the name of a system property such as "sysappscore",
-  "connectivity", or "ntechs". For massflow statistics is needs to be a `Pair`` such as
+  "connectivity", or "ntechs". For massflow statistics is needs to be a `Pair` such as
 `("phosphsor" => "recovery_ratios")`
 - `maximize::Bool = true` If `true` the system with the largest `target` values are selected. If `false` the smallest.
 
@@ -137,9 +136,10 @@ function select_systems(systems::Array{System}, n_select::Int;
                         templates_include,
                         templates_exclude)
 
-    if length(systems) < n_select
-        error("Cannot select $(n_select) systems. Only $(length(systems)) systems fullfill all conditions!")
+    if length(systems) == 0
+        return System[]
     end
+    n_select = min(n_select, length(systems))
 
     # compute properties if they do not exists
     haskey(systems[1].properties, "sysappscore") || sysappscore!.(systems)

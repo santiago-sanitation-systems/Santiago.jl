@@ -131,13 +131,12 @@ massflow_summary!.(allSys, Ref(input_masses), n=20)
         @test n == length(select_systems(allSys, n))
     end
 
-    @test_throws ErrorException select_systems(allSys, length(allSys) + 1)
-
+    @test length(select_systems(allSys, length(allSys) + 1)) == length(allSys)
 
     #test with conditions
-    @test_throws ErrorException select_systems(allSys, 3,
-                                               techs_include=["Pour.flush"],
-                                               techs_exclude=["Pour.flush"])
+    @test length(select_systems(allSys, 3,
+                                techs_include=["Pour.flush"],
+                                techs_exclude=["Pour.flush"])) == 0
 
     # exclude techs
     ss = select_systems(allSys, 3, techs_exclude=["Pour.flush", "wsp_3_trans"])
