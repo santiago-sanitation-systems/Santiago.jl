@@ -9,6 +9,8 @@ using DataFrames
 export import_technologies, properties_dataframe
 export dot_file, dot_string
 
+export SystemJSON
+
 
 # remove number and 'trans' from name
 simplifytechname(name) = replace(name, r"(_[0-9]*)?(_trans)?$" => "")
