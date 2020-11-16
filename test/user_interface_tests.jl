@@ -137,17 +137,35 @@ end
                                            techs_include=["Pour.flush"],
                                            techs_exclude=["Pour.flush"])
 
-# exclude
+# exclude techs
 ss = select_systems(allSys, 3, techs_exclude=["Pour.flush", "wsp_3_trans"])
 
+@test length(ss) == 3
 @test .! any(["Pour.flush" ∈ Santiago.simplifytechname.(t.name for t in s.techs)  for s in ss])
 @test .! any(["sbr" ∈ Santiago.simplifytechname.(t.name for t in s.techs)  for s in ss])
 
-# include
+# include techs
 ss = select_systems(allSys, 3, techs_include=["Pour.flush", "sbr"])
 
+@test length(ss) == 3
 @test all(["Pour.flush" ∈ Santiago.simplifytechname.(t.name for t in s.techs)  for s in ss])
 @test all(["sbr" ∈ Santiago.simplifytechname.(t.name for t in s.techs)  for s in ss])
+
+
+# exclude templates
+ss = select_systems(allSys, 3, templates_exclude=["ST.3", "ST.15"])
+
+@test length(ss) == 3
+@test ! any([occursin("ST.3", s.properties["template"]) for s in ss])
+@test ! any([occursin("ST.15", s.properties["template"]) for s in ss])
+
+# include templates
+ss = select_systems(allSys, 3, templates_include=["ST.17"])
+
+@test length(ss) == 3
+@test all([occursin("ST.17", s.properties["template"]) for s in ss])
+
+
 
 
 # -----------

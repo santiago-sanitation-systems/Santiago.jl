@@ -48,11 +48,39 @@ has_not_techs(techs_exclude, sys) = length(techs_exclude)==0 ?
     ! any(in.(techs_exclude, Ref(simplifytechname.(t.name for t in sys.techs))))
 
 
+# function to templates
+function is_template(templates_include, sys)
+    if templates_include == ["ALL"]
+        return true
+    else
+        # regex to look for a string th the same beginning
+        pattern = (Regex("^$(p)") for p in templates_include)
+        return any(occursin.(pattern, sys.properties["template"]))
+    end
+end
+
+function is_not_template(templates_exclude, sys)
+    if length(templates_exclude) == 0
+        return true
+    else
+        # regex to look for a string th the same beginning
+        pattern = (Regex("^$(p)") for p in templates_exclude)
+        return ! any(occursin.(pattern, sys.properties["template"]))
+    end
+end
+
 """
     $TYPEDSIGNATURES
 
 Select a subset of `n_select` systems. The function aims to identify systems
  that are divers and have a good SAS.
+
+The follwowong optional arguments may be used to restrict the selection further:
+- `techs_include`
+- `techs_exclude`
+- `templates_include`
+- `templates_exclude`
+For the templates only the first few characters must be provided.
 
 Note, this function may modify the properties of the input systems! Any of
 the following properties will be added if missing:
@@ -64,21 +92,27 @@ the following properties will be added if missing:
 """
 function select_systems(systems::Array{System}, n_select::Int;
                         techs_include::Array{String}=["ALL"],
-                        techs_exclude::Array{String}=String[])
-
-    # filter techs
-    systems = filter(sys -> has_techs(techs_include, sys) && has_not_techs(techs_exclude,
-                                                                           sys), systems)
-
-    if length(systems) < n_select
-        error("Cannot select $(n_select) systems. Only $(length(systems)) systems fullfill all conditions!")
-    end
+                        techs_exclude::Array{String}=String[],
+                        templates_include::Array{String}=["ALL"],
+                        templates_exclude::Array{String}=String[])
 
     # compute properties if they do not exists
     haskey(systems[1].properties, "template") || template!.(systems)
     haskey(systems[1].properties, "sysappscore") || sysappscore!.(systems)
     haskey(systems[1].properties, "ntechs") || ntechs!.(systems)
     haskey(systems[1].properties, "connectivity") || connectivity!.(systems)
+
+    # filter techs
+    systems = filter(sys -> has_techs(techs_include, sys) &&
+                     has_not_techs(techs_exclude, sys) &&
+                     is_template(templates_include, sys) &&
+                     is_not_template(templates_exclude, sys),
+                     systems)
+
+    if length(systems) < n_select
+        error("Cannot select $(n_select) systems. Only $(length(systems)) systems fullfill all conditions!")
+    end
+
 
 
     # extract system properties

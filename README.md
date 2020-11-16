@@ -125,6 +125,10 @@ selectedSys = select_systems(allSys, 8)
 select_systems(allSys, 3, techs_exclude=["Pour.flush", "wsp_3_trans"])
 select_systems(allSys, 3, techs_include=["Pour.flush"])
 
+# Similar for templates
+select_systems(allSys, 3, templates_exclude=["ST.3", "ST.15"])
+select_systems(allSys, 3, templates_include=["ST.17"])
+
 # -----------
 # 6) write some properties in a DataFrame for further analysis
 
