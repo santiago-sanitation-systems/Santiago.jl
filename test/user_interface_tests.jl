@@ -125,48 +125,67 @@ massflow_summary!.(allSys, Ref(input_masses), n=20)
 # -----------
 # 5) select systems
 
-for n in 0:length(allSys)
-    @test n == length(select_systems(allSys, n))
+@testset "system selection" begin
+
+    for n in 0:length(allSys)
+        @test n == length(select_systems(allSys, n))
+    end
+
+    @test_throws ErrorException select_systems(allSys, length(allSys) + 1)
+
+
+    #test with conditions
+    @test_throws ErrorException select_systems(allSys, 3,
+                                               techs_include=["Pour.flush"],
+                                               techs_exclude=["Pour.flush"])
+
+    # exclude techs
+    ss = select_systems(allSys, 3, techs_exclude=["Pour.flush", "wsp_3_trans"])
+
+    @test length(ss) == 3
+    @test .! any(["Pour.flush" ∈ Santiago.simplifytechname.(t.name for t in s.techs)  for s in ss])
+    @test .! any(["sbr" ∈ Santiago.simplifytechname.(t.name for t in s.techs)  for s in ss])
+
+    # include techs
+    ss = select_systems(allSys, 3, techs_include=["Pour.flush", "sbr"])
+
+    @test length(ss) == 3
+    @test all(["Pour.flush" ∈ Santiago.simplifytechname.(t.name for t in s.techs)  for s in ss])
+    @test all(["sbr" ∈ Santiago.simplifytechname.(t.name for t in s.techs)  for s in ss])
+
+
+    # exclude templates
+    ss = select_systems(allSys, 3, templates_exclude=["ST.3", "ST.15"])
+
+    @test length(ss) == 3
+    @test ! any([occursin("ST.3", s.properties["template"]) for s in ss])
+    @test ! any([occursin("ST.15", s.properties["template"]) for s in ss])
+
+    # include templates
+    ss = select_systems(allSys, 3, templates_include=["ST.17"])
+
+    @test length(ss) == 3
+    @test all([occursin("ST.17", s.properties["template"]) for s in ss])
+
+    # other targets
+    @test_throws ErrorException select_systems(allSys, 3, target="XXX")
+
+    for tt in ["sysappscore", "ntechs", "connectivity"]
+        ss1 = select_systems(allSys, 7, target=tt, maximize=true)
+        ss2 = select_systems(allSys, 7, target=tt, maximize=false)
+        @test sum(s.properties[tt] for s in ss1) > sum(s.properties[tt] for s in ss2)
+    end
+    @test_throws ErrorException select_systems(allSys, 3, target="XXX")
+    @test_throws ErrorException select_systems(allSys, 3, target="phosphor" => "YYY")
+    @test_throws ErrorException select_systems(allSys, 3, target="ZZZ" => "recovery_ratio")
+
+    tt = ("phosphor" => "recovery_ratio")
+    ss1 = select_systems(allSys, 7, target=tt, maximize=true)
+    ss2 = select_systems(allSys, 7, target=tt, maximize=false)
+    @test sum(s.properties["massflow_stats"]["recovery_ratio"]["phosphor", "mean"] for s in ss1) >
+        sum(s.properties["massflow_stats"]["recovery_ratio"]["phosphor", "mean"] for s in ss2)
+
 end
-
-@test_throws ErrorException select_systems(allSys, length(allSys) + 1)
-
-
-#test with conditions
-@test_throws ErrorException select_systems(allSys, 3,
-                                           techs_include=["Pour.flush"],
-                                           techs_exclude=["Pour.flush"])
-
-# exclude techs
-ss = select_systems(allSys, 3, techs_exclude=["Pour.flush", "wsp_3_trans"])
-
-@test length(ss) == 3
-@test .! any(["Pour.flush" ∈ Santiago.simplifytechname.(t.name for t in s.techs)  for s in ss])
-@test .! any(["sbr" ∈ Santiago.simplifytechname.(t.name for t in s.techs)  for s in ss])
-
-# include techs
-ss = select_systems(allSys, 3, techs_include=["Pour.flush", "sbr"])
-
-@test length(ss) == 3
-@test all(["Pour.flush" ∈ Santiago.simplifytechname.(t.name for t in s.techs)  for s in ss])
-@test all(["sbr" ∈ Santiago.simplifytechname.(t.name for t in s.techs)  for s in ss])
-
-
-# exclude templates
-ss = select_systems(allSys, 3, templates_exclude=["ST.3", "ST.15"])
-
-@test length(ss) == 3
-@test ! any([occursin("ST.3", s.properties["template"]) for s in ss])
-@test ! any([occursin("ST.15", s.properties["template"]) for s in ss])
-
-# include templates
-ss = select_systems(allSys, 3, templates_include=["ST.17"])
-
-@test length(ss) == 3
-@test all([occursin("ST.17", s.properties["template"]) for s in ss])
-
-
-
 
 # -----------
 # 6) DataFrame properties

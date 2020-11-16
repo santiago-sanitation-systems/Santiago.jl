@@ -69,13 +69,45 @@ function is_not_template(templates_exclude, sys)
     end
 end
 
+
+function prefilter(systems::Array{System},
+                   techs_include::Array{String}=["ALL"],
+                   techs_exclude::Array{String}=String[],
+                   templates_include::Array{String}=["ALL"],
+                   templates_exclude::Array{String}=String[])
+
+    # compute properties if they do not exists
+    haskey(systems[1].properties, "template") || template!.(systems)
+
+    # filter techs
+    filter(sys -> has_techs(techs_include, sys) &&
+           has_not_techs(techs_exclude, sys) &&
+           is_template(templates_include, sys) &&
+           is_not_template(templates_exclude, sys),
+           systems)
+end
+
+
+
 """
     $TYPEDSIGNATURES
 
-Select a subset of `n_select` systems. The function aims to identify systems
- that are divers and have a good SAS.
+Select a subset of `n_select` systems. The function aims to identify
+ systems that are divers and have a large (or small) target
+ value. Diversity is mainly determined by the system templates.
 
-The follwowong optional arguments may be used to restrict the selection further:
+Most system properties can serve as target. The most commonly used one is the `sysappscore`.
+
+## Arguments
+- `n_select::Int` Number of systems to select.
+
+- `target = "sysappscore"` value used ot rank systems. Can be a string
+  with the name of a system property such as "sysappscore",
+  "connectivity", or "ntechs". For massflow statistics is needs to be a `Pair`` such as
+`("phosphsor" => "recovery_ratios")`
+- `maximize::Bool = true` If `true` the system with the largest `target` values are selected. If `false` the smallest.
+
+The following optional arguments may be used to restrict the selection further:
 - `techs_include`
 - `techs_exclude`
 - `templates_include`
@@ -83,7 +115,7 @@ The follwowong optional arguments may be used to restrict the selection further:
 For the templates only the first few characters must be provided.
 
 Note, this function may modify the properties of the input systems! Any of
-the following properties will be added if missing:
+the following properties can be added if missing:
 
 - `template`
 - `sysappscore`
@@ -91,34 +123,60 @@ the following properties will be added if missing:
 - `connectivity`
 """
 function select_systems(systems::Array{System}, n_select::Int;
+                        target = "sysappscore",
+                        maximize::Bool = true,
                         techs_include::Array{String}=["ALL"],
                         techs_exclude::Array{String}=String[],
                         templates_include::Array{String}=["ALL"],
                         templates_exclude::Array{String}=String[])
 
-    # compute properties if they do not exists
-    haskey(systems[1].properties, "template") || template!.(systems)
-    haskey(systems[1].properties, "sysappscore") || sysappscore!.(systems)
-    haskey(systems[1].properties, "ntechs") || ntechs!.(systems)
-    haskey(systems[1].properties, "connectivity") || connectivity!.(systems)
-
-    # filter techs
-    systems = filter(sys -> has_techs(techs_include, sys) &&
-                     has_not_techs(techs_exclude, sys) &&
-                     is_template(templates_include, sys) &&
-                     is_not_template(templates_exclude, sys),
-                     systems)
+    # filter general condition
+    systems = prefilter(systems,
+                        techs_include,
+                        techs_exclude,
+                        templates_include,
+                        templates_exclude)
 
     if length(systems) < n_select
         error("Cannot select $(n_select) systems. Only $(length(systems)) systems fullfill all conditions!")
     end
 
+    # compute properties if they do not exists
+    haskey(systems[1].properties, "sysappscore") || sysappscore!.(systems)
+    haskey(systems[1].properties, "ntechs") || ntechs!.(systems)
+    haskey(systems[1].properties, "connectivity") || connectivity!.(systems)
 
+    # select target
+    if target == "sysappscore"
+        targets = [s.properties["sysappscore"] for s in systems]
+    elseif target == "connectivity"
+        targets = [s.properties["connectivity"] for s in systems]
+    elseif target == "ntechs"
+        targets = [s.properties["ntechs"] for s in systems]
+    elseif target isa Pair
+        substance, stat = target
+        # error checking
+        substance ∈ SUBSTANCE_NAMES ||
+            error("'$(substance)' is not a known substance!\n  Choose one of: $(SUBSTANCE_NAMES)")
+        stats = ["recovery_ratio", "recovered", "entered" ]
+        stat ∈ stats||
+            error("'$(stat)' is not a known massflow statistic!\n  Choose one of: $(stats)")
+        haskey(systems[1].properties, "massflow_stats") || error("You must first run `massflow_summary!` or `massflow_summary_parallel!` ")
+
+        # get values
+        targets = [s.properties["massflow_stats"][stat][substance, "mean"] for s in systems]
+    else
+        error("target '$(target)' unknown!")
+    end
+
+    # flip sign to minimize
+    if !maximize
+        targets .= -targets
+    end
 
     # extract system properties
     IDs = [s.properties["ID"] for s in systems]
     templates = [s.properties["template"] for s in systems]
-    sas = [s.properties["sysappscore"] for s in systems]
     properties = [s.properties[k] for s in systems, k in ["ntechs", "connectivity"]]
 
     # identify all templates used
@@ -126,7 +184,7 @@ function select_systems(systems::Array{System}, n_select::Int;
 
     ## Calculate how many systems to select per template
     ## based on the 90% quantiles of sysappscore per template
-    q_scores = [quantile(sas[templates .== t], 0.9)
+    q_scores = [quantile(targets[templates .== t], 0.9)
                 for t in templates_used]
 
     n_template = assign_categories(n_select, q_scores) # assign number of system per template
@@ -135,10 +193,10 @@ function select_systems(systems::Array{System}, n_select::Int;
 
     for (i, template) in enumerate(templates_used)
         properties_template = @view properties[templates .== template, :]
-        sas_template = @view sas[templates .== template]
+        targets_template = @view targets[templates .== template]
         selected_template = @view selected[templates .== template]
 
-        n_sys_t = length(sas_template)
+        n_sys_t = length(targets_template)
         if n_sys_t < n_template[i]
             @debug "Maximal $(n_sys_t) (not $(n_template[i])) systems can be selected for template \"$(templates_used[i])\"!"
             n_template[i] = n_sys_t
@@ -154,9 +212,9 @@ function select_systems(systems::Array{System}, n_select::Int;
             ## find system with highest score per cluster
             for k in 1:length(km.counts)
                 properties_template_clust = @view properties_template[assig .== k,:]
-                sas_template_clust = @view sas_template[assig .== k]
+                targets_template_clust = @view targets_template[assig .== k]
                 selected_template_clust = @view selected_template[assig .== k]
-                maxindex = findmax(sas_template_clust)[2] # system with the highest appscore
+                maxindex = findmax(targets_template_clust)[2] # system with the highest appscore
                 selected_template_clust[maxindex] = true # select system
             end
         else
@@ -165,9 +223,9 @@ function select_systems(systems::Array{System}, n_select::Int;
         ## Add additional systems if 'nunique' was too small
         ## (use systems with the highest score)
         if n_template[i] > ncluster
-            sas_template_ns = @view sas_template[.!selected_template]
+            targets_template_ns = @view targets_template[.!selected_template]
             selected_template_ns = @view selected_template[.!selected_template]
-            selectidx = sortperm(sas_template_ns, rev=true)[1:(n_template[i] - ncluster)]
+            selectidx = sortperm(targets_template_ns, rev=true)[1:(n_template[i] - ncluster)]
             selected_template_ns[selectidx] .= true
         end
 
@@ -176,9 +234,9 @@ function select_systems(systems::Array{System}, n_select::Int;
     ## Add additional systems some templates had not enough systems
     ## (use systems with the highest score)
     if sum(selected) < n_select
-        sas_ns = @view sas[.!selected]
+        targets_ns = @view targets[.!selected]
         selected_ns = @view selected[.!selected]
-        selectidx = sortperm(sas_ns, rev=true)[1:(n_select - sum(selected))]
+        selectidx = sortperm(targets_ns, rev=true)[1:(n_select - sum(selected))]
         selected_ns[selectidx] .= true
     end
 
