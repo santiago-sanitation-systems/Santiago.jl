@@ -124,12 +124,19 @@ allSys[2].properties["massflow_stats"]["lost"][:,:,"q_0.5"]
 selectedSys = select_systems(allSys, 8)
 
 # We can also include or exclude technologies
-select_systems(allSys, 3, techs_exclude=["Pour.flush", "wsp_3_trans"])
-select_systems(allSys, 3, techs_include=["Pour.flush"])
+select_systems(allSys, 8, techs_exclude=["Pour.flush", "wsp_3_trans"])
+select_systems(allSys, 8, techs_include=["Pour.flush"])
 
 # Similar for templates
-select_systems(allSys, 3, templates_exclude=["ST.3", "ST.15"])
-select_systems(allSys, 3, templates_include=["ST.17"])
+select_systems(allSys, 8, templates_exclude=["ST.3", "ST.15"])
+select_systems(allSys, 8, templates_include=["ST.17"])
+
+# By default the systems are selected by the `"sysappscore"` but other
+# properties can be used too. For example, here we prefer short systems:
+select_systems(allSys, 8, target="ntechs", maximize=false)
+
+# Or systems with a high phosphor recovery (run massflow calculation first):
+select_systems(allSys, 8, target="phosphor" => "recovery_ratio")
 
 # -----------
 # 6) write some properties in a DataFrame for further analysis
