@@ -184,6 +184,27 @@ massflow_summary!.(allSys, Ref(input_masses), n=20)
     @test sum(s.properties["massflow_stats"]["recovery_ratio"]["phosphor", "mean"] for s in ss1) >
         sum(s.properties["massflow_stats"]["recovery_ratio"]["phosphor", "mean"] for s in ss2)
 
+    # selection type: ranking vs. diverese
+    @test_throws ErrorException select_systems(allSys, 3, selection_type="XYZ")
+
+    ss_dma = select_systems(allSys, 10, selection_type="diverse", maximize=true)
+    ss_dmi = select_systems(allSys, 10, selection_type="diverse", maximize=false)
+    ss_rma = select_systems(allSys, 10, selection_type="ranking", maximize=true)
+    ss_rmi = select_systems(allSys, 10, selection_type="ranking", maximize=false)
+
+    @test sum([s.properties["sysappscore"] for s in ss_dmi]) <
+        sum([s.properties["sysappscore"] for s in ss_dma])
+
+    @test sum([s.properties["sysappscore"] for s in ss_rmi]) <
+        sum([s.properties["sysappscore"] for s in ss_rma])
+
+    @test sum([s.properties["sysappscore"] for s in ss_dma]) <
+        sum([s.properties["sysappscore"] for s in ss_rma])
+
+    @test sum([s.properties["sysappscore"] for s in ss_dmi]) >
+        sum([s.properties["sysappscore"] for s in ss_rmi])
+
+
 end
 
 # -----------

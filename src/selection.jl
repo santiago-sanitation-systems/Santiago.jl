@@ -92,9 +92,8 @@ end
 """
     $TYPEDSIGNATURES
 
-Select a subset of maximal `n_select` systems. The function aims to identify
- systems that are divers and have a large (or small) target
- value. Diversity is mainly determined by the system templates.
+Select a subset of maximal `n_select` systems. The function aims to
+ identify systems that have a good target value.
 
 Most system properties can serve as target. The most commonly used one is the `sysappscore`.
 
@@ -102,9 +101,15 @@ Most system properties can serve as target. The most commonly used one is the `s
 - `n_select::Int` Number of systems to select (if possible)
 - `target = "sysappscore"` value used ot rank systems. Can be a string
   with the name of a system property such as "sysappscore",
-  "connectivity", or "ntechs". For massflow statistics is needs to be a `Pair` such as
-`("phosphsor" => "recovery_ratios")`
-- `maximize::Bool = true` If `true` the system with the largest `target` values are selected. If `false` the smallest.
+  "connectivity", or "ntechs". For massflow statistics is needs to be a
+`Pair` such as `("phosphsor" => "recovery_ratios")`
+- `maximize::Bool = true` If `true` the system with the largest `target`
+values are selected. If `false` the smallest.
+- `selection_type = "diverse"` Must be either `"diverse"` or
+ `"ranking"`. If `"ranking", the systems with the largest (or
+ smallest) target values are returned. If `"diverse"`, the returned
+ systems have a large (or small) target value but are as diverese as
+ possoble. Diversity is mainly determined by the system templates.
 
 The following optional arguments may be used to restrict the selection further:
 - `techs_include`
@@ -124,6 +129,7 @@ the following properties can be added if missing:
 function select_systems(systems::Array{System}, n_select::Int;
                         target = "sysappscore",
                         maximize::Bool = true,
+                        selection_type::String = "diverse",
                         techs_include::Array{String}=["ALL"],
                         techs_exclude::Array{String}=String[],
                         templates_include::Array{String}=["ALL"],
@@ -171,8 +177,28 @@ function select_systems(systems::Array{System}, n_select::Int;
 
     # flip sign to minimize
     if !maximize
-        targets .= -targets
+        targets *= -1
     end
+
+    # choose the type of selection
+    if selection_type == "diverse"
+        return select_diverse(systems, n_select, targets)
+    elseif selection_type == "ranking"
+        return select_ranking(systems, n_select, targets)
+    else
+        error("'selection_type' must be either \"diverse\" or \"ranking\"!")
+    end
+end
+
+
+"""
+    $TYPEDSIGNATURES
+
+Select a subset of maximal `n_select` systems. The function aims to identify
+ systems that are divers while having a large target
+ value. Diversity is mainly determined by the system templates.
+"""
+function select_diverse(systems::Array{System}, n_select::Int, targets::Array)
 
     # extract system properties
     IDs = [s.properties["ID"] for s in systems]
@@ -239,6 +265,23 @@ function select_systems(systems::Array{System}, n_select::Int;
         selectidx = sortperm(targets_ns, rev=true)[1:(n_select - sum(selected))]
         selected_ns[selectidx] .= true
     end
+
+    filter(s -> s.properties["ID"] in IDs[selected], systems)
+end
+
+
+"""
+    $TYPEDSIGNATURES
+
+Select a subset of maximal `n_select` systems. The function selects the
+ systems with the largest target values.
+"""
+function select_ranking(systems::Array{System}, n_select::Int, targets::Array)
+
+    IDs = [s.properties["ID"] for s in systems]
+
+    selected = fill(false, length(systems))
+    selected[sortperm(targets, rev=true)[1:n_select]] .= true
 
     filter(s -> s.properties["ID"] in IDs[selected], systems)
 end
