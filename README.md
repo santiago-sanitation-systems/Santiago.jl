@@ -8,11 +8,11 @@ Status](https://coveralls.io/repos/github/santiago-sanitation-systems/Santiago.j
 
 `Santiago` (SANitation sysTem Alternative GeneratOr) is a Julia package to generate appropriate sanitation system options. It is able to
 - find all possible systems given a set of sanitation technologies;
-- assess the appropriateness of a technology in a given context;
+- assess the appropriateness of a technology in a given case (context);
 - assess the overall appropriateness of a sanitation system in a given context;
 - calculate (optionally with uncertainly quantification) the massflows for each system for
   total `phosphor`, total `nitrogen`, `totalsolids`, and `water`;
-- select a desired number of diverse but appropriate systems.
+- select a meaningful subset of systems for the given case.
 
 
 # Installation
@@ -137,6 +137,12 @@ select_systems(allSys, 8, target="ntechs", maximize=false)
 
 # Or systems with a high phosphor recovery (run massflow calculation first):
 select_systems(allSys, 8, target="phosphor" => "recovery_ratio")
+
+# By default the returned systems are diverse while having a good
+# target score. You can ignore the diversity requirement to get the
+# systems with the best target scores by setting
+# the `selection_type` to "ranking".
+select_systems(allSys, 10, selection_type="ranking")
 
 # -----------
 # 6) write some properties in a DataFrame for further analysis
