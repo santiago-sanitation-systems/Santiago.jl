@@ -3,8 +3,7 @@
 [![version](https://juliahub.com/docs/Santiago/version.svg)](https://juliahub.com/ui/Packages/Santiago/JPJQH)
 [![Build
 Status](https://github.com/santiago-sanitation-systems/Santiago.jl/workflows/CI/badge.svg)](https://github.com/santiago-sanitation-systems/Santiago.jl/actions)
-[![Coverage
-Status](https://coveralls.io/repos/github/santiago-sanitation-systems/Santiago.jl/badge.svg?branch=master)](https://coveralls.io/github/santiago-sanitation-systems/Santiago.jl?branch=master)
+[![codecov](https://codecov.io/gh/santiago-sanitation-systems/Santiago.jl/branch/master/graph/badge.svg?token=GWBV5M4Z13)](https://codecov.io/gh/santiago-sanitation-systems/Santiago.jl)
 
 `Santiago` (SANitation sysTem Alternative GeneratOr) is a Julia package to generate appropriate sanitation system options. It is able to
 - find all possible systems given a set of sanitation technologies;
