@@ -19,6 +19,7 @@ struct Product
 end
 
 Product(name::T) where T <: AbstractString = Product(Symbol(name))
+Base.hash(p::Product, h::UInt) = hash(p.name, hash(:Product, h))
 show(io::Base.IO, p::Product) = print(io, "$(p.name)")
 isless(p1::Product, p2::Product) = isless(p1.name, p2.name)
 

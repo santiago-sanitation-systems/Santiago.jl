@@ -5,7 +5,7 @@
 using Clustering: kmeans, assignments
 using Statistics: quantile
 
-export select_systems
+export select_systems, pick_systems
 
 
 # assign N values to categories relative to the weights 'w' with at least one value per in each category
@@ -284,4 +284,14 @@ function select_ranking(systems::Array{System}, n_select::Int, targets::Array)
     selected[sortperm(targets, rev=true)[1:n_select]] .= true
 
     filter(s -> s.properties["ID"] in IDs[selected], systems)
+end
+
+
+"""
+    $TYPEDSIGNATURES
+
+Return systems with matching `ID`. May return an empty array.
+"""
+function pick_systems(systems::Array{System}, IDs::Array{T} where T <: AbstractString)
+    filter(s -> s.properties["ID"] ∈ IDs, systems)
 end
