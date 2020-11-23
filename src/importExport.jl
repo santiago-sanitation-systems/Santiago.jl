@@ -340,7 +340,7 @@ end
 
 function SystemJSON(sys::System)
     # convert NamedArray's of massflow_stats
-    p = sys.properties
+    p = copy(sys.properties)
     if haskey(p, "massflow_stats")
         p["massflow_stats"] = Dict(k => Dict(v) for (k,v) in p["massflow_stats"])
     end
