@@ -364,6 +364,19 @@ JSON3.write(io::IO, sys::Array{T}; kw...) where T <: System = JSON3.write(io, [S
 ## ---------------------------------
 ## export system properties to DataFrame
 
+# helper to export all massflow statistics
+function all_massflow_selection(sys::System)
+    ms_string = String[]
+    for (k, v) in sys.properties["massflow_stats"]
+        na = names(v)           # names of NamedArray
+        # construct string
+        d = reshape(collect(k * " | " * join(n, " | ") for n in Iterators.product(na...)), 1, :)
+
+        append!(ms_string, d)
+    end
+    ms_string
+end
+
 """
     $TYPEDSIGNATURES
 
@@ -377,10 +390,15 @@ This will extract the mean value of the recovered water and the 50% quantile of 
 water lost to air. Note, the order of the values must match the dimensions of the
  `NamedArray` stored in the system propertes!
 """
-function properties_dataframe(systems::Array{System}; massflow_selection=AbstractString[])
+function properties_dataframe(systems::Array{System}; massflow_selection="all")
 
     if length(massflow_selection)>0 && ("massflow_stats" ∉ keys(systems[1].properties))
         error("The systems have no mass flow information. Run `massflow_summary!.(systems, Ref(input_masses), n=20)`.")
+    end
+
+    # if default, export all stats
+    if massflow_selection == "all"
+        massflow_selection = all_massflow_selection(systems[1])
     end
 
     # all properties except 'massflow_stats'

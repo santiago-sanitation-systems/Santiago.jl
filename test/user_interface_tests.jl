@@ -227,6 +227,12 @@ df = properties_dataframe(allSys,
 @test "lost_water_air loss_q_0.5" in names(df)
 @test "entered_water" in names(df)
 
+# check export of all massflow statistics
+df = properties_dataframe(allSys, massflow_selection = "all")
+@test size(df,1) == length(allSys)
+@test size(df,2) == 6 + 4*5 + 4 + 4*3*5 +
+    4*5 + 4*16*5
+
 # -----------
 # 7) helpers
 

@@ -163,6 +163,9 @@ df = properties_dataframe(selectedSys,
 size(df)
 names(df)
 
+# or you could simply export all properties (> 400!)
+df = properties_dataframe(allSys, massflow_selection = "all")
+
 # export as csv
 import CSV  # the package 'CSV' needs to be installed separately
 CSV.write("mysystems.csv", df)
