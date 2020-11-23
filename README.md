@@ -147,6 +147,10 @@ select_systems(allSys, 10, selection_type="ranking")
 # This helper function returns the systems with matching IDs:
 pick_systems(allSys, ["003s-QbnU-FvGB", "0JLD-YQbJ-SGAu"])
 
+# Investigate how techs and templates are used
+templates_per_tech(allSys)
+techs_per_template(allSys)
+
 # -----------
 # 6) write some properties in a DataFrame for further analysis
 

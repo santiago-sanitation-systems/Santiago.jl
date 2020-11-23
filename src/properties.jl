@@ -1,10 +1,11 @@
 # -----------
-# functions to asses and select systems
+# functions to calculate system properties
 
 export sysappscore, sysappscore!,
     ntechs, ntechs!,
     connectivity, connectivity!,
-    template, template!
+    template, template!,
+    templates_per_tech, techs_per_template
 
 # -----------
 """
@@ -263,3 +264,54 @@ end
 Add the template to system properties.
 """
 template!(s::System) = s.properties["template"] = template(s)
+
+
+
+## ---------------------------------
+## functions to relate templates and technolgies
+
+"""
+    $TYPEDSIGNATURES
+
+List for every technology the system templates it was used in.
+Note, only technologies that are used in at least one system are listed.
+"""
+function templates_per_tech(systems::Array{System})
+    haskey(systems[1].properties, "template") ||
+        error("No templates assigned! Run `template!` first.")
+    d = Dict{String, Set{String}}()
+    for s in systems
+        for tech in s.techs
+            name = Santiago.simplifytechname(tech.name)
+            if haskey(d, name)
+                push!(d[name], s.properties["template"])
+            else
+                d[name] = Set([s.properties["template"]])
+            end
+        end
+    end
+    d
+end
+
+"""
+    $TYPEDSIGNATURES
+
+List all technologies that systems of the same templates have used.
+"""
+function techs_per_template(systems::Array{System})
+    haskey(systems[1].properties, "template") ||
+        error("No templates assigned! Run `template!` first.")
+    d = Dict{String, Set{String}}()
+    for s in systems
+        templ = s.properties["template"]
+        for tech in s.techs
+            techname = Santiago.simplifytechname(tech.name)
+            if haskey(d, templ)
+                push!(d[templ], techname)
+            else
+                d[templ] = Set([techname])
+            end
+        end
+    end
+    d
+end
