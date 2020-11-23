@@ -84,6 +84,7 @@ allSys = build_systems(sources, techs);
 # 3) Calculate (or update) system properties
 
 @test "ID" in keys(allSys[1].properties)
+@test length(allSys[1].properties["ID"]) == 12 + 2
 @test "source" in keys(allSys[1].properties)
 
 sysappscore!.(allSys)

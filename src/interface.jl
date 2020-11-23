@@ -86,9 +86,14 @@ function build_systems(sources::Array{T},
         append!(allSys, newSys)
     end
 
-    ## add ID
-    for (i,s) in enumerate(allSys)
-        s.properties["ID"] = i
+    ## add a unique ID
+    for s in allSys
+        id_str = string(hash(s), base=62, pad=12)
+        # separate string with '-' for better legibility
+        id_str = replace(id_str, r"(.{4})" => s"\1-")
+        id_str = replace(id_str, r"-$" => "")
+
+        s.properties["ID"] = id_str
     end
 
     @info "Total number of systems (without duplicates): $(lpad(length(allSys), 6))"
