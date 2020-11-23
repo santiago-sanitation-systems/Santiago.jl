@@ -144,6 +144,9 @@ select_systems(allSys, 8, target="phosphor" => "recovery_ratio")
 # the `selection_type` to "ranking".
 select_systems(allSys, 10, selection_type="ranking")
 
+# This helper function returns the systems with matching IDs:
+pick_systems(allSys, ["003s-QbnU-FvGB", "0JLD-YQbJ-SGAu"])
+
 # -----------
 # 6) write some properties in a DataFrame for further analysis
 
