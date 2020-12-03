@@ -67,6 +67,8 @@ length(allSys)
 # -----------
 # 3) Calculate (or update) system properties
 
+tas, tas_components = appropriateness(tech_file, case_file)
+
 sysappscore!.(allSys)
 connectivity!.(allSys)
 ntechs!.(allSys)
