@@ -393,7 +393,7 @@ water lost to air. Note, the order of the values must match the dimensions of th
 function properties_dataframe(systems::Array{System}; massflow_selection="all")
 
     if length(massflow_selection)>0 && ("massflow_stats" ∉ keys(systems[1].properties))
-        error("The systems have no mass flow information. Run `massflow_summary!.(systems, Ref(input_masses), n=20)`.")
+        error("The systems have no mass flow information. \n Either run `massflow_summary!` first or do not export massflow statistics with:\n  `properties_dataframe(system, massflow_selection=[])`.")
     end
 
     # if default, export all stats
