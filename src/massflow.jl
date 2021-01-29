@@ -183,7 +183,9 @@ function sample_P(P::AbstractArray, transC_reliability::AbstractArray, rng::Abst
                 push!(alpha, P[i,j]*transC_reliability[i])
             end
         end
-        P2[i,.!i_zero] = rand(rng, Dirichlet(alpha), 1)
+        if sum(i_zero) != size(P,2)
+            P2[i,.!i_zero] = rand(rng, Dirichlet(alpha))
+        end
     end
     P2
 end
