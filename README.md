@@ -65,13 +65,14 @@ allSys = build_systems(sources, techs);
 length(allSys)
 
 # -----------
-# 3) Calculate (or update) system properties
+# 3) Calculate system properties
 
 tas, tas_components = appropriateness(tech_file, case_file)
 
 sysappscore!.(allSys)
-connectivity!.(allSys)
 ntechs!.(allSys)
+nconnections!.(allSys)
+connectivity!.(allSys)
 template!.(allSys)
 
 # see all properties of the first system

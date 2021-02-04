@@ -90,11 +90,14 @@ allSys = build_systems(sources, techs);
 sysappscore!.(allSys)
 @test "sysappscore" in keys(allSys[1].properties)
 
-connectivity!.(allSys)
-@test "connectivity" in keys(allSys[1].properties)
-
 ntechs!.(allSys)
 @test "ntechs" in keys(allSys[1].properties)
+
+nconnections!.(allSys)
+@test "nconnections" in keys(allSys[1].properties)
+
+connectivity!.(allSys)
+@test "connectivity" in keys(allSys[1].properties)
 
 template!.(allSys)
 @test "template" in keys(allSys[1].properties)
@@ -230,7 +233,7 @@ df = properties_dataframe(allSys,
 # check export of all massflow statistics
 df = properties_dataframe(allSys, massflow_selection = "all")
 @test size(df,1) == length(allSys)
-@test size(df,2) == 6 + 4*5 + 4 + 4*3*5 +
+@test size(df,2) == 7 + 4*5 + 4 + 4*3*5 +
     4*5 + 4*16*5
 
 # -----------

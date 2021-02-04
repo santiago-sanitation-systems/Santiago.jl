@@ -3,6 +3,7 @@
 
 export sysappscore, sysappscore!,
     ntechs, ntechs!,
+    nconnections, nconnections!,
     connectivity, connectivity!,
     template, template!,
     templates_per_tech, techs_per_template
@@ -57,9 +58,23 @@ ntechs!(s::System) = s.properties["ntechs"] = ntechs(s)
 # -----------
 """
     $TYPEDSIGNATURES
+Calculate number of connections.
+"""
+nconnections(s::System) = length(s.connections)
+
+"""
+    $TYPEDSIGNATURES
+Add number of connections to system properties.
+"""
+nconnections!(s::System) = s.properties["nconnections"] = nconnections(s)
+
+
+# -----------
+"""
+    $TYPEDSIGNATURES
 Calculate average number of connection per technology.
 """
-connectivity(s::System) = length(s.connections) / ntechs(s)
+connectivity(s::System) = nconnections(s) / ntechs(s)
 
 """
     $TYPEDSIGNATURES
