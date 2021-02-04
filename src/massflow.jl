@@ -282,10 +282,11 @@ Performs Monte Carlo massflow calculations and provides the summary statistics o
    coefficients. Else, the transfer coefficients are sampled from a Dirichlet distribution.
 - `n`: number of Monte Carlo simulations. Ignored if `MC=false`.
 - `scale_reliability`: factor to scale the `transC_reliability` of all `Techs`.
+- `techflows`: if true, the flows of the individual techs are summarized
 - `rng`: optional, a random generator. This is only needed for multi-threading to obtain thread-safety.
 
 """
-function massflow_summary(sys::System, M_in::Dict; MC::Bool=true, n::Int=100,
+function massflow_summary(sys::System, M_in::Dict; MC::Bool=true, n::Int=100, techflows::Bool=false,
                           scale_reliability::Real=1.0, rng::AbstractRNG=GLOBAL_RNG)
 
 
@@ -297,7 +298,7 @@ function massflow_summary(sys::System, M_in::Dict; MC::Bool=true, n::Int=100,
     end
 
 
-    summaries = Dict{String, NamedArray{Float64}}()
+    summaries = Dict{String, Any}()
 
     #  -- compute masses
     ns = MC ? n : 1             # make only one run if MC == false
@@ -370,6 +371,25 @@ function massflow_summary(sys::System, M_in::Dict; MC::Bool=true, n::Int=100,
     # --  entered
     summaries["entered"] = entered(M_in, sys)
 
+    # --  flows per technology
+    if techflows
+        techflows = Dict{Tech, NamedArray}()
+
+        for tech in keys(m_outs[1]) # loop over all techs
+            tmp = cat((m[tech] for m in m_outs)..., dims=3)
+            ll = NamedArray(cat(mean(tmp.array, dims=3),
+                                std(tmp.array, dims=3),
+                                mapslices(x-> quantile(x, qq), tmp.array, dims=3),
+                                dims=3))
+            setnames!(ll, SUBSTANCE_NAMES, 1)
+            setnames!(ll, collect(keys(tmp.dicts[2])), 2)
+            setnames!(ll, ["mean", "sd", ["q_$i" for i in qq]...], 3)
+
+            techflows[tech] = ll
+        end
+        summaries["tech_flows"] = techflows
+    end
+
     return(summaries)
 end
 
@@ -406,11 +426,12 @@ Make sure the that you start Julia with multiple threads!
    coefficients. Else, the transfer coefficients are sampled from a Dirichlet distribution.
 ## Keyword arguments
 - `n`: number of Monte Carlo simulations. Ignored if `MC=false`.
+- `techflows`: if true, the flows of the individual techs are summarized
 - `scale_reliability`: factor to scale the `transC_reliability` of all `Techs`.
 - `rng`: optional, a random generator. This is only needed for multi-threading to obtain thread-safety.
 """
 function massflow_summary_parallel!(systems::Vector{System}, M_in::Dict;
-                                    MC::Bool=true, n::Int=100,
+                                    MC::Bool=true, n::Int=100, techflows::Bool=false,
                                     scale_reliability::Real=1.0)
 
     Threads.nthreads()==1 && @warn "Start Julia with multiple threads to benefit from parallelization!"
@@ -423,6 +444,7 @@ function massflow_summary_parallel!(systems::Vector{System}, M_in::Dict;
     Threads.@threads for s in systems
         massflow_summary!(s, M_in, MC=MC, n=n,
                           scale_reliability=scale_reliability,
+                          techflows=techflows,
                           rng=rngs[Threads.threadid()])
         ProgressMeter.next!(p)
     end

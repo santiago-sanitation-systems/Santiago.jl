@@ -343,6 +343,9 @@ function SystemJSON(sys::System)
     p = copy(sys.properties)
     if haskey(p, "massflow_stats")
         p["massflow_stats"] = Dict(k => Dict(v) for (k,v) in p["massflow_stats"])
+        if haskey(p["massflow_stats"], "tech_flows")
+            p["massflow_stats"]["tech_flows"] = Dict(k => Dict(v) for (k,v) in p["massflow_stats"]["tech_flows"])
+        end
     end
     SystemJSON(
         [simplifytechname(t.name) for t in sys.techs],
