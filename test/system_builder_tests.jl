@@ -94,9 +94,9 @@ transC_D["nitrogen"] = Dict(Product("d1") => 0.3,
                             Product("airloss") => 0.0,
                             Product("soilloss") => 0.3,
                             Product("waterloss") => 0.0)
-transC_D["water"] = Dict(Product("d1") => 0.0,
-                         Product("d2") => 0.0,
-                         Product("d3") => 1.0,
+transC_D["water"] = Dict(Product("d1") => 0.1,
+                         Product("d2") => 0.1,
+                         Product("d3") => 0.8, # numerical problems if == 1.0 ?
                          Product("airloss") => 0.0,
                          Product("soilloss") => 0.0,
                          Product("waterloss") => 0.0)

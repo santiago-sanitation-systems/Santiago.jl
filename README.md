@@ -109,6 +109,10 @@ massflow_summary_parallel!(allSys, input_masses, n=20);
 # Alternatively, the non-parallelized version can be used:
 # massflow_summary!.(allSys, Ref(input_masses), n=20);
 
+# If the flows of every technology is of interest, set 'techflows=true'.
+# The default is 'false' as this produces as very large amount of additional data!
+massflow_summary_parallel!(allSys, input_masses, n=20, techflows=true);
+
 # Examples how to extract results
 allSys[2].properties["massflow_stats"]["entered"]
 allSys[2].properties["massflow_stats"]["recovery_ratio"]

@@ -379,7 +379,7 @@ function massflow_summary(sys::System, M_in::Dict; MC::Bool=true, n::Int=100, te
             tmp = cat((m[tech] for m in m_outs)..., dims=3)
             ll = NamedArray(cat(mean(tmp.array, dims=3),
                                 std(tmp.array, dims=3),
-                                mapslices(x-> quantile(x, qq), tmp.array, dims=3),
+                                mapslices(x -> quantile(x, qq), tmp.array, dims=3),
                                 dims=3))
             setnames!(ll, SUBSTANCE_NAMES, 1)
             setnames!(ll, collect(keys(tmp.dicts[2])), 2)
@@ -406,6 +406,7 @@ the system properties.
    coefficients. Else, the transfer coefficients are sampled from a Dirichlet distribution.
 ## Keyword arguments
 - `n`: number of Monte Carlo simulations. Ignored if `MC=false`.
+- `techflows`: if true, the flows of the individual techs are summarized.
 - `scale_reliability`: factor to scale the `transC_reliability` of all `Techs`.
 - `rng`: optional, a random generator. This is only needed for multi-threading to obtain thread-safety.
 """
@@ -426,7 +427,7 @@ Make sure the that you start Julia with multiple threads!
    coefficients. Else, the transfer coefficients are sampled from a Dirichlet distribution.
 ## Keyword arguments
 - `n`: number of Monte Carlo simulations. Ignored if `MC=false`.
-- `techflows`: if true, the flows of the individual techs are summarized
+- `techflows`: if true, the flows of the individual techs are summarized.
 - `scale_reliability`: factor to scale the `transC_reliability` of all `Techs`.
 - `rng`: optional, a random generator. This is only needed for multi-threading to obtain thread-safety.
 """

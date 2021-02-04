@@ -64,9 +64,16 @@ end
 
 # parallel calculations
 
-massflow_summary_parallel!(allSys, M_in, n=10);
+massflow_summary_parallel!(allSys, M_in, n=10, techflows=false);
 
 for s in allSys
     @test length(s.properties["massflow_stats"]) == 5
 end
 @test length(unique([hash(s.properties["massflow_stats"]) for s in allSys])) == length(allSys)
+
+
+massflow_summary_parallel!(allSys, M_in, n=10, techflows=true);
+for s in allSys
+    @test length(s.properties["massflow_stats"]) == 6
+    @test length(s.properties["massflow_stats"]["tech_flows"]) == length(s.techs)
+end
