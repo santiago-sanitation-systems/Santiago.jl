@@ -1,7 +1,7 @@
 using Reexport: @reexport
 @reexport using JSON3
 
-using Combinatorics
+using Combinatorics: combinations
 import StructTypes
 using DataFrames
 
@@ -251,27 +251,6 @@ function import_technologies(techFile::String; sourceGroup::String="U",
     return sources, sourcesAdd, techs
 
 end
-
-
-
-"""
-    $TYPEDSIGNATURES
-
-Generates all possible combinations of a single `source` and all `sourcesAdds`.
-"""
-function generateCombinations(source::T, sourcesAdd::Array{T}) where T <: AbstractTech
-
-    src_comb = Array{Tech}[]
-    push!(src_comb, [source])
-
-    for s_pos in Combinatorics.combinations(sourcesAdd)
-        push!(s_pos, source)
-        push!(src_comb, s_pos)
-    end
-
-    return src_comb
-end
-
 
 
 """

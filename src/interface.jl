@@ -18,7 +18,7 @@ build_systems(sources::Array{T},
 ## Parameters
 - sources:            An array of sources technologies
 - technologies:       Array of sanitation technologies
-- additional_sources: optional array of source technolgies that can be added to the main sources (such as kitch sink)
+- additional_sources: Array of source technolgies that are all added to the main sources (such as kitch sink)
 
 ## Values
 An array of all found sanitation systems.
@@ -47,11 +47,11 @@ function build_systems(sources::Array{T},
     end
 
     ## ------
-    ## Generate Combinations of U and Uadd
+    ## Generate combine each U with every Uadd
 
-    src_comb = vcat([generateCombinations(src, additional_sources) for src in sources]...)
+    src_comb = [[s; additional_sources] for s in sources]
     if length(additional_sources) > 0
-        @info "The $(length(sources)) sources and $(length(additional_sources)) additional sources result in  $(length(src_comb)) combinations."
+        @info "The $(length(sources)) sources and $(length(additional_sources)) additional sources are used."
     end
 
     allSys = System[]
