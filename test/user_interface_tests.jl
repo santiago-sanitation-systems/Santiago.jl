@@ -236,6 +236,9 @@ df = properties_dataframe(allSys, massflow_selection = "all")
 @test size(df,2) == 7 + 4*5 + 4 + 4*3*5 +
     4*5 + 4*16*5
 
+@test_throws ErrorException properties_dataframe(allSys, massflow_selection = "tech_flows")
+@test_throws ErrorException properties_dataframe(allSys, massflow_selection = ["tech_flows"])
+
 # -----------
 # 7) helpers
 

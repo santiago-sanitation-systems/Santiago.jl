@@ -350,11 +350,13 @@ JSON3.write(io::IO, sys::Array{T}; kw...) where T <: System = JSON3.write(io, [S
 function all_massflow_selection(sys::System)
     ms_string = String[]
     for (k, v) in sys.properties["massflow_stats"]
-        na = names(v)           # names of NamedArray
-        # construct string
-        d = reshape(collect(k * " | " * join(n, " | ") for n in Iterators.product(na...)), 1, :)
+        if k != "tech_flows"
+            na = names(v)           # names of NamedArray
+            # construct string
+            d = reshape(collect(k * " | " * join(n, " | ") for n in Iterators.product(na...)), 1, :)
 
-        append!(ms_string, d)
+            append!(ms_string, d)
+        end
     end
     ms_string
 end
@@ -365,6 +367,8 @@ end
 Extract systems properties into a `DataFrame`.
 
 With the argument `massflow_selection` we can select which information should be extracted from the massflow calulation.
+
+Note, massflows per technology ('tech_flows') cannot be export to a Dataframe! Try the JSON export.
 
 ### Example:
 `massflow_selection = ["recovered | water | mean", "lost | water| air loss | q_0.5"]`
@@ -378,6 +382,9 @@ function properties_dataframe(systems::Array{System}; massflow_selection="all")
 
     if length(massflow_selection)>0 && ("massflow_stats" ∉ keys(systems[1].properties))
         error("The systems have no mass flow information. \n Either run `massflow_summary!` first or do not export massflow statistics with:\n  `properties_dataframe(system, massflow_selection=[])`.")
+    end
+    if massflow_selection == "tech_flows" || massflow_selection == ["tech_flows"]
+        error("'tech_flows' cannot be exported to a Dataframe. You may want to try the JSON export.")
     end
 
     # if default, export all stats

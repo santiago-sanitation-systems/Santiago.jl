@@ -373,7 +373,7 @@ function massflow_summary(sys::System, M_in::Dict; MC::Bool=true, n::Int=100, te
 
     # --  flows per technology
     if techflows
-        techflows = Dict{Tech, NamedArray}()
+        techflows = Dict{String, NamedArray}()
 
         for tech in keys(m_outs[1]) # loop over all techs
             tmp = cat((m[tech] for m in m_outs)..., dims=3)
@@ -385,7 +385,7 @@ function massflow_summary(sys::System, M_in::Dict; MC::Bool=true, n::Int=100, te
             setnames!(ll, collect(keys(tmp.dicts[2])), 2)
             setnames!(ll, ["mean", "sd", ["q_$i" for i in qq]...], 3)
 
-            techflows[tech] = ll
+            techflows[simplifytechname(tech.name)] = ll
         end
         summaries["tech_flows"] = techflows
     end
