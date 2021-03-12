@@ -371,6 +371,8 @@ With the argument `massflow_selection` we can select which information should be
 This will extract the mean value of the recovered water and the 50% quantile of the
 water lost to air. Note, the order of the values must match the dimensions of the
  `NamedArray` stored in the system propertes!
+
+`massflow_selection` can be set to `"all"` extrace all massflow quantities (which are a lot!).
 """
 function properties_dataframe(systems::Array{System}; massflow_selection="all")
 
