@@ -103,8 +103,14 @@ function massflow(sys::System, M_in::Dict{String, Dict{String, T}};
                     tc = t.transC[substance][Product("x")]
                 end
 
-                masses[substance, prod] = flow[t.name, ouput_con[3].name] *
-                    tc / P[t.name, ouput_con[3].name]
+                fraction = tc / P[t.name, ouput_con[3].name]
+                # catches case where 'tc' and 'P[t.name, ouput_con[3].name]' equal zero
+                if isnan(fraction)
+                    fraction = 0.0
+                end
+
+                masses[substance, prod] = flow[t.name, ouput_con[3].name] * fraction
+
             end
 
             for loss in ["airloss", "soilloss", "waterloss"]
