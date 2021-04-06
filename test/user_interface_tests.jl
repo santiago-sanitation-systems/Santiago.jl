@@ -209,8 +209,10 @@ massflow_summary!.(allSys, Ref(input_masses), n=20)
         sum([s.properties["sysappscore"] for s in ss_rmi])
 
     # pick systems by ID
-    @test length(pick_systems(allSys, ["003s-QbnU-FvGB", "0JLD-YQbJ-SGAu"])) == 2
-    @test length(pick_systems(allSys, ["003s-QbnU-FvGB", "XYZ"])) == 1
+    id1 = allSys[1].properties["ID"]
+    id2 = allSys[2].properties["ID"]
+    @test length(pick_systems(allSys, [id1, id2])) == 2
+    @test length(pick_systems(allSys, [id1, "XYZ"])) == 1
     @test length(pick_systems(allSys, ["XYZ"])) == 0
 
 end
