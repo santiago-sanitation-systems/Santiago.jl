@@ -100,16 +100,16 @@ Most system properties can serve as target. The most commonly used one is the `s
 ## Arguments
 - `n_select::Int` Number of systems to select (if possible)
 - `target = "sysappscore"` value used ot rank systems. Can be a string
-  with the name of a system property such as "sysappscore",
-  "connectivity", or "ntechs". For massflow statistics is needs to be a
+  with the name of a system property such as `"sysappscore"`,
+  `"connectivity"`, or `"ntechs"`. For massflow statistics is needs to be a
 `Pair` such as `("phosphsor" => "recovery_ratios")`
 - `maximize::Bool = true` If `true` the system with the largest `target`
 values are selected. If `false` the smallest.
 - `selection_type = "diverse"` Must be either `"diverse"` or
- `"ranking"`. If `"ranking", the systems with the largest (or
+ `"ranking"`. If `"ranking"`, the systems with the largest (or
  smallest) target values are returned. If `"diverse"`, the returned
- systems have a large (or small) target value but are as diverese as
- possoble. Diversity is mainly determined by the system templates.
+ systems have a large (or small) target value but are also as diverse as
+ possible. Diversity is mainly determined by the system templates.
 
 The following optional arguments may be used to restrict the selection further:
 - `techs_include`
@@ -118,8 +118,8 @@ The following optional arguments may be used to restrict the selection further:
 - `templates_exclude`
 For the templates only the first few characters must be provided.
 
-Note, this function may modify the properties of the input systems! Any of
-the following properties can be added if missing:
+Note, this function may add properties to the input systems! Any of
+the following properties may be added if missing:
 
 - `template`
 - `sysappscore`
