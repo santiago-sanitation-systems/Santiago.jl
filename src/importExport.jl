@@ -406,7 +406,8 @@ function properties_dataframe(systems::Array{System}; massflow_selection="all")
     cnames = Symbol.([cnames; replace.(massflow_selection, "|" => "_")])
     ctypes = [ctypes; fill(Float64, length(massflow_selection))]
 
-    d = DataFrame(ctypes, cnames)
+
+    d = DataFrame([cnames[i] => ctypes[i][] for i in 1:length(cnames)])
 
     for sys in systems
         newrow = collect(values(sys.properties))[no_massflow_idx]
