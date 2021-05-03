@@ -94,7 +94,6 @@ function import_technologies(techFile::String; sourceGroup::String="U",
     for i in 1:length(rawtechs)
         rtech = rawtechs[i]     # tech in JSON format
 
-
         ## Case 1: Copy | Copy
         if (rtech.inputs.relationship == "NA" || rtech.inputs.relationship == "AND") && (rtech.outputs.relationship == "NA" || rtech.outputs.relationship == "AND")
 
@@ -110,11 +109,11 @@ function import_technologies(techFile::String; sourceGroup::String="U",
 
             ## Case 2: Copy | GenVar
         elseif (rtech.inputs.relationship == "NA" || rtech.inputs.relationship == "AND") && (rtech.outputs.relationship == "OR")
-            error(" The relationship of output products cannot be defined as 'OR'!")
+            error("Tech '$(rtech.name)': The relationship of output products cannot be defined as 'OR'!")
 
             ## Case 3: Copy | Gen1
         elseif (rtech.inputs.relationship == "NA" || rtech.inputs.relationship == "AND") && (rtech.outputs.relationship == "XOR")
-            error(" The relationship of output products cannot be defined as 'XOR'!")
+            error("Tech '$(rtech.name)': The relationship of output products cannot be defined as 'XOR'!")
 
             ## Case 4: GenVar | Hierarchy
         elseif rtech.inputs.relationship == "OR" && (rtech.outputs.relationship != "NA" && rtech.outputs.relationship != "AND")
@@ -122,7 +121,7 @@ function import_technologies(techFile::String; sourceGroup::String="U",
             ## Prepare (get the hierarchy)
             hira = split(rtech.outputs.relationship, " > ")
             if length(hira) != length(rtech.inputs.product)
-                error("Case 4: Lenght of Hierarchy is expected to be the same as number of Input Products")
+                error("Tech '$(rtech.name)' (case 4): Length of hierarchy is expected to be the same as number of Input Products")
             end
             c = 1
 
