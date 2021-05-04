@@ -209,7 +209,7 @@ function import_technologies(techFile::String; sourceGroup::String="U",
 
             ## Case 8: Other syntax
         else
-            error("Case 8: Unrecognized Syntax Inrel.")
+            error("Tech '$(rtech.name)' (case 8): Unrecognized input/output relationship.")
         end
     end
 
@@ -230,9 +230,11 @@ function import_technologies(techFile::String; sourceGroup::String="U",
     subTechFiltered = filter(islegal, subTechList)
 
     # Test if all technologies in the input file exist at least in one form in the final tech lists
+    n_nonimport = 0
     for t in rawtechs
         if !any(occursin(t.name, x.name) for x in subTechFiltered)
-            error("Tech '$(t.name)' is not imported! Check technology file carefully!")
+            @warn "Tech '$(t.name)' is not imported! Check definition in technology file carefully!"
+            n_nonimport +=1
         end
     end
 
@@ -243,8 +245,8 @@ function import_technologies(techFile::String; sourceGroup::String="U",
 
     @info "sources imported:\t\t $(lpad(length(sources), 4))"
     @info "additional sources imported:\t $(lpad(length(sourcesAdd), 4))"
-    @info "technologies imported:\t\t $(lpad(length(rawtechs), 4))"
-    n_derived_techs = length(sources) + length(sourcesAdd) + length(techs) - length(rawtechs)
+    @info "technologies imported:\t\t $(lpad(length(rawtechs)-n_nonimport, 4))"
+    n_derived_techs = length(sources) + length(sourcesAdd) + length(techs) - length(rawtechs) - n_nonimport
     @info "additional derived technologies: $(lpad((n_derived_techs), 4))"
 
     return sources, sourcesAdd, techs
