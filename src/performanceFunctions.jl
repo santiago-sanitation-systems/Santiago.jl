@@ -70,7 +70,8 @@ Base.@kwdef struct Trapez <: Continous
     b::Float64
     c::Float64
     d::Float64
-    Trapez(a,b,c,d) = a <= b < c <= d ? new(a,b,c,d) : error("Parameters must be in order: a <= b < c <= d, not ($a, $b, $c, $d)!")
+    Trapez(a,b,c,d) = a == d ? error("Parameter 'a' must be smaller than 'd'!") :
+        a <= b <= c <= d ? new(a,b,c,d) : error("Parameters must be in order: a <= b <= c <= d, not ($a, $b, $c, $d)!")
 end
 
 function (t::Trapez)(x, type::Pdf)

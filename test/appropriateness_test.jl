@@ -53,7 +53,6 @@ end
     @test minimum(d) ≈ 1
     @test maximum(d) ≈ 5
 
-
     @test d(0.8, Pdf()) ≈ 0
     @test d(0.8, Performance()) ≈ 0
     @test d(2.5, Pdf()) ≈ 0.4
