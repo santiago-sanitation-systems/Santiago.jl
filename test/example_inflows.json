@@ -1,0 +1,14 @@
+{
+  "Dry.toilet": {
+    "water": 547.1,
+    "nitrogen": 4.55,
+    "totalsolids": 32.12,
+    "phosphor": 0.548
+  },
+  "Pour.flush": {
+    "water": 1277.1,
+    "nitrogen": 4.55,
+    "totalsolids": 32.12,
+    "phosphor": 0.548
+  }
+}
