@@ -64,6 +64,12 @@ allSys = build_systems(sources, techs);
 # number of found systems
 length(allSys)
 
+
+# The computations can be accelerated by setting max_candidates to a low number.
+# However, this will result only in a *stochastic* subset of all possible systems!
+allSys = build_systems(sources, techs, max_candidates=100);
+
+
 # -----------
 # 3) Calculate system properties
 
