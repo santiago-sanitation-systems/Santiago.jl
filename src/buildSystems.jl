@@ -293,10 +293,15 @@ end
 
 # Return a vector of Systems
 function build_system!(sys::System, completesystems::Array{System},
-                       techs::Array{T}, threadlock, pmeter) where T <: AbstractTech
+                       techs::Array{T}, max_candidates::Int, threadlock, pmeter) where T <: AbstractTech
 
     # get Array of matching Techs Arrays
     candidates = get_candidates(sys, techs)
+
+    # limit the number of candiates
+    if length(candidates) > max_candidates
+        candidates = StatsBase.sample(candidates, max_candidates; replace=false)
+    end
 
     Base.Threads.@threads for candidate in candidates
         # extend systems
@@ -312,7 +317,8 @@ function build_system!(sys::System, completesystems::Array{System},
                 end
             else
                 build_system!(sys_ext, completesystems,
-                              techs, threadlock, pmeter)
+                              techs, max_candidates,
+                              threadlock, pmeter)
             end
         end
     end
@@ -321,13 +327,16 @@ end
 
 """
 Returns an Array of all possible `System`s starting with `source`. A source can be any technology with a least one output.
+
+`max_candidates` limits the number of way to extend a system. If more than `max_candidates` are available,
+`max_candidates` candidates are selected randomly. A lower number may speed up system building.
 """
-function build_all_systems(source::Array{T1}, techs::Array{T2}) where T1 <: AbstractTech where T2 <: AbstractTech
+function build_all_systems(source::Array{T1}, techs::Array{T2}; max_candidates::Int=10_000_000) where T1 <: AbstractTech where T2 <: AbstractTech
 
     completesystems = System[]
     threadlock = ReentrantLock()
     pmeter = ProgressMeter.ProgressUnknown(desc="Systems found:", dt=1)
-    build_system!(System(source), completesystems, techs,
+    build_system!(System(source), completesystems, techs, max_candidates,
                   threadlock, pmeter)
 
     ProgressMeter.finish!(pmeter)

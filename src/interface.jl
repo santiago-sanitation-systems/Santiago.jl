@@ -13,12 +13,16 @@ export build_systems
 build_systems(sources::Array{T},
               technologies::Array{T};
               additional_sources::Array{T}=T[]
-              addlooptechs::Bool=true, looptechgroup=[:S, :T]) where T <: AbstractTech
+              addlooptechs::Bool=true, looptechgroup=[:S, :T],
+              max_candidates=10_000_000) where T <: AbstractTech
 ```
 ## Parameters
 - sources:            An array of sources technologies
 - technologies:       Array of sanitation technologies
 - additional_sources: Array of source technolgies that are all added to the main sources (such as kitch sink)
+- max_candidates:     The maximal number of system extensions that are tried.
+                      A small number may lead to faster computations, but only to a random subset
+                      of all possible systems in generated.
 
 ## Values
 An array of all found sanitation systems.
@@ -26,7 +30,8 @@ An array of all found sanitation systems.
 function build_systems(sources::Array{T},
                        technologies::Array{T};
                        additional_sources::Array{T}=T[],
-                       addlooptechs::Bool=true, looptechgroup=[:S, :T]) where T <: AbstractTech
+                       addlooptechs::Bool=true, looptechgroup=[:S, :T],
+                       max_candidates::Int=10_000_000) where T <: AbstractTech
 
 
     technologies2 = copy(technologies) # we do not want to modify the inputs
@@ -77,7 +82,7 @@ function build_systems(sources::Array{T},
         ## ---
         ## build systems
 
-        newSys = build_all_systems(ss, sub_technologies)
+        newSys = build_all_systems(ss, sub_technologies; max_candidates=max_candidates)
 
         # store source name
         for s in newSys
