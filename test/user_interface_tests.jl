@@ -72,7 +72,10 @@ end
 # -----------
 # 2) Build all systems
 
-allSys = build_systems(sources, techs);
+allSys = build_systems(sources, techs; max_candidates=0)
+@test length(allSys) == 0
+
+allSys = build_systems(sources, techs)
 @test length(allSys) == 76
 
 # test that techs are not modified
