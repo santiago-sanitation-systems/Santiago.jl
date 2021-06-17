@@ -434,7 +434,7 @@ end
 
 function dot_format(sys::System, io::IO, no_group::Array{String}=["S", "C", "T"], options::String="")
 
-    make_legal(name::String) = replace(name, " :: " => "")
+    make_legal(name::String) = replace(name, " :: " => "") |> n -> replace(n, "-" => "_")
 
 
     println(io, "digraph system {")
