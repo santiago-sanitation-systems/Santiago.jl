@@ -304,14 +304,15 @@ sanitation system options for urban planning considering novel
 technologies. Water Research 145,
 259–278. https://doi.org/10.1016/j.watres.2018.08.021
 
-Spuhler, D., Scheidegger, A., Maurer, M., submitted. Ex-ante
-quantification of nutrient, total solids, and water flows in
-sanitation systems. Journal of Environmental Management.
-
 Spuhler, D., Scheidegger, A., Maurer, M., 2020. Comparative analysis
 of sanitation systems for resource recovery: influence of
 configurations and single technology components. Water
 Research 116281. https://doi.org/10.1016/j.watres.2020.116281
+
+Spuhler, D., Scheidegger, A., Maurer, M., 2021. Ex-ante quantification
+of nutrient, total solids, and water flows in sanitation
+systems. Journal of Environmental Management 280, 111785.
+https://doi.org/10.1016/j.jenvman.2020.111785
 
 
 # License
