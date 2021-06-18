@@ -1,6 +1,4 @@
 
-
-
 # -----------
 # define technologies for testing
 
@@ -36,6 +34,13 @@ transC_A["totalsolids"] = Dict(Product("a1") => 0.5,
 A = Tech(String[], ["a1", "a2"], "A", "group1", 0.5,
          transC_A,
          transC_rel)
+A2 = Tech(String[], ["a1", "a2"], "A2", "group1", 0.5,
+          transC_A,
+          transC_rel)
+A3 = Tech(String[], ["a1", "a2"], "A3", "group1", 0.5,
+          transC_A,
+          transC_rel)
+
 
 # --
 transC_B = Dict{String, Dict{Product, Float64}}()
@@ -57,6 +62,7 @@ transC_B["totalsolids"] = Dict(Product("b1") => 1.0,
                                Product("waterloss") => 0.0)
 
 B = Tech(String[], ["b1"], "B", "group1", 0.5, transC_B, transC_rel)
+B2 = Tech(String[], ["b1"], "B2", "group1", 0.5, transC_B, transC_rel)
 
 # --
 transC_C = Dict{String, Dict{Product, Float64}}()
@@ -212,3 +218,36 @@ transC_error["totalsolids"] = Dict(Product("recovered") => 0.0,
 # system without triangle
 allSys = SSB.build_all_systems([A, B], [C, D, E, F, G])
 @test length(allSys) == 2
+@test SSB.get_sources(allSys[1]) == Set([A, B])
+
+# -----------
+# test source swapping
+
+sys1 = allSys[1]
+@test_throws ErrorException SSB.System(sys1, [B2])
+
+sys2 = SSB.System(sys1, [A2, B2])
+sys3 = SSB.System(sys2, [A, B])
+
+@test SSB.get_sources(sys1) == Set([A, B])
+@test SSB.get_sources(sys2) == Set([A2, B2])
+@test SSB.get_sources(sys3) == Set([A, B])
+@test hash(sys1) != hash(sys2)
+@test hash(sys1) == hash(sys3)
+
+
+@test length(build_systems([A], [C, D, E, F, G],
+                           additional_sources=[B],
+                           addlooptechs = false)) == 2
+
+@test length(build_systems([A, A2], [C, D, E, F, G],
+                           additional_sources=[B],
+                           addlooptechs = false)) == 4
+
+@test length(build_systems([A, A2, A3], [C, D, E, F, G],
+                           additional_sources=[B],
+                           addlooptechs = false)) == 6
+
+@test length(build_systems([A], [C, D, E, F, G],
+                           additional_sources=[B, B2],
+                           addlooptechs = false)) == 2

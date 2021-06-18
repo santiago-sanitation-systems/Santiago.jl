@@ -52,16 +52,29 @@ function build_systems(sources::Array{T},
     end
 
     ## ------
-    ## Generate combine each U with every Uadd
+    ## Generate each U with every Uadd
 
     src_comb = [[s; additional_sources] for s in sources]
+
+    # dict with unique combination of input products
+    d_source_combs = Dict{Array{Product}, Array{Array{AbstractTech}}}()
+    for sys in src_comb
+        outs = get_outputs(sys)
+        if haskey(d_source_combs, outs)
+            push!(d_source_combs[outs], sys)
+        else
+            d_source_combs[outs] = [sys]
+        end
+    end
+
     if length(additional_sources) > 0
         @info "The $(length(sources)) sources and $(length(additional_sources)) additional sources are used."
     end
 
     allSys = System[]
-    for ss in src_comb
-        @info "Find systems for source (combination): $(ss)"
+    for source_products in keys(d_source_combs)
+        ss = d_source_combs[source_products][1]
+        @info "Find systems with input product (combination): $(source_products)"
 
         ## -----
         ## prefilter Techlist, returns sub_technologies
@@ -71,24 +84,23 @@ function build_systems(sources::Array{T},
         # sub_technologies = prefilterTechList(ss, sources, additional_sources, technologies2)
         sub_technologies = technologies2
 
-        # get source name
-        names_ss = String[]
-        for s in ss
-            push!(names_ss, s.name)
-        end
-        names_ss = names_ss[end:-1:1]
-        names_ss = join(names_ss, "_")
-
         ## ---
         ## build systems
 
         newSys = build_all_systems(ss, sub_technologies; max_candidates=max_candidates)
-
-        # store source name
-        for s in newSys
-            s.properties["source"] = names_ss
-        end
         append!(allSys, newSys)
+
+        ## ---
+        ## if more sources with same intput products exists, simply swap sources
+
+        for ss2 in d_source_combs[source_products][2:end]
+            for sys in newSys
+                s = System(sys, ss2)
+                push!(allSys, s)
+            end
+        end
+
+
     end
 
     ## add a unique ID
@@ -100,6 +112,9 @@ function build_systems(sources::Array{T},
 
         s.properties["ID"] = id_str
     end
+
+    # add source names
+    source_names!.(allSys)
 
     @info "Total number of systems (without duplicates): $(lpad(length(allSys), 6))"
     return allSys

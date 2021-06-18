@@ -169,6 +169,43 @@ function show(io::Base.IO, s::System)
 end
 
 
+"""
+Generate a new system based on a existing system but swap out sources
+"""
+function System(sys::System, sources::Array{<:AbstractTech})
+    old_sources = get_sources(sys)
+    out_products = get_outputs(sources)
+    all(in.(get_outputs(old_sources), Ref(out_products))) ||
+        error("Existing sources ($(sources)) cannot be swaped with $(old_sources)!")
+
+    newsys = System(copy(sys.techs), copy(sys.connections), sys.complete, copy(sys.properties))
+
+    # remove old sources
+    for os in old_sources
+        delete!(newsys.techs, os)
+    end
+
+    # add new sources
+    for ns in sources
+        push!(newsys.techs, ns)
+    end
+
+    # replace connections
+    for c in newsys.connections
+        if c[2] ∈ old_sources
+            product = c[1]
+            # find source with same output product
+            new_source = first(filter(s -> product ∈ s.outputs, sources))
+            # replace connection
+            delete!(newsys.connections, c)
+            push!(newsys.connections, (product, new_source, c[3]))
+        end
+    end
+
+    return newsys
+end
+
+
 # -----------
 # helper functions
 
@@ -220,6 +257,10 @@ function get_inputs(sys::System)
     return collect(keys(ins))
 end
 
+"""
+return all sources of a systems
+"""
+get_sources(sys::System) = filter(t -> length(t.inputs)==0, sys.techs)
 
 
 function is_complete(sys::System)

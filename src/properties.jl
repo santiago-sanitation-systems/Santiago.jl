@@ -82,6 +82,22 @@ Add average number of connection per technology to system properties.
 """
 connectivity!(s::System) = s.properties["connectivity"] = connectivity(s)
 
+"""
+    $TYPEDSIGNATURES
+Generate a string with all source names
+"""
+function source_names(s::System)
+    sources = get_sources(s)
+    names_ss = [t.name for t in sources]
+    sort!(names_ss)
+    join(names_ss, "_")
+end
+
+"""
+    $TYPEDSIGNATURES
+Add a string with all source names to system properties.
+"""
+source_names!(s::System) = s.properties["source"] = source_names(s)
 
 # -----------
 """
