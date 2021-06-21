@@ -65,6 +65,40 @@ B = Tech(String[], ["b1"], "B", "group1", 0.5, transC_B, transC_rel)
 B2 = Tech(String[], ["b1"], "B2", "group1", 0.5, transC_B, transC_rel)
 
 # --
+# can replace source A and B
+transC_X = Dict{String, Dict{Product, Float64}}()
+transC_X["phosphor"] = Dict(Product("a1") => 0.5,
+                            Product("a2") => 0.4,
+                            Product("b1") => 0.1,
+                            Product("airloss") => 0.0,
+                            Product("soilloss") => 0.0,
+                            Product("waterloss") => 0.0)
+transC_X["nitrogen"] = Dict(Product("a1") => 0.5,
+                            Product("a2") => 0.4,
+                            Product("b1") => 0.1,
+                            Product("airloss") => 0.0,
+                            Product("soilloss") => 0.0,
+                            Product("waterloss") => 0.0)
+transC_X["water"] = Dict(Product("a1") => 0.5,
+                         Product("a2") => 0.4,
+                         Product("b1") => 0.1,
+                         Product("airloss") => 0.0,
+                         Product("soilloss") => 0.0,
+                         Product("waterloss") => 0.0)
+transC_X["totalsolids"] = Dict(Product("a1") => 0.5,
+                               Product("a2") => 0.4,
+                               Product("b1") => 0.1,
+                               Product("airloss") => 0.0,
+                               Product("soilloss") => 0.0,
+                               Product("waterloss") => 0.0)
+
+
+X = Tech(String[], ["a1", "b1", "a2"], "X", "group1", 0.5,
+         transC_X,
+         transC_rel)
+
+
+# --
 transC_C = Dict{String, Dict{Product, Float64}}()
 transC_C["phosphor"] = Dict(Product("c1") => 0.5,
                             Product("airloss") => 0.2,
@@ -190,8 +224,7 @@ transC_error["phosphor"] = Dict(Product("recovered") => 0.0,
                                 Product("waterloss") => 1.0)
 transC_error["nitrogen"] = Dict(Product("recovered") => 0.0,
                                 Product("airloss") => 0.0,
-                                Product("soilloss") => 0.0,
-                                Product("waterloss") => 1.0)
+                                Product("soilloss") => 0.0,                                Product("waterloss") => 1.0)
 transC_error["water"] = Dict(Product("recovered") => 0.0,
                              Product("airloss") => 0.5,
                              Product("soilloss") => 0.5,
@@ -236,9 +269,29 @@ sys3 = SSB.System(sys2, [A, B])
 @test hash(sys1) == hash(sys3)
 
 
+@test length(build_systems([A], [C, D, E, F, G] ,
+                           addlooptechs = true)) == 0
+
+@test length(build_systems([A], [C, D, E, F, G] ,
+                           addlooptechs = false)) == 0
+
+@test length(build_systems([B], [C, D, E, F, G] ,
+                           addlooptechs = false)) == 0
+
+@test length(build_systems([X], [C, D, E, F, G] ,
+                           addlooptechs = false)) == 2
+
+@test length(build_systems([A, B], [C, D, E, F, G],
+                           additional_sources=[B],
+                           addlooptechs = false)) == 2
+
 @test length(build_systems([A], [C, D, E, F, G],
                            additional_sources=[B],
                            addlooptechs = false)) == 2
+
+@test length(build_systems([A, X], [C, D, E, F, G] ,
+                           additional_sources=[B],
+                           addlooptechs = false)) == 4
 
 @test length(build_systems([A, A2], [C, D, E, F, G],
                            additional_sources=[B],
