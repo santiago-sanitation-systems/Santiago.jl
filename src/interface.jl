@@ -73,8 +73,14 @@ function build_systems(sources::Array{T},
 
     allSys = System[]
     for source_products in keys(d_source_combs)
-        ss = d_source_combs[source_products][1]
-        @info "Find systems with input product (combination): $(source_products)"
+        io = IOBuffer()
+        println(io, "Find systems for input (combination):\n  $(source_products)")
+        println(io, "for the following source(s):")
+        for s in d_source_combs[source_products]
+            print(io, "- ")
+            println(io, s)
+        end
+        @info String(take!(io))
 
         ## -----
         ## prefilter Techlist, returns sub_technologies
@@ -87,6 +93,7 @@ function build_systems(sources::Array{T},
         ## ---
         ## build systems
 
+        ss = d_source_combs[source_products][1]
         newSys = build_all_systems(ss, sub_technologies; max_candidates=max_candidates)
         append!(allSys, newSys)
 
