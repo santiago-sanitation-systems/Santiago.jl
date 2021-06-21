@@ -473,7 +473,7 @@ function get_candidates(sys::System, techs::Array{T}) where T <: AbstractTech
 
     outs = get_outputs(sys)
 
-    matching_techs = Array{Array{AbstractTech},1}()
+    matching_techs = Array{Array{T},1}()
     n_out = length(outs)
 
     ## get matching combinations
@@ -618,7 +618,7 @@ end
 """
 add tech combinations with internal loops. Only for techs in group :S and :T
 """
-function add_loop_techs!(tech_list::Array{AbstractTech}; groups = [:S, :T])
+function add_loop_techs!(tech_list::Array{<:AbstractTech}; groups = [:S, :T])
     for fgroup in groups
         tech_list_group = filter(t -> t.functional_group == fgroup, tech_list)
         for tech1 in tech_list_group

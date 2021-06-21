@@ -57,7 +57,7 @@ function build_systems(sources::Array{T},
     src_comb = [[s; additional_sources] for s in sources]
 
     # dict with unique combination of input products
-    d_source_combs = Dict{Array{Product}, Array{Array{AbstractTech}}}()
+    d_source_combs = Dict{Array{Product}, Array{Array{T}}}()
     for sys in src_comb
         outs = get_outputs(sys)
         if haskey(d_source_combs, outs)

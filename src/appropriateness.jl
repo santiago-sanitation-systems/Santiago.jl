@@ -123,7 +123,7 @@ end
 # ---------------------------------
 # update exiting techs with new TAS
 
-function update_appropriateness!(techs::Array{AbstractTech}, tas::Dict{String, Float64})
+function update_appropriateness!(techs::Array{<:AbstractTech}, tas::Dict{String, Float64})
     for t in techs
         nn = simplifytechname(t.name)
         nn ∈ keys(tas) ? t.appscore[1] = tas[nn] : error("Appropriateness for '$(nn)' not defined!")
