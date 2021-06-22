@@ -222,8 +222,8 @@ function import_technologies(techFile::String; sourceGroup::String="U",
         inp_trans  = [occursin("transported", i) for i in inp]
         outp_trans = [occursin("transported", i) for i in outp]
 
-        ##        is transport              |         everything is transported  | nothing is transported
-        (t.functional_group == Symbol("C")) | (all(inp_trans) & all(outp_trans)) | (all(.!(inp_trans)) & all(.!(outp_trans)))
+        ##        is transport              ||         everything is transported   || nothing is transported
+        (t.functional_group == Symbol("C")) || (all(inp_trans) && all(outp_trans)) || (all(.!(inp_trans)) && all(.!(outp_trans)))
     end
 
 

@@ -71,7 +71,7 @@ function techscore(techattributes, caseattributes)
         d1, t1 = get_distribution(techattributes[a])
         d2, t2 = get_distribution(caseattributes[a])
 
-        (((t1 isa Pdf) & (t2 isa Performance)) | ((t1 isa Performance) & (t2 isa Pdf))) ||
+        (((t1 isa Pdf) && (t2 isa Performance)) || ((t1 isa Performance) && (t2 isa Pdf))) ||
             error("Attribute '$a': Only a 'Pdf'/'Pmf' and a 'Performance' function can be combined! ")
         d[a] = integrate(d1, t1, d2, t2)
     end
