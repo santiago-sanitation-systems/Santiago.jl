@@ -34,20 +34,14 @@ function build_systems(sources::Array{T},
                        max_candidates::Int=10_000_000) where T <: AbstractTech
 
 
-    technologies2 = copy(technologies) # we do not want to modify the inputs
+    technologies2 = copy(technologies) # we do not want to modify the input array
 
     ## ------
     ## Generate looptechs
+
     if addlooptechs
-        # build looped techs
-        ninit = nold = length(technologies2)
+        ninit = length(technologies2)
         add_loop_techs!(technologies2, groups = looptechgroup)
-        i = 1
-        while nold < length(technologies2) & i < 2
-            nold = length(technologies2)
-            add_loop_techs!(technologies2, groups = looptechgroup)
-            i += 1
-        end
         @info "additional looped techs:\t$(lpad(length(technologies2) - ninit, 6))"
     end
 

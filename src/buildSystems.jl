@@ -648,7 +648,7 @@ function add_loop_techs!(tech_list::Array{<:AbstractTech}; groups = [:S, :T])
 end
 
 
-function make_looped_techs(tech1::Tech, tech2::Tech)
+function make_looped_techs(tech1::T1, tech2::T2) where {T1 <: AbstractTech, T2 <: AbstractTech}
 
     # input_new = union(in1, in2) - intersect(out1, in2) - intersect(out2, in1)
     # output_new = union(out1, out2) - intersect(out1, in2) - intersect(out2, in1)
