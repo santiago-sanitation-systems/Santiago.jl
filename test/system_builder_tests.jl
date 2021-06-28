@@ -42,6 +42,27 @@ A3 = Tech(String[], ["a1", "a2"], "A3", "group1", 0.5,
           transC_rel)
 
 
+# -- check TC
+transC_fail = deepcopy(transC_A)
+transC_fail["water"][Product("a1")] = 0.1 # < 1
+@test_throws ErrorException Tech(String[], ["a1", "a2"],
+                                 "A", "group1", 0.5,
+                                 transC_fail,
+                                 transC_rel)
+
+transC_fail["water"][Product("a1")] = 0.7 # >1
+@test_throws ErrorException Tech(String[], ["a1", "a2"],
+                                 "A", "group1", 0.5,
+                                 transC_fail,
+                                 transC_rel)
+
+transC_fail["water"][Product("a1")] = -0.5 # ==1 but negative values
+transC_fail["water"][Product("a2")] = 1.5
+@test_throws ErrorException Tech(String[], ["a1", "a2"],
+                                 "A", "group1", 0.5,
+                                 transC_fail,
+                                 transC_rel)
+
 # --
 transC_B = Dict{String, Dict{Product, Float64}}()
 transC_B["phosphor"] = Dict(Product("b1") => 1.0,

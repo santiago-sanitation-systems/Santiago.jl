@@ -45,6 +45,25 @@ struct Tech <: AbstractTech
     transC::Dict{String, Dict{Product, Float64}}
     "Uncertainty factor relating to transfer coefficients"
     transC_reliability::Dict{String, Float64}
+
+    # constructor with sanity checks
+    function Tech(inputs, outputs,
+                  name, functional_group, appscore,
+                  n_inputs, transC, transC_reliability)
+        # - check TC
+        for sub in keys(transC)
+            s = 0.0
+            for val = values(transC[sub])
+                val >= 0 || error("Tech $(name): Negative transfer coefficients for $(sub)!")
+                s += val
+            end
+            isapprox(s, 1.0) || error("Tech $(name): The transfer coefficients for $sub do not sum to 1!")
+
+        end
+
+        new(inputs, outputs, name, functional_group, appscore, n_inputs,
+            transC, transC_reliability)
+    end
 end
 
 # A tech is uniquley defined by it's name only -> speeds up comparison a lot!
@@ -73,18 +92,6 @@ function Tech(inputs::Array{T}, outputs::Array{T}, name::T, functional_group::T,
               appscore::Float64,
               transC::Dict{String, Dict{Product, Float64}},
               transC_reliability::Dict{String, Float64}) where T<:String
-
-    # sanity check
-    for sub in keys(transC)
-        s = 0.0
-        for val = values(transC[sub])
-            s += val
-        end
-        if !isapprox(s, 1.0)
-            error("Tech $(name): The transfer coefficients for $sub do not sum to 1!")
-        end
-    end
-
 
     Tech([Product(x) for x in inputs],
          [Product(x) for x in outputs],
