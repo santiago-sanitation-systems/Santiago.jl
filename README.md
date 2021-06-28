@@ -54,7 +54,7 @@ using Santiago
 input_tech_file = joinpath(pkgdir(Santiago), "test/example_techs.json")
 input_case_file = joinpath(pkgdir(Santiago), "test/example_case.json")
 
-sources, additional_sources, techs = import_technologies(input_tech_file, input_case_file)
+sources, additional_sources, techs = import_technologies(input_tech_file)
 
 # -----------
 # 2) Build all systems
@@ -73,7 +73,7 @@ allSys = build_systems(sources, techs, max_candidates=100);
 # -----------
 # 3) Calculate system properties
 
-tas, tas_components = appropriateness(tech_file, case_file)
+tas, tas_components = appropriateness(input_tech_file, input_case_file)
 
 sysappscore!.(allSys)
 ntechs!.(allSys)
