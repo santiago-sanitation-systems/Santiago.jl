@@ -39,16 +39,33 @@ end
 # test scaling
 
 @test_throws ErrorException scale_massflows(allSys[1], 100) # massflow summary is not yet computed
-massflow_summary!.(allSys, Ref(M_in), n=10);
 
-allSys2 = scale_massflows.(allSys, 100) # copy
+# with out techflows
+massflow_summary!.(allSys, Ref(M_in), n=10, techflows=false);
+allSys3 = scale_massflows.(allSys, 100)
 for i in 1:length(allSys)
-    for (k, v) in allSys2[i].properties["massflow_stats"]
+    for (k, v) in allSys3[i].properties["massflow_stats"]
         @test  all(v .≈ (allSys[i].properties["massflow_stats"][k] .* 100))
     end
 end
 
-# test that the RGN is not accidentally resetted
+# with techflows
+massflow_summary!.(allSys, Ref(M_in), n=10, techflows=true);
+allSys2 = scale_massflows.(allSys, 100)
+for i in 1:length(allSys)
+    for (k, v) in allSys2[i].properties["massflow_stats"]
+        if v isa Santiago.NamedArray
+            @test  all(v .≈ (allSys[i].properties["massflow_stats"][k] .* 100))
+        end
+    end
+end
+for i in 1:length(allSys)
+    for (k, v) in allSys2[i].properties["massflow_stats"]["tech_flows"]
+        @test all(v .≈ (allSys[i].properties["massflow_stats"]["tech_flows"][k] .* 100))
+    end
+end
+
+# test that the RNG is not accidentally resetted
 r1 = allSys[1].properties["massflow_stats"]["lost"][3,1,1]
 massflow_summary!(allSys[1], M_in, n=10)
 r2 = allSys[1].properties["massflow_stats"]["lost"][3,1, 1]
@@ -58,7 +75,9 @@ r2 = allSys[1].properties["massflow_stats"]["lost"][3,1, 1]
 scale_massflows!.(allSys, 0)    # inplace
 for i in 1:length(allSys)
     for (k, v) in allSys[i].properties["massflow_stats"]
-        @test all(v .≈ 0.0)
+        if v isa Santiago.NamedArray
+            @test all(v .≈ 0.0)
+        end
     end
 end
 

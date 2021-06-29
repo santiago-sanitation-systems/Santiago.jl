@@ -465,11 +465,18 @@ Scale all massflow summary statistics by `n_users`.
 """
 function scale_massflows!(sys::System, n_users::Real)
     haskey(sys.properties, "massflow_stats") || error("`massflow_stats` are not  yet calulated! Run `massflow_summary!(system)`.")
-    for v in values(sys.properties["massflow_stats"])
-        v .*= n_users
-    end
+    _scale!(sys.properties["massflow_stats"], n_users)
     sys
 end
+
+function _scale!(d::Dict, n_users)
+    for v in values(d)
+        _scale!(v, n_users)
+    end
+end
+
+_scale!(na::NamedArray, n_users) = na .*= n_users
+
 
 """
     $TYPEDSIGNATURES
