@@ -315,7 +315,7 @@ StructTypes.names(::Type{Tech}) = ((:transC, :TC), # rename some fields for expo
 struct SystemJSON
     technologies::Array{String} # only names
     properties::Dict
-    graphizdot::String
+    # graphizdot::String
 end
 
 function SystemJSON(sys::System)
@@ -329,8 +329,8 @@ function SystemJSON(sys::System)
     end
     SystemJSON(
         [simplifytechname(t.name) for t in sys.techs],
-        p,
-        dot_string(sys)
+        p
+        # dot_string(sys)
     )
 end
 
