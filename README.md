@@ -330,4 +330,4 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-Copyright 2020, Eawag. Contact: Dorothee Spuhler, <Dorothee.Spuhler@eawag.ch>
+Copyright 2020, Dorothee Spuhler at Eawag. Contact: Dorothee Spuhler, <Dorothee.Spuhler@eawag.ch>
