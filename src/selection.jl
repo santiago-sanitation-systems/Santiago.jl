@@ -266,7 +266,7 @@ function select_diverse(systems::Array{System}, n_select::Int, targets::Array)
         selected_ns[selectidx] .= true
     end
 
-    filter(s -> s.properties["ID"] in IDs[selected], systems)
+    systems[selected]
 end
 
 
@@ -283,7 +283,7 @@ function select_ranking(systems::Array{System}, n_select::Int, targets::Array)
     selected = fill(false, length(systems))
     selected[sortperm(targets, rev=true)[1:n_select]] .= true
 
-    filter(s -> s.properties["ID"] in IDs[selected], systems)
+    systems[selected]
 end
 
 
