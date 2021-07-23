@@ -279,7 +279,7 @@ fewSys = select_systems(allSys, 6)
 
 ## 4) scale massflows for 100 people
 
-fewSys = scale_massflows.(fewSys, 100)
+scale_massflows!.(fewSys, 100)
 
 ```
 The slowest parts are `build_systems` and
