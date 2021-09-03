@@ -99,10 +99,10 @@ Most system properties can serve as target. The most commonly used one is the `s
 
 ## Arguments
 - `n_select::Int` Number of systems to select (if possible)
-- `target = "sysappscore"` value used ot rank systems. Can be a string
+- `target = "sysappscore"` value used to rank systems. Can be a string
   with the name of a system property such as `"sysappscore"`,
   `"connectivity"`, or `"ntechs"`. For massflow statistics is needs to be a
-`Pair` such as `("phosphsor" => "recovery_ratios")`
+`Pair` such as `("phosphor" => "recovery_ratio")`
 - `maximize::Bool = true` If `true` the system with the largest `target`
 values are selected. If `false` the smallest.
 - `selection_type = "diverse"` Must be either `"diverse"` or
