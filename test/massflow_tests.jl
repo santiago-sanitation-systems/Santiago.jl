@@ -81,6 +81,8 @@ for i in 1:length(allSys)
     end
 end
 
+@test_throws ErrorException scale_massflows(allSys[1], -2) # negative numbe of users
+
 # parallel calculations
 
 massflow_summary_parallel!(allSys, M_in, n=10, techflows=false);

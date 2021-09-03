@@ -465,6 +465,7 @@ Scale all massflow summary statistics by `n_users`.
 """
 function scale_massflows!(sys::System, n_users::Real)
     haskey(sys.properties, "massflow_stats") || error("`massflow_stats` are not  yet calulated! Run `massflow_summary!(system)`.")
+    n_users >= 0 || error("`A negative number of user is not allowed!`.")
     _scale!(sys.properties["massflow_stats"], n_users)
     sys
 end
