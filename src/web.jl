@@ -129,20 +129,36 @@ end
 
 
 # -----------
-# JSON export with tas argument
+# Massflow scaling
 
-function SystemJSON(sys::System, tas::Dict{String}{Float64})
+function _scale_web!(d::Dict, n_users)
+    for (k,v) in d
+        if v isa Dict
+            _scale_web!(v, n_users)
+        else
+            d[k] = v * n_users
+        end
+    end
+end
 
-    s = Santiago.SystemJSON(sys)
+# -----------
+# JSON export with `tas` and `n_users` argument
+
+function SystemJSON(sys::System, tas::Dict{String}{Float64}, n_users::Real=1)
+    n_users >= 0 || error("`A negative number of user is not allowed!`.")
+
+    s = SystemJSON(sys)
     # update SAS field
     s.properties["sysappscore"] = Santiago.sysappscore_web(sys, tas)
+    # update massflows
+    _scale_web!(s.properties["massflow_stats"], n_users)
 
     return s
 end
 
 
-JSON3.write(sys::System, tas::Dict{String}{Float64}) = JSON3.write(SystemJSON(sys, tas))
-JSON3.write(io::IO, sys::T, tas::Dict{String}{Float64}; kw...) where T <: System = JSON3.write_web(io, SystemJSON(sys, tas); kw...)
+JSON3.write(sys::System, tas::Dict{String}{Float64}, n_users::Real=1) = JSON3.write(SystemJSON(sys, tas, n_users))
+JSON3.write(io::IO, sys::T, tas::Dict{String}{Float64}, n_users::Real=1; kw...) where T <: System = JSON3.write(io, SystemJSON(sys, tas, n_users); kw...)
 
-JSON3.write(sys::Array{System}, tas::Dict{String}{Float64}) = JSON3.write([SystemJSON(s, tas) for s in sys])
-JSON3.write(io::IO, sys::Array{T}, tas::Dict{String}{Float64}; kw...) where T <: System = JSON3.write(io, [SystemJSON(s, tas) for s in sys]; kw...)
+JSON3.write(sys::Array{System}, tas::Dict{String}{Float64}, n_users::Real=1) = JSON3.write([SystemJSON(s, tas) for s in sys])
+JSON3.write(io::IO, sys::Array{T}, tas::Dict{String}{Float64}, n_users::Real=1; kw...) where T <: System = JSON3.write(io, [SystemJSON(s, tas, n_users) for s in sys]; kw...)
