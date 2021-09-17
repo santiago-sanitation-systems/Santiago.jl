@@ -24,3 +24,7 @@ end
 @testset "User interface" begin
     include("user_interface_tests.jl")
 end
+
+@testset "Web functions" begin
+    include("web_tests.jl")
+end
