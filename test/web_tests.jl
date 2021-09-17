@@ -20,6 +20,34 @@ update_appropriateness!(sources, tas)
 update_appropriateness!(techs, tas)
 
 # test sysappscore_web
-for s in allSys
+@testset "sysappscore_web" begin
+    for s in allSys
     @test SSB.sysappscore_web(s, tas) ≈ sysappscore(s)
+    end
+end
+
+
+
+@testset "system selection web" begin
+
+    for n in 0:length(allSys)
+        @test n == length(SSB.select_systems_web(allSys, n, tas))
+    end
+
+    @test length(SSB.select_systems_web(allSys, length(allSys) + 1, tas)) == length(allSys)
+
+    select1 = select_systems(allSys, 33, target = "sysappscore",
+                             selection_type = "ranking")
+    select2 = SSB.select_systems_web(allSys, 33, tas, target = "sysappscore",
+                                     selection_type = "ranking")
+    @test all(select1 .== select2)
+
+
+    select1 = select_systems(allSys, 33, target = "connectivity",
+                             selection_type = "ranking")
+    select2 = SSB.select_systems_web(allSys, 33, tas, target = "connectivity",
+                                     selection_type = "ranking")
+    @test all(select1 .== select2)
+
+
 end

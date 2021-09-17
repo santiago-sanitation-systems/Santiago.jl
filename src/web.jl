@@ -5,8 +5,8 @@
 
 
 ## Compute the SAS based on a dict of TASs
-## `tas, tas_components = appropriateness(tech_file, case_file);`
-### provides the `tas` Dict
+##   `tas, tas_components = appropriateness(tech_file, case_file);`
+## provides the `tas` Dict
 function sysappscore_web(s::System, tas::Dict{String}{Float64}; α = 0.5)::Float64
 
     appscores = Float64[]
@@ -21,4 +21,108 @@ function sysappscore_web(s::System, tas::Dict{String}{Float64}; α = 0.5)::Float
     logsum = sum(Base.log.(appscores))
     score = exp( logsum/(α*(n-1.0) + 1.0) )
     return score
+end
+
+
+
+"""
+    $TYPEDSIGNATURES
+
+This function is almost identical to `select_systems` except the additional `tas`
+argument which is obtained by:
+
+`tas, tas_components = appropriateness(tech_file, case_file);`
+
+
+## Arguments
+- `n_select::Int` Number of systems to select (if possible)
+- `tas::Dict{String}{Float64}` Result from `appropriateness(tech_file, case_file)`
+- `target = "sysappscore"` value used to rank systems. Can be a string
+  with the name of a system property such as `"sysappscore"`,
+  `"connectivity"`, or `"ntechs"`. For massflow statistics is needs to be a
+`Pair` such as `("phosphor" => "recovery_ratio")`
+- `maximize::Bool = true` If `true` the system with the largest `target`
+values are selected. If `false` the smallest.
+- `selection_type = "diverse"` Must be either `"diverse"` or
+ `"ranking"`. If `"ranking"`, the systems with the largest (or
+ smallest) target values are returned. If `"diverse"`, the returned
+ systems have a large (or small) target value but are also as diverse as
+ possible. Diversity is mainly determined by the system templates.
+
+The following optional arguments may be used to restrict the selection further:
+- `techs_include`
+- `techs_exclude`
+- `templates_include`
+- `templates_exclude`
+For the templates only the first few characters must be provided.
+
+Note, this function may add properties to the input systems! Any of
+the following properties may be added if missing:
+
+- `template`
+- `ntech`
+- `connectivity`
+"""
+function select_systems_web(systems::Array{System}, n_select::Int,
+                            tas::Dict{String}{Float64};
+                            target = "sysappscore",
+                            maximize::Bool = true,
+                            selection_type::String = "diverse",
+                            techs_include::Array{String}=["ALL"],
+                            techs_exclude::Array{String}=String[],
+                            templates_include::Array{String}=["ALL"],
+                            templates_exclude::Array{String}=String[])
+
+    # filter general condition
+    systems = prefilter(systems,
+                        techs_include,
+                        techs_exclude,
+                        templates_include,
+                        templates_exclude)
+
+    if length(systems) == 0
+        return System[]
+    end
+    n_select = min(n_select, length(systems))
+
+    # compute properties if they do not exists
+    haskey(systems[1].properties, "ntechs") || ntechs!.(systems)
+    haskey(systems[1].properties, "connectivity") || connectivity!.(systems)
+
+    # select target
+    if target == "sysappscore"
+        targets = [sysappscore_web(s, tas) for s in systems]
+    elseif target == "connectivity"
+        targets = [s.properties["connectivity"] for s in systems]
+    elseif target == "ntechs"
+        targets = [s.properties["ntechs"] for s in systems]
+    elseif target isa Pair
+        substance, stat = target
+        # error checking
+        substance ∈ SUBSTANCE_NAMES ||
+            error("'$(substance)' is not a known substance!\n  Choose one of: $(SUBSTANCE_NAMES)")
+        stats = ["recovery_ratio", "recovered", "entered" ]
+        stat ∈ stats||
+            error("'$(stat)' is not a known massflow statistic!\n  Choose one of: $(stats)")
+        haskey(systems[1].properties, "massflow_stats") || error("You must first run `massflow_summary!` or `massflow_summary_parallel!` ")
+
+        # get values
+        targets = [s.properties["massflow_stats"][stat][substance, "mean"] for s in systems]
+    else
+        error("target '$(target)' unknown!")
+    end
+
+    # flip sign to minimize
+    if !maximize
+        targets *= -1
+    end
+
+    # choose the type of selection
+    if selection_type == "diverse"
+        return select_diverse(systems, n_select, targets)
+    elseif selection_type == "ranking"
+        return select_ranking(systems, n_select, targets)
+    else
+        error("'selection_type' must be either \"diverse\" or \"ranking\"!")
+    end
 end
