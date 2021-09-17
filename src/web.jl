@@ -126,3 +126,23 @@ function select_systems_web(systems::Array{System}, n_select::Int,
         error("'selection_type' must be either \"diverse\" or \"ranking\"!")
     end
 end
+
+
+# -----------
+# JSON export with tas argument
+
+function SystemJSON(sys::System, tas::Dict{String}{Float64})
+
+    s = Santiago.SystemJSON(sys)
+    # update SAS field
+    s.properties["sysappscore"] = Santiago.sysappscore_web(sys, tas)
+
+    return s
+end
+
+
+JSON3.write(sys::System, tas::Dict{String}{Float64}) = JSON3.write(SystemJSON(sys, tas))
+JSON3.write(io::IO, sys::T, tas::Dict{String}{Float64}; kw...) where T <: System = JSON3.write_web(io, SystemJSON(sys, tas); kw...)
+
+JSON3.write(sys::Array{System}, tas::Dict{String}{Float64}) = JSON3.write([SystemJSON(s, tas) for s in sys])
+JSON3.write(io::IO, sys::Array{T}, tas::Dict{String}{Float64}; kw...) where T <: System = JSON3.write(io, [SystemJSON(s, tas) for s in sys]; kw...)

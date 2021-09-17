@@ -49,5 +49,15 @@ end
                                      selection_type = "ranking")
     @test all(select1 .== select2)
 
+end
+
+
+@testset "JSON export web" begin
+
+    for i in 1:length(allSys)
+        @test JSON3.write(allSys[i], tas) == JSON3.write(allSys[i])
+    end
+
+    @test JSON3.write(allSys, tas) == JSON3.write(allSys)
 
 end
