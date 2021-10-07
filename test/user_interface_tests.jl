@@ -185,11 +185,20 @@ massflow_summary!.(allSys, Ref(input_masses), n=20)
     @test_throws ErrorException select_systems(allSys, 3, target="phosphor" => "YYY")
     @test_throws ErrorException select_systems(allSys, 3, target="ZZZ" => "recovery_ratio")
 
-    tt = ("phosphor" => "recovery_ratio")
-    ss1 = select_systems(allSys, 7, target=tt, maximize=true)
-    ss2 = select_systems(allSys, 7, target=tt, maximize=false)
-    @test sum(s.properties["massflow_stats"]["recovery_ratio"]["phosphor", "mean"] for s in ss1) >
-        sum(s.properties["massflow_stats"]["recovery_ratio"]["phosphor", "mean"] for s in ss2)
+    for sub in Santiago.SUBSTANCE_NAMES
+        for t in ["recovery_ratio", "recovered"]
+            tt = (sub => t)
+            ss1 = select_systems(allSys, 7, target=tt, maximize=true)
+            ss2 = select_systems(allSys, 7, target=tt, maximize=false)
+            @test sum(s.properties["massflow_stats"][t][sub, "mean"] for s in ss1) >=
+                sum(s.properties["massflow_stats"][t][sub, "mean"] for s in ss2)
+        end
+    end
+
+    @test length(select_systems(allSys, 7, target="phosphor" => "lost")) == 7
+    @test length(select_systems(allSys, 7, target="phosphor" => "entered")) == 7
+
+
 
     # selection type: ranking vs. diverese
     @test_throws ErrorException select_systems(allSys, 3, selection_type="XYZ")

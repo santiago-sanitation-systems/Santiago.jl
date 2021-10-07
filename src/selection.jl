@@ -164,13 +164,19 @@ function select_systems(systems::Array{System}, n_select::Int;
         # error checking
         substance ∈ SUBSTANCE_NAMES ||
             error("'$(substance)' is not a known substance!\n  Choose one of: $(SUBSTANCE_NAMES)")
-        stats = ["recovery_ratio", "recovered", "entered" ]
+        stats = ["recovery_ratio", "recovered", "entered", "lost"]
         stat ∈ stats||
             error("'$(stat)' is not a known massflow statistic!\n  Choose one of: $(stats)")
         haskey(systems[1].properties, "massflow_stats") || error("You must first run `massflow_summary!` or `massflow_summary_parallel!` ")
 
         # get values
-        targets = [s.properties["massflow_stats"][stat][substance, "mean"] for s in systems]
+        if stat == "entered"
+            targets = [s.properties["massflow_stats"][stat][substance, "entered"] for s in systems]
+        elseif stat == "lost"
+            targets = [sum(s.properties["massflow_stats"][stat][substance, :, "mean"]) for s in systems]
+        else
+            targets = [s.properties["massflow_stats"][stat][substance, "mean"] for s in systems]
+        end
     else
         error("target '$(target)' unknown!")
     end
