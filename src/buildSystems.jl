@@ -643,7 +643,7 @@ function add_loop_techs!(tech_list::Array{<:AbstractTech}; groups = [:S, :T])
                         # matching tech are partners!
                         tech_news = make_looped_techs(tech1, tech2)
                         for tech_new in tech_news
-                            if !(tech_new in tech_list) && length(tech_new.outputs)>0 && length(tech_new.inputs)>0
+                            if  length(tech_new.outputs)>0 && length(tech_new.inputs)>0
                                 push!(tech_list, tech_new)
                             end
                         end
@@ -652,6 +652,7 @@ function add_loop_techs!(tech_list::Array{<:AbstractTech}; groups = [:S, :T])
             end
         end
     end
+    unique!(tech_list)
 end
 
 
