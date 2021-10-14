@@ -315,7 +315,7 @@ function get_openin_techs(sys::System, prod::Product)
 end
 
 # pre filter the tech list
-function get_candidates(s::Array{T}, outs, k) where T <: AbstractTech
+function get_candidates(techs, outs, k) where T <: AbstractTech
     # Limitation!
     # This function guaranties, that we never add a techs, which leads to new open inputs.
     # However, this banns not only loops, but also "triangles". E.g if only "A is given"
@@ -332,7 +332,7 @@ function get_candidates(s::Array{T}, outs, k) where T <: AbstractTech
 
     end
 
-    filter(condi, s)
+    filter(condi, techs)
 end
 
 
@@ -467,6 +467,28 @@ function meltTechs(techs::Union{Array{T}, Set{T}}) where T <: AbstractTech
     return flattechs
 end
 
+# fast helpers for get_candidates()
+function has_not_tech(t::Tech, systechs)
+    # same as: !(t in systechs)
+    for st in systechs
+        if st == t
+            return false
+        end
+    end
+    return true
+end
+
+function has_not_tech(t::TechCombined, systechs)
+    # same as:  length(intersect(t.internal_techs, systechs)) == 0
+    for t in t.internal_techs
+        for st in systechs
+            if st == t
+                return false
+            end
+        end
+    end
+    return true
+end
 
 
 # Returns techs that fit to an open system
@@ -474,9 +496,8 @@ function get_candidates(sys::System, techs::Array{T}) where T <: AbstractTech
 
     # filter out already used techs (also in TechCombined)
     systechs = meltTechs(sys.techs)
-    ffilter(t::Tech) = !(t in systechs)
-    ffilter(t::TechCombined) = length(intersect(t.internal_techs, systechs)) == 0
-    techssub = filter(t -> ffilter(t), techs)
+    idx = has_not_tech.(techs, Ref(systechs))
+    techssub = @view techs[idx]
 
     outs = get_outputs(sys)
 
