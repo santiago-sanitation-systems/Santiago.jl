@@ -168,10 +168,10 @@ massflow_summary!.(allSys, Ref(input_masses), n=20)
     @test ! any([occursin("ST.15", s.properties["template"]) for s in ss])
 
     # include templates
-    ss = select_systems(allSys, 3, templates_include=["ST.17"])
+    ss = select_systems(allSys, 3, templates_include=["ST.16"])
 
     @test length(ss) == 3
-    @test all([occursin("ST.17", s.properties["template"]) for s in ss])
+    @test all([occursin("ST.16", s.properties["template"]) for s in ss])
 
     # other targets
     @test_throws ErrorException select_systems(allSys, 3, target="XXX")
@@ -261,4 +261,4 @@ nrealtechs = length(unique(Santiago.simplifytechname(t.name) for t in
                            [sources; additional_sources; techs]))
 
 @test length(templates_per_tech(allSys)) <= nrealtechs
-@test length(techs_per_template(allSys)) == 6
+@test length(techs_per_template(allSys)) == length(unique(template.(allSys)))
