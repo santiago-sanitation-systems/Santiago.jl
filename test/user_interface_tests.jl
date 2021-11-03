@@ -195,6 +195,16 @@ massflow_summary!.(allSys, Ref(input_masses), n=20)
         end
     end
 
+    # test sum across all products
+    for t in ["recovery_ratio", "recovered"]
+        tt = ("all" => t)
+        ss1 = select_systems(allSys, 7, target=tt, maximize=true)
+        ss2 = select_systems(allSys, 7, target=tt, maximize=false)
+        @test sum(s.properties["massflow_stats"][t][:, "mean"] for s in ss1) >=
+            sum(s.properties["massflow_stats"][t][:, "mean"] for s in ss2)
+    end
+
+
     @test length(select_systems(allSys, 7, target="phosphor" => "lost")) == 7
     @test length(select_systems(allSys, 7, target="phosphor" => "entered")) == 7
 
