@@ -101,15 +101,12 @@ Most system properties can serve as target. The most commonly used one is the `s
 - `n_select::Int` Number of systems to select (if possible)
 - `target = "sysappscore"` value used to rank systems. Can be a string
   with the name of a system property such as `"sysappscore"`,
-  `"connectivity"`, or `"ntechs"`. For massflow statistics is needs to be a
-`Pair` such as `("phosphor" => "recovery_ratio")`
-- `maximize::Bool = true` If `true` the system with the largest `target`
-values are selected. If `false` the smallest.
-- `selection_type = "diverse"` Must be either `"diverse"` or
- `"ranking"`. If `"ranking"`, the systems with the largest (or
- smallest) target values are returned. If `"diverse"`, the returned
- systems have a large (or small) target value but are also as diverse as
- possible. Diversity is mainly determined by the system templates.
+  `"connectivity"`, or `"ntechs"`. For massflow statistics is needs to be a `Pair` of
+   a product and a massflow statistic such as `("phosphor" => "recovery_ratio")`.
+- `maximize::Bool = true` If `true` the system with the largest `target` values
+   are selected. If `false` the smallest.
+- `selection_type = "diverse"` Must be either `"diverse"` or  `"ranking"`.
+  If `"ranking"`, the systems with the largest (or smallest) target values are returned. If `"diverse"`, the returned systems have a large (or small) target value but are also as diverse as possible. Diversity is mainly determined by the system templates.
 
 The following optional arguments may be used to restrict the selection further:
 - `techs_include`
@@ -117,6 +114,14 @@ The following optional arguments may be used to restrict the selection further:
 - `templates_include`
 - `templates_exclude`
 For the templates only the first few characters must be provided.
+
+## Details
+
+As a special functionality, the argument `target` also accepts a
+`Pair` of `"all"` and a massflow statistic, for example `("all" => "recovery_ratio")`.
+In this case the _average_ of the massflow
+statistics across all four products is used as target. Note, however,
+that makes no sense for most massflow statistics!
 
 Note, this function may add properties to the input systems! Any of
 the following properties may be added if missing:
