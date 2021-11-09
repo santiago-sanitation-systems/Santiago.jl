@@ -147,8 +147,12 @@ function get_adj_mat(sys::System, substance::String)
 
         if haskey(from_tech.transC[substance], prod_tmp)
             tc = from_tech.transC[substance][prod_tmp]
-        else
+        elseif haskey(from_tech.transC[substance], Product("x"))
             tc = from_tech.transC[substance][Product("x")]
+        else
+            error("No transfer coefficients for substance '$(substance)' found!\n" *
+                  "   - System: $(sys.properties["ID"])\n" *
+                  "   - Tech: $(from_tech)")
         end
         P[from_tech.name, to_tech.name] += tc
     end
