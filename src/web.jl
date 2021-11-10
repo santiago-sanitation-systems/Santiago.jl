@@ -73,6 +73,12 @@ function select_systems_web(systems::Array{System}, n_select::Int,
                             templates_include::Array{String}=["ALL"],
                             templates_exclude::Array{String}=String[])
 
+    # check if the required properties exists
+    for p in ("ntechs", "connectivity", "template")
+        haskey(systems[1].properties, "template") ||
+            error("Systems have no property '$p'. Run $(p)!.(systems) first.")
+    end
+
     # filter general condition
     systems = prefilter(systems,
                         techs_include,
@@ -84,10 +90,6 @@ function select_systems_web(systems::Array{System}, n_select::Int,
         return System[]
     end
     n_select = min(n_select, length(systems))
-
-    # compute properties if they do not exists
-    haskey(systems[1].properties, "ntechs") || ntechs!.(systems)
-    haskey(systems[1].properties, "connectivity") || connectivity!.(systems)
 
     # select target
     if target == "sysappscore"

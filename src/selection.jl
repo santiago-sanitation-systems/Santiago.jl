@@ -76,10 +76,6 @@ function prefilter(systems::Array{System},
                    templates_include::Array{String}=["ALL"],
                    templates_exclude::Array{String}=String[])
 
-    # compute properties if they do not exists
-    haskey(systems[1].properties, "template") || template!.(systems)
-
-    # filter techs
     filter(sys -> has_techs(techs_include, sys) &&
            has_not_techs(techs_exclude, sys) &&
            is_template(templates_include, sys) &&
@@ -140,6 +136,12 @@ function select_systems(systems::Array{System}, n_select::Int;
                         templates_include::Array{String}=["ALL"],
                         templates_exclude::Array{String}=String[])
 
+    # compute properties if they do not exists
+    haskey(systems[1].properties, "template") || template!.(systems)
+    haskey(systems[1].properties, "sysappscore") || sysappscore!.(systems)
+    haskey(systems[1].properties, "ntechs") || ntechs!.(systems)
+    haskey(systems[1].properties, "connectivity") || connectivity!.(systems)
+
     # filter general condition
     systems = prefilter(systems,
                         techs_include,
@@ -152,10 +154,7 @@ function select_systems(systems::Array{System}, n_select::Int;
     end
     n_select = min(n_select, length(systems))
 
-    # compute properties if they do not exists
-    haskey(systems[1].properties, "sysappscore") || sysappscore!.(systems)
-    haskey(systems[1].properties, "ntechs") || ntechs!.(systems)
-    haskey(systems[1].properties, "connectivity") || connectivity!.(systems)
+
 
     # select target
     if target == "sysappscore"

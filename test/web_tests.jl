@@ -13,6 +13,11 @@ sources, additional_sources, techs = import_technologies(input_tech_file)
 allSys = build_systems(sources, techs)
 @test length(allSys) == 76
 
+
+ntechs!.(allSys)
+connectivity!.(allSys)
+template!.(allSys)
+
 input_masses = Dict("Dry.toilet" => Dict("phosphor" => 548.0,
                                          "nitrogen" => 4550.0,
                                          "water" => 22447113.5,
@@ -24,7 +29,7 @@ input_masses = Dict("Dry.toilet" => Dict("phosphor" => 548.0,
                     )
 
 # calculate mass flows for all systems and write to system properties
-massflow_summary!.(allSys, Ref(input_masses), n=20)
+massflow_summary!.(allSys, Ref(input_masses), n=10)
 
 
 # add appropriateness
