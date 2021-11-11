@@ -13,6 +13,8 @@ sources, additional_sources, techs = import_technologies(input_tech_file)
 allSys = build_systems(sources, techs)
 @test length(allSys) == 76
 
+# error because sysstem properties are missing
+@test_throws ErrorException SSB.select_systems_web(allSys, 33, tas, target = "sysappscore", selection_type = "ranking")
 
 ntechs!.(allSys)
 connectivity!.(allSys)
@@ -61,10 +63,15 @@ end
                                      selection_type = "ranking")
     @test all(select1 .== select2)
 
-
     select1 = select_systems(allSys, 33, target = "connectivity",
                              selection_type = "ranking")
     select2 = SSB.select_systems_web(allSys, 33, tas, target = "connectivity",
+                                     selection_type = "ranking")
+    @test all(select1 .== select2)
+
+    select1 = select_systems(allSys, 33, target = ("all" => "recovery_ratio"),
+                             selection_type = "ranking")
+    select2 = SSB.select_systems_web(allSys, 33, tas, target = ("all" => "recovery_ratio"),
                                      selection_type = "ranking")
     @test all(select1 .== select2)
 

@@ -101,20 +101,33 @@ function select_systems_web(systems::Array{System}, n_select::Int,
     elseif target isa Pair
         substance, stat = target
         # error checking
-        substance ∈ SUBSTANCE_NAMES ||
+        (substance ∈ SUBSTANCE_NAMES || substance == "all") ||
             error("'$(substance)' is not a known substance!\n  Choose one of: $(SUBSTANCE_NAMES)")
         stats = ["recovery_ratio", "recovered", "entered", "lost"]
         stat ∈ stats||
             error("'$(stat)' is not a known massflow statistic!\n  Choose one of: $(stats)")
-        haskey(systems[1].properties, "massflow_stats") || error("You must first run `massflow_summary!` or `massflow_summary_parallel!` ")
+        haskey(systems[1].properties, "massflow_stats") || error("You must first run `massflow_summary!` or `massflow_summary_parallel!`.")
 
         # get values
+
         if stat == "entered"
-            targets = [s.properties["massflow_stats"][stat][substance, "entered"] for s in systems]
+            if substance == "all"
+                targets = [sum(s.properties["massflow_stats"][stat][:, "entered"]) for s in systems]
+            else
+                targets = [s.properties["massflow_stats"][stat][substance, "entered"] for s in systems]
+            end
         elseif stat == "lost"
-            targets = [sum(s.properties["massflow_stats"][stat][substance, :, "mean"]) for s in systems]
+            if substance == "all"
+                targets = [sum(s.properties["massflow_stats"][stat][:, :, "mean"]) for s in systems]
+            else
+                targets = [sum(s.properties["massflow_stats"][stat][substance, :, "mean"]) for s in systems]
+            end
         else
-            targets = [s.properties["massflow_stats"][stat][substance, "mean"] for s in systems]
+            if substance == "all"
+                targets = [sum(s.properties["massflow_stats"][stat][:, "mean"]) for s in systems]
+            else
+                targets = [s.properties["massflow_stats"][stat][substance, "mean"] for s in systems]
+            end
         end
     else
         error("target '$(target)' unknown!")
