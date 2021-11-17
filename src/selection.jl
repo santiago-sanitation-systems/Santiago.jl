@@ -262,11 +262,13 @@ function select_diverse(systems::Array{System}, n_select::Int, targets::Array)
 
             ## find system with highest score per cluster
             for k in 1:length(km.counts)
-                properties_template_clust = @view properties_template[assig .== k,:]
-                targets_template_clust = @view targets_template[assig .== k]
-                selected_template_clust = @view selected_template[assig .== k]
-                maxindex = findmax(targets_template_clust)[2] # system with the highest appscore
-                selected_template_clust[maxindex] = true # select system
+                if km.counts[k] > 0
+                    properties_template_clust = @view properties_template[assig .== k,:]
+                    targets_template_clust = @view targets_template[assig .== k]
+                    selected_template_clust = @view selected_template[assig .== k]
+                    maxindex = findmax(targets_template_clust)[2] # system with the highest appscore
+                    selected_template_clust[maxindex] = true # select system
+                end
             end
         else
             ncluster = 0  # no cluster was made, because n_selectedsystems <= n_templates
