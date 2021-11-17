@@ -11,7 +11,8 @@ export select_systems, pick_systems
 # assign N values to categories relative to the weights 'w' with at least one value per in each category
 function assign_categories(N::Int, w::AbstractArray)
     ncat = length(w)
-    w = w ./ sum(w)
+
+    w = sum(w) > 0 ? w ./ sum(w) : fill(1/ncat, ncat) # catch corner case of all zeros
     if  N >= ncat
         nn = floor.(Int, w*(N-ncat)) #nn is the vector of number of selected items per cat
         r = N-ncat - sum(nn) # remaining selections to distribute within cats
@@ -201,7 +202,7 @@ function select_systems(systems::Array{System}, n_select::Int;
 
     # flip sign to minimize
     if !maximize
-        targets *= -1
+        targets .*= -1
     end
 
     # choose the type of selection

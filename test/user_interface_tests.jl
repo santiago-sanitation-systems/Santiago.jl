@@ -134,6 +134,17 @@ massflow_summary!.(allSys, Ref(input_masses), n=20)
 
 @testset "system selection" begin
 
+    @test any(1 .<= Santiago.assign_categories(6, [1,2,0,0,0]))
+
+    for n in 4:6
+        @test n == sum(Santiago.assign_categories(n, ones(5)))
+    end
+
+    for n in 4:6
+        @test n == sum(Santiago.assign_categories(n, zeros(5)))
+    end
+
+
     for n in 0:length(allSys)
         @test n == length(select_systems(allSys, n))
     end
