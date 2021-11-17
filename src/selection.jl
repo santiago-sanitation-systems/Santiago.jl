@@ -15,11 +15,11 @@ function assign_categories(N::Int, w::AbstractArray)
     if  N >= ncat
         nn = floor.(Int, w*(N-ncat)) #nn is the vector of number of selected items per cat
         r = N-ncat - sum(nn) # remaining selections to distribute within cats
-        nn[sortperm(w*(N-ncat) .- nn, rev=true)[1:r]] .+= 1 # rank the categories according to the rest that was floored before and distribute r
+        nn[partialsortperm(w*(N-ncat) .- nn, 1:r, rev=true)] .+= 1 # rank the categories according to the rest that was floored before and distribute r
         nn .+= 1 # at leat one item is selected from each catetgory
     else
         nn = zeros(Int, length(w))
-        nn[sortperm(w, rev=true)[1:N]] .+= 1
+        nn[partialsortperm(w, 1:N, rev=true)] .+= 1
     end
     return nn
 end
@@ -275,7 +275,7 @@ function select_diverse(systems::Array{System}, n_select::Int, targets::Array)
         if n_template[i] > ncluster
             targets_template_ns = @view targets_template[.!selected_template]
             selected_template_ns = @view selected_template[.!selected_template]
-            selectidx = sortperm(targets_template_ns, rev=true)[1:(n_template[i] - ncluster)]
+            selectidx = partialsortperm(targets_template_ns, 1:(n_template[i] - ncluster), rev=true)
             selected_template_ns[selectidx] .= true
         end
 
@@ -286,7 +286,7 @@ function select_diverse(systems::Array{System}, n_select::Int, targets::Array)
     if sum(selected) < n_select
         targets_ns = @view targets[.!selected]
         selected_ns = @view selected[.!selected]
-        selectidx = sortperm(targets_ns, rev=true)[1:(n_select - sum(selected))]
+        selectidx = partialsortperm(targets_ns, 1:(n_select - sum(selected)), rev=true)
         selected_ns[selectidx] .= true
     end
 
@@ -305,7 +305,7 @@ function select_ranking(systems::Array{System}, n_select::Int, targets::Array)
     IDs = [s.properties["ID"] for s in systems]
 
     selected = fill(false, length(systems))
-    selected[sortperm(targets, rev=true)[1:n_select]] .= true
+    selected[partialsortperm(targets, 1:n_select, rev=true)] .= true
 
     systems[selected]
 end
