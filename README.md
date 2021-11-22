@@ -16,7 +16,7 @@ Status](https://github.com/santiago-sanitation-systems/Santiago.jl/workflows/CI/
 
 # Installation
 
-1. Install [Julia](https://julialang.org/) version >= 1.4.
+1. Install [Julia](https://julialang.org/) version >= 1.4. (32 bit version)
 
 2. Install the `Santiago` package from the Julia prompt:
 ```Julia
