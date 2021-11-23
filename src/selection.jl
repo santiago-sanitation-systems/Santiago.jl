@@ -235,7 +235,7 @@ function select_diverse(systems::Array{System}, n_select::Int, targets::Array)
 
     ## Calculate how many systems to select per template
     ## based on the 90% quantiles of sysappscore per template
-    q_scores = [quantile(targets[templates .== t], 0.9)
+    q_scores = [quantile(abs.(targets[templates .== t]), 0.9)
                 for t in templates_used]
 
     n_template = assign_categories(n_select, q_scores) # assign number of system per template
