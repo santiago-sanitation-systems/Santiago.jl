@@ -506,7 +506,22 @@ function get_candidates(sys::System, techs::Array{T}) where T <: AbstractTech
 
     ## get matching combinations
     for k in 1:n_out
-        for c in Combinatorics.combinations(get_candidates(techssub, outs, k), k) # try all combination of lenght k (in R: combn())
+        gc = get_candidates(techssub, outs, k)
+
+        # if too many combinations, reduce gc randomly
+        n_combinations = binomial(length(gc), k)
+        if n_combinations > 10_000_000
+            @debug "\n Reduce number of combinations to check from $(n_combinations*1.0) to 10'000'000!"
+            # find max number of candidates so that the length does not explode
+            nmax = 0
+            while binomial(nmax + 1, k) < 10_000_000
+                nmax += 1
+            end
+            # subsample candiates
+            gc = StatsBase.sample(gc, min(length(gc), nmax), replace=false)
+        end
+
+        for c in Combinatorics.combinations(gc, k) # try all combination of lenght k (in R: combn())
             inputs = get_inputs(c)
             if is_compatible(outs, inputs)
                 push!(matching_techs, c)
