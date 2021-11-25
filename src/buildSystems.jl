@@ -508,10 +508,14 @@ function get_candidates(sys::System, techs::Array{T}) where T <: AbstractTech
     for k in 1:n_out
         gc = get_candidates(techssub, outs, k)
 
-        # if too many combinations, reduce gc randomly
-        n_combinations = binomial(length(gc), k)
-        if n_combinations > 10_000_000
-            @debug "\n Reduce number of combinations to check from $(n_combinations*1.0) to 10'000'000!"
+        # test if we have too many combinations. If so, reduce gc randomly
+        tomany = try
+            binomial(length(gc), k) > 10_000_000
+        catch
+            true                # catch numerical overflow
+        end
+        if tomany
+            @debug "\n Reduce number of combinations to check to 10'000'000!"
             # find max number of candidates so that the length does not explode
             nmax = 0
             while binomial(nmax + 1, k) < 10_000_000
