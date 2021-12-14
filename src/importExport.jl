@@ -273,7 +273,10 @@ function import_technologies(tech_file::String, case_file::String;
                              sinkGroup::String="D")
 
 
-    sources, additional_sources, techs = import_technologies(tech_file)
+    sources, additional_sources, techs = import_technologies(tech_file,
+                                                             sourceGroup = sourceGroup,
+                                                             sourceAddGroup = sourceAddGroup,
+                                                             sinkGroup = sinkGroup)
     tas, _ = appropriateness(tech_file, case_file)
     update_appropriateness!(sources, tas)
     update_appropriateness!(additional_sources, tas)
