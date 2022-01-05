@@ -172,17 +172,17 @@ massflow_summary!.(allSys, Ref(input_masses), n=20)
 
 
     # exclude templates
-    ss = select_systems(allSys, 3, templates_exclude=["ST.3", "ST.15"])
+    ss = select_systems(allSys, 3, templates_exclude=["ST3.", "ST15."])
 
     @test length(ss) == 3
-    @test ! any([occursin("ST.3", s.properties["template"]) for s in ss])
-    @test ! any([occursin("ST.15", s.properties["template"]) for s in ss])
+    @test ! any([occursin("ST3.", s.properties["template"]) for s in ss])
+    @test ! any([occursin("ST15", s.properties["template"]) for s in ss]) # note the missing "."
 
     # include templates
-    ss = select_systems(allSys, 3, templates_include=["ST.16"])
+    ss = select_systems(allSys, 3, templates_include=["ST16."])
 
     @test length(ss) == 3
-    @test all([occursin("ST.16", s.properties["template"]) for s in ss])
+    @test all([occursin("ST16.", s.properties["template"]) for s in ss])
 
     # other targets
     @test_throws ErrorException select_systems(allSys, 3, target="XXX")
