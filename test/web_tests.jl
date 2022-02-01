@@ -91,3 +91,12 @@ end
     @test JSON3.write(scale_massflows(allSys[1], 5.0)) == JSON3.write(scale_massflows(allSys[1], 1.0), tas, 5.0)
 
 end
+
+@testset "techs_per_template" begin
+
+    tt = Santiago.techs_per_template(allSys)
+    ttweb = Santiago.techs_per_template_web(allSys)
+
+    @test !any(occursin.("_trans", union(values(tt)...)))
+    @test any(occursin.("_trans", union(values(ttweb)...)))
+end

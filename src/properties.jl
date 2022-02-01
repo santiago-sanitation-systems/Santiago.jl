@@ -499,7 +499,7 @@ end
 """
     $TYPEDSIGNATURES
 
-List all technologies that systems of the same templates have used.
+List all technologies that are used by the systems of each templates.
 """
 function techs_per_template(systems::Array{System})
     haskey(systems[1].properties, "template") ||

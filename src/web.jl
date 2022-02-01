@@ -183,3 +183,30 @@ JSON3.write(io::IO, sys::T, tas::Dict{String}{Float64}, n_users::Real=1; kw...) 
 
 JSON3.write(sys::Array{System}, tas::Dict{String}{Float64}, n_users::Real=1) = JSON3.write([SystemJSON(s, tas) for s in sys])
 JSON3.write(io::IO, sys::Array{T}, tas::Dict{String}{Float64}, n_users::Real=1; kw...) where T <: System = JSON3.write(io, [SystemJSON(s, tas, n_users) for s in sys]; kw...)
+
+
+# -----------
+# keep '_trans' in tech names
+"""
+    $TYPEDSIGNATURES
+
+List all technologies that are used by the systems of each templates.
+However, this version distinguishes between 'tech' and 'tech_trans'!
+"""
+function techs_per_template_web(systems::Array{System})
+    haskey(systems[1].properties, "template") ||
+        error("No templates assigned! Run `template!` first.")
+    d = Dict{String, Set{String}}()
+    for s in systems
+        templ = s.properties["template"]
+        for tech in s.techs
+            techname = replace(tech.name, r"(_[0-9]+)?" => "")
+            if haskey(d, templ)
+                push!(d[templ], techname)
+            else
+                d[templ] = Set([techname])
+            end
+        end
+    end
+    d
+end
