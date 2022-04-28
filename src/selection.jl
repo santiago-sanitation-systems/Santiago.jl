@@ -110,7 +110,14 @@ The following optional arguments may be used to restrict the selection further:
 - `techs_exclude`
 - `templates_include`
 - `templates_exclude`
-For the templates only the first few characters must be provided.
+Templates can be abbreviated by giving only the first few
+characters. _All_ matching templates will then be used. This is
+convinient for interactive use, however, it may lead to confusion! For
+example, instead of providing the complete template name `"T1 basic
+template"`, one could use the abbreviation `"T1"`. Note, that this
+will also match a template with the name `"T11 complicated
+template"`! So make sure that you abbreviation is unique. In this example
+one should use at least `"T1 "`.
 
 ## Details
 
