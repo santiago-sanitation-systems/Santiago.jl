@@ -89,7 +89,7 @@ end
 
 
     @test JSON3.write(scale_massflows(allSys[1], 5.0)) == JSON3.write(scale_massflows(allSys[1], 1.0), tas, 5.0)
-
+    @test JSON3.write(scale_massflows.(allSys[1:3], 5.0)) == JSON3.write(scale_massflows.(allSys[1:3], 1.0), tas, 5.0)
 end
 
 @testset "techs_per_template" begin

@@ -181,7 +181,7 @@ end
 JSON3.write(sys::System, tas::Dict{String}{Float64}, n_users::Real=1) = JSON3.write(SystemJSON(sys, tas, n_users))
 JSON3.write(io::IO, sys::T, tas::Dict{String}{Float64}, n_users::Real=1; kw...) where T <: System = JSON3.write(io, SystemJSON(sys, tas, n_users); kw...)
 
-JSON3.write(sys::Array{System}, tas::Dict{String}{Float64}, n_users::Real=1) = JSON3.write([SystemJSON(s, tas) for s in sys])
+JSON3.write(sys::Array{System}, tas::Dict{String}{Float64}, n_users::Real=1) = JSON3.write([SystemJSON(s, tas, n_users) for s in sys])
 JSON3.write(io::IO, sys::Array{T}, tas::Dict{String}{Float64}, n_users::Real=1; kw...) where T <: System = JSON3.write(io, [SystemJSON(s, tas, n_users) for s in sys]; kw...)
 
 
