@@ -253,13 +253,14 @@ using Serialization
 sources, additional_sources, techs = import_technologies(tech_file)
 
 if isfile("mycachfile.jls")
-    allSys = deserialize("mycachfile.jls")
+    allSys, sources, additional_sources, techs = deserialize("mycachfile.jls")
 else
     allSys = build_systems(sources, techs)
     ...
     massflow_summary!.(allSys, Ref(input_masses), n=100);
     ...
-    serialize("mycachfile.jls", allSys)
+    serialize("mycachfile.jls", (allSys, sources, additional_sources, techs)) 
+    # note: we need to save the techs in order to ensure the link to from systems to tech properties (tas)
 end
 
 sysappscore!.(allSys) # all are '-1.0' because no case profile was defined yet
