@@ -478,8 +478,10 @@ function scale_massflows!(sys::System, n_users::Real)
 end
 
 function _scale!(d::Dict, n_users)
-    for v in values(d)
-        _scale!(v, n_users)
+    for (k, v) in d
+        if k != "recovery_ratio"
+            _scale!(v, n_users)
+        end
     end
 end
 

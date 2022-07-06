@@ -155,7 +155,9 @@ end
 function _scale_web!(d::Dict, n_users)
     for (k,v) in d
         if v isa Dict
-            _scale_web!(v, n_users)
+            if k != "recovery_ratio"
+                _scale_web!(v, n_users)
+            end
         else
             d[k] = v * n_users
         end

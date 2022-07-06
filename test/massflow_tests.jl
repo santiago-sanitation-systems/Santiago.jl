@@ -45,7 +45,11 @@ massflow_summary!.(allSys, Ref(M_in), n=10, techflows=false);
 allSys3 = scale_massflows.(allSys, 100)
 for i in 1:length(allSys)
     for (k, v) in allSys3[i].properties["massflow_stats"]
-        @test  all(v .≈ (allSys[i].properties["massflow_stats"][k] .* 100))
+        if k == "recovery_ratio"
+            @test  all(v .≈ (allSys[i].properties["massflow_stats"][k])) # no scaling!
+        else
+            @test  all(v .≈ (allSys[i].properties["massflow_stats"][k] .* 100))
+        end
     end
 end
 
@@ -55,7 +59,11 @@ allSys2 = scale_massflows.(allSys, 100)
 for i in 1:length(allSys)
     for (k, v) in allSys2[i].properties["massflow_stats"]
         if v isa Santiago.NamedArray
-            @test  all(v .≈ (allSys[i].properties["massflow_stats"][k] .* 100))
+            if k == "recovery_ratio"
+                @test  all(v .≈ (allSys[i].properties["massflow_stats"][k])) # no scaling!
+            else
+                @test  all(v .≈ (allSys[i].properties["massflow_stats"][k] .* 100))
+            end
         end
     end
 end
@@ -76,12 +84,14 @@ scale_massflows!.(allSys, 0)    # inplace
 for i in 1:length(allSys)
     for (k, v) in allSys[i].properties["massflow_stats"]
         if v isa Santiago.NamedArray
-            @test all(v .≈ 0.0)
+            if k != "recovery_ratio"
+                @test all(v .≈ 0.0)
+            end
         end
     end
 end
 
-@test_throws ErrorException scale_massflows(allSys[1], -2) # negative numbe of users
+@test_throws ErrorException scale_massflows(allSys[1], -2) # negative number of users
 
 # parallel calculations
 
