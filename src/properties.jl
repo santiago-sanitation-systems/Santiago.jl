@@ -102,12 +102,31 @@ source_names!(s::System) = s.properties["source"] = source_names(s)
 # -----------
 # define system templates
 
+function fg_t_transported(s::System)
+    for t in s.techs
+        if t.functional_group == :T && occursin("_trans", t.name)
+            return true
+        end
+    end
+    false
+end
+
+
+function fg_t_not_transported(s::System)
+    for t in s.techs
+        if t.functional_group == :T && !occursin("_trans", t.name)
+            return true
+        end
+    end
+    false
+end
+
+
 """
     $TYPEDSIGNATURES
 Calculate characteristics that are used to assign templaces
 """
 function template_characteristics(s::System)
-
     # -----------
     # --- calculate  characteristics
     all_products = [c[1] for c in s.connections]
@@ -139,8 +158,11 @@ function template_characteristics(s::System)
     # onsite storage and treatment
     fg_s = any(occursin.("S", all_functional_groups))
 
-    # decentralized and centralized storage and treatment
-    fg_t = any(occursin.("T", all_functional_groups))
+    # decentralized treatment
+    fg_t_notrans = fg_t_not_transported(s)
+
+    # centralized treatment
+    fg_t_trans = fg_t_transported(s)
 
     # transported
     has_transport = any(occursin.("transported", all_product_names))
@@ -180,7 +202,8 @@ function template_characteristics(s::System)
             transported_blackwater = transported_blackwater,
             urine = urine,
             fg_s = fg_s,
-            fg_t = fg_t,
+            fg_t_notrans = fg_t_notrans,
+            fg_t_trans = fg_t_trans,
             has_transport = has_transport,
             has_biofuel = has_biofuel ,
             onsite_biofuel =onsite_biofuel,
@@ -198,7 +221,6 @@ multible_templates_error(s::System, t1, t2) = error("More than one template matc
 Identifies the template a system belongs to.
 """
 function template(s::System)
-
     # -----------
     # --- calculate some characteristics
 
@@ -209,7 +231,8 @@ function template(s::System)
     transported_blackwater,
     urine,
     fg_s,
-    fg_t,
+    fg_t_notrans,
+    fg_t_trans,
     has_transport,
     has_biofuel,
     onsite_biofuel,
@@ -227,70 +250,70 @@ function template(s::System)
     # dry
 
     if dry_material && onsite_sludge && ! blackwater && ! transported_blackwater &&
-        ! urine && fg_s && ! fg_t && ! has_transport && ! has_biofuel &&
+        ! urine && fg_s && ! fg_t_notrans && ! fg_t_trans && ! has_biofuel &&
         ! biomass && ! has_urinal && ! controlled_od
         tt = "ST1. Onsite dry system with sludge production without biomass production"
         template = template == "not defined" ? tt : multiple_templates_error(s, template, tt)
     end
 
     if dry_material && onsite_sludge && ! blackwater && ! transported_blackwater &&
-        ! urine && fg_s && ! fg_t && ! has_transport && ! has_biofuel &&
+        ! urine && fg_s && ! fg_t_notrans && ! fg_t_trans && ! has_biofuel &&
         biomass && ! has_urinal && ! controlled_od
         tt = "ST2. Onsite dry system with sludge production and with biomass production"
         template = template == "not defined" ? tt : multiple_templates_error(s, template, tt)
     end
 
     if dry_material && ! onsite_sludge && ! blackwater && ! transported_blackwater &&
-        ! urine && ! fg_t && ! has_transport && ! has_biofuel &&
+        ! urine && ! fg_t_notrans && ! fg_t_trans && ! has_biofuel &&
         ! biomass && ! has_urinal && ! controlled_od
         tt = "ST3. Onsite dry system without sludge production without biomass production"
         template = template == "not defined" ? tt : multiple_templates_error(s, template, tt)
     end
 
     if dry_material && ! onsite_sludge && ! blackwater && ! transported_blackwater &&
-        ! urine && fg_s && ! fg_t && ! has_transport && ! has_biofuel &&
+        ! urine && fg_s && ! fg_t_notrans && ! fg_t_trans && ! has_biofuel &&
         biomass && ! has_urinal && ! controlled_od
         tt = "ST4. Onsite dry system without sludge production and with biomass production"
         template = template == "not defined" ? tt : multiple_templates_error(s, template, tt)
     end
 
     if dry_material && ! blackwater && ! transported_blackwater &&
-        ! urine && fg_t && ! has_transport && ! has_biofuel &&
+        ! urine && fg_t_notrans && ! fg_t_trans && ! has_biofuel &&
         ! biomass && ! has_urinal && ! controlled_od
         tt = "ST5. Decentralized dry system without biomass production"
         template = template == "not defined" ? tt : multiple_templates_error(s, template, tt)
     end
 
     if dry_material && ! blackwater && ! transported_blackwater &&
-        ! urine && fg_t && ! has_transport && ! has_biofuel &&
+        ! urine && fg_t_notrans && ! fg_t_trans && ! has_biofuel &&
         biomass && ! has_urinal && ! controlled_od
         tt = "ST6. Decentralized dry system with biomass production"
         template = template == "not defined" ? tt : multiple_templates_error(s, template, tt)
     end
 
     if dry_material && ! blackwater && ! transported_blackwater &&
-        ! urine && fg_s && has_transport && ! has_biofuel &&
+        ! urine && (fg_s || fg_t_notrans) && fg_t_trans && ! has_biofuel &&
         ! biomass && ! has_urinal && ! controlled_od
         tt = "ST7. Hybrid dry system without biomass production"
         template = template == "not defined" ? tt : multiple_templates_error(s, template, tt)
     end
 
     if dry_material && ! blackwater && ! transported_blackwater &&
-        ! urine && fg_s && has_transport && ! has_biofuel &&
+        ! urine && (fg_s || fg_t_notrans) && fg_t_trans && ! has_biofuel &&
         biomass && ! has_urinal && ! controlled_od
         tt = "ST8. Hybrid dry system with biomass production"
         template = template == "not defined" ? tt : multiple_templates_error(s, template, tt)
     end
 
     if dry_material && ! blackwater && ! transported_blackwater &&
-        ! urine && ! fg_s && has_transport && ! has_biofuel &&
+        ! urine && ! fg_s && ! fg_t_notrans && fg_t_trans && ! has_biofuel &&
         ! biomass && ! has_urinal && ! controlled_od
         tt = "ST9. Centralized dry system without biomass production"
         template = template == "not defined" ? tt : multiple_templates_error(s, template, tt)
     end
 
     if dry_material && ! blackwater && ! transported_blackwater &&
-        ! urine && ! fg_s && has_transport && ! has_biofuel &&
+        ! urine && ! fg_s && ! fg_t_notrans && fg_t_trans && ! has_biofuel &&
         biomass && ! has_urinal && ! controlled_od
         tt = "ST10. Centralized dry system with biomass production"
         template = template == "not defined" ? tt : multiple_templates_error(s, template, tt)
@@ -300,48 +323,48 @@ function template(s::System)
     # Blackwater
 
     if ! onsite_sludge && blackwater && ! transported_blackwater &&
-        ! urine && fg_s && ! fg_t && ! has_transport && ! has_biofuel && ! has_urinal && ! controlled_od
+        ! urine && fg_s && ! fg_t_notrans && ! fg_t_trans && ! has_biofuel && ! has_urinal && ! controlled_od
         tt = "ST11. Onsite blackwater system without sludge with or without effluent transport"
         template = template == "not defined" ? tt : multiple_templates_error(s, template, tt)
     end
 
     if onsite_sludge && blackwater && ! transported_blackwater &&
-        ! urine && fg_s && ! fg_t && ! has_transport && ! has_biofuel && ! has_urinal && ! controlled_od
+        ! urine && fg_s && ! fg_t_notrans && ! fg_t_trans && ! has_biofuel && ! has_urinal && ! controlled_od
         tt = "ST12. Onsite blackwater system with sludge production without effuent transport"
         template = template == "not defined" ? tt : multiple_templates_error(s, template, tt)
     end
 
     if has_sludge && blackwater && ! transported_blackwater &&
-        ! urine && fg_t && ! has_transport && ! has_biofuel && ! has_urinal && ! controlled_od
+        ! urine && fg_t_notrans && ! fg_t_trans && ! has_biofuel && ! has_urinal && ! controlled_od
         tt = "ST13. Decentralized blackwater system with sludge"
         template = template == "not defined" ? tt : multiple_templates_error(s, template, tt)
     end
 
     if ! has_sludge && blackwater && ! transported_blackwater &&
-        ! urine && fg_t && ! has_transport && ! has_biofuel && ! has_urinal && ! controlled_od
+        ! urine && fg_t_notrans && ! fg_t_trans && ! has_biofuel && ! has_urinal && ! controlled_od
         tt = "ST14. Decentralized blackwater system without sludge"
         template = template == "not defined" ? tt : multiple_templates_error(s, template, tt)
     end
 
     if has_sludge && blackwater &&
-        ! urine && fg_s && has_transport && ! has_biofuel && ! has_urinal && ! controlled_od
+        ! urine && (fg_s || fg_t_notrans) && fg_t_trans && ! has_biofuel && ! has_urinal && ! controlled_od
         tt = "ST15. Hybrid blackwater system with sludge"
         template = template == "not defined" ? tt : multiple_templates_error(s, template, tt)
     end
 
     if has_sludge && blackwater &&
-        ! urine && ! fg_s && has_transport && ! has_biofuel && ! has_urinal && ! controlled_od
+        ! urine && ! fg_s && ! fg_t_notrans && fg_t_trans && ! has_biofuel && ! has_urinal && ! controlled_od
         tt = "ST16. Centralized blackwater system with sludge"
         template = template == "not defined" ? tt : multiple_templates_error(s, template, tt)
     end
 
     if ! has_sludge && blackwater &&
-        ! urine && fg_s && has_transport && ! has_biofuel && ! has_urinal && ! controlled_od
+        ! urine && (fg_s || fg_t_notrans) && fg_t_trans && ! has_biofuel && ! has_urinal && ! controlled_od
         tt = "ST17. Hybrid blackwater system without sludge"
         template = template == "not defined" ? tt : multiple_templates_error(s, template, tt)
     end
     if ! has_sludge && blackwater &&
-        ! urine && ! fg_s && has_transport && ! has_biofuel && ! has_urinal && ! controlled_od
+        ! urine && ! fg_s && ! fg_t_notrans && fg_t_trans && ! has_biofuel && ! has_urinal && ! controlled_od
         tt = "ST18. Centralized blackwater system without sludge"
         template = template == "not defined" ? tt : multiple_templates_error(s, template, tt)
     end
@@ -349,50 +372,50 @@ function template(s::System)
     # Biofuel
 
     if dry_material && ! blackwater && ! transported_blackwater &&
-        ! urine && fg_s && ! fg_t && ! has_transport && onsite_biofuel && ! has_urinal && ! controlled_od
+        ! urine && fg_s && ! fg_t_notrans && ! fg_t_trans && onsite_biofuel && ! has_urinal && ! controlled_od
         tt = "ST19. Onsite dry system with biofuel production without effluent transport"
         template = template == "not defined" ? tt : multiple_templates_error(s, template, tt)
     end
 
     if ! dry_material && blackwater &&
-        ! urine && fg_s && ! fg_t && ! has_transport && onsite_biofuel && ! has_urinal && ! controlled_od
+        ! urine && fg_s && ! fg_t_notrans && ! fg_t_trans && onsite_biofuel && ! has_urinal && ! controlled_od
         tt = "ST20. Onsite blackwater system with biofuel production without effluent transport"
         template = template == "not defined" ? tt : multiple_templates_error(s, template, tt)
     end
 
     if dry_material && ! blackwater && ! transported_blackwater &&
-        ! urine && fg_t && ! has_transport && onsite_biofuel && ! transported_biofuel && ! has_urinal && ! controlled_od
+        ! urine && fg_t_notrans && ! fg_t_trans && onsite_biofuel && ! transported_biofuel && ! has_urinal && ! controlled_od
         tt = "ST21. Decentralized dry system with biofuel production"
         template = template == "not defined" ? tt : multiple_templates_error(s, template, tt)
     end
 
     if ! dry_material && blackwater &&
-        ! urine && fg_t && ! has_transport && onsite_biofuel && ! transported_biofuel && ! has_urinal && ! controlled_od
+        ! urine && fg_t_notrans && ! fg_t_trans && onsite_biofuel && ! transported_biofuel && ! has_urinal && ! controlled_od
         tt = "ST22. Decentralized blackwater system with biofuel production"
         template = template == "not defined" ? tt : multiple_templates_error(s, template, tt)
     end
 
     if dry_material && ! blackwater && ! transported_blackwater &&
-        ! urine && fg_s && has_transport && has_biofuel && ! has_urinal && ! controlled_od
+        ! urine && (fg_s || fg_t_notrans) && fg_t_trans && has_biofuel && ! has_urinal && ! controlled_od
         tt = "ST23. Hybrid dry system with biofuel production"
         template = template == "not defined" ? tt : multiple_templates_error(s, template, tt)
     end
 
     if dry_material && ! blackwater && ! transported_blackwater &&
-        ! urine && !fg_s && has_transport && has_biofuel && ! has_urinal && ! controlled_od
+        ! urine && ! fg_s && ! fg_t_notrans && fg_t_trans && has_biofuel && ! has_urinal && ! controlled_od
         tt = "ST24. Centralized dry system with biofuel production"
         template = template == "not defined" ? tt : multiple_templates_error(s, template, tt)
     end
 
     if ! dry_material && blackwater &&
-        ! urine && fg_s && has_transport && has_biofuel && ! has_urinal && ! controlled_od
+        ! urine && (fg_s || fg_t_notrans) && fg_t_trans && has_biofuel && ! has_urinal && ! controlled_od
         tt = "ST25. Hybrid blackwater system with biofuel production"
         template = template == "not defined" ? tt : multiple_templates_error(s, template, tt)
     end
 
 
     if ! dry_material && blackwater &&
-        ! urine && !fg_s && has_transport && has_biofuel && ! has_urinal && ! controlled_od
+        ! urine && ! fg_s && ! fg_t_notrans && fg_t_trans && has_biofuel && ! has_urinal && ! controlled_od
         tt = "ST26. Centralized blackwater system with biofuel production"
         template = template == "not defined" ? tt : multiple_templates_error(s, template, tt)
     end
@@ -401,47 +424,47 @@ function template(s::System)
     # Urine
 
     if dry_material && ! blackwater && ! transported_blackwater &&
-        urine && fg_s && ! fg_t && ! has_transport && ! has_urinal && ! controlled_od
+        urine && fg_s && ! fg_t_notrans && ! fg_t_trans &&  ! has_urinal && ! controlled_od
         tt = "ST27. Onsite dry system with urine diversion without effluent transport"
         template = template == "not defined" ? tt : multiple_templates_error(s, template, tt)
     end
 
     if ! dry_material && blackwater && ! transported_blackwater &&
-        urine && fg_s && ! fg_t && ! has_transport && ! has_urinal && ! controlled_od
+        urine && fg_s && ! fg_t_notrans && ! fg_t_trans &&  ! has_urinal && ! controlled_od
         tt = "ST28. Onsite blackwater system with urine diversion system without effluent transport"
         template = template == "not defined" ? tt : multiple_templates_error(s, template, tt)
     end
 
     if dry_material && ! blackwater && ! transported_blackwater &&
-        urine && fg_t && ! has_transport && ! has_urinal && ! controlled_od
+        urine && fg_t_notrans && ! fg_t_trans && ! has_urinal && ! controlled_od
         tt = "ST29. Decentralized dry system with urine diversion with or without effluent transport"
         template = template == "not defined" ? tt : multiple_templates_error(s, template, tt)
     end
 
     if ! dry_material && blackwater &&
-        urine && fg_t && ! has_transport && ! has_urinal && ! controlled_od
+        urine && fg_t_notrans && ! fg_t_trans && ! has_urinal && ! controlled_od
         tt = "ST30. Decentralized blackwater system with urine diversion with or without effluent transport"
         template = template == "not defined" ? tt : multiple_templates_error(s, template, tt)
     end
 
     if dry_material && ! blackwater && ! transported_blackwater &&
-        urine && fg_s && has_transport && ! has_urinal && ! controlled_od
+        urine && (fg_s || fg_t_notrans) && fg_t_trans && ! has_urinal && ! controlled_od
         tt = "ST31. Hybrid dry system with urine diversion"
         template = template == "not defined" ? tt : multiple_templates_error(s, template, tt)
     end
     if dry_material && ! blackwater && ! transported_blackwater &&
-        urine && !fg_s && has_transport && ! has_urinal && ! controlled_od
+        urine && ! fg_s && ! fg_t_notrans && fg_t_trans &&! has_urinal && ! controlled_od
         tt = "ST32. Centralized dry system with urine diversion"
         template = template == "not defined" ? tt : multiple_templates_error(s, template, tt)
     end
 
     if ! dry_material && blackwater &&
-        urine && fg_s && has_transport && ! has_urinal && ! controlled_od
+        urine && (fg_s || fg_t_notrans) && fg_t_trans && ! has_urinal && ! controlled_od
         tt = "ST33. Hybrid blackwater system with urine diversion"
         template = template == "not defined" ? tt : multiple_templates_error(s, template, tt)
     end
     if ! dry_material && blackwater &&
-        urine && ! fg_s && has_transport && ! has_urinal && ! controlled_od
+        urine && ! fg_s && ! fg_t_notrans && fg_t_trans && ! has_urinal && ! controlled_od
         tt = "ST34. Centralized blackwater system with urine diversion"
         template = template == "not defined" ? tt : multiple_templates_error(s, template, tt)
     end
