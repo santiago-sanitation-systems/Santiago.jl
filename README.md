@@ -13,6 +13,7 @@ Status](https://github.com/santiago-sanitation-systems/Santiago.jl/workflows/CI/
   total `phosphor`, total `nitrogen`, `totalsolids`, and `water`;
 - select a meaningful subset of systems for the given case.
 
+For non-research applications we recommend to use `Santiago` via the web app [sanichoice.net](https://www.sanichoice.net/).
 
 # Installation
 
