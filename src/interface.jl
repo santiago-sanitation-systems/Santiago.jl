@@ -5,6 +5,26 @@
 export build_systems
 
 
+
+"""
+Returns the *names* of the `techs` that are not used in any of the `systems`
+"""
+function techs_not_used(systems::Vector{System}, techs::Vector{<:AbstractTech})
+    tech_names = unique(Santiago.simplifytechname.(t.name) for t in techs)
+    techs_not_used_idx = fill(true, length(tech_names))
+    for (i,t) in enumerate(tech_names)
+        for s in systems
+            techs_sys = (simplifytechname.(ts.name) for ts in s.techs)
+            if t ∈ techs_sys
+                techs_not_used_idx[i] = false
+                break
+            end
+        end
+    end
+    tech_names[techs_not_used_idx]
+end
+
+
 """
 # Build all systems from a given the sources and and a set of technologies.
 
@@ -118,5 +138,19 @@ function build_systems(sources::Array{T},
     source_names!.(allSys)
 
     @info "Total number of systems (without duplicates): $(lpad(length(allSys), 6))"
+
+    # check for not used techs
+    t_no_used = techs_not_used(allSys, technologies)
+
+    if length(t_no_used) == 0
+        @info "All technologies have been used in at least one system"
+    else
+        msg_str = "The following technologies were not uses in any system:\n"
+        for t in t_no_used
+            msg_str = msg_str * "- $(t)\n"
+        end
+        @info msg_str
+    end
+
     return allSys
 end

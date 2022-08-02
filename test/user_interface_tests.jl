@@ -283,3 +283,9 @@ nrealtechs = length(unique(Santiago.simplifytechname(t.name) for t in
 
 @test length(templates_per_tech(allSys)) <= nrealtechs
 @test length(techs_per_template(allSys)) == length(unique(template.(allSys)))
+
+# identify techs that have not been used
+@test length(Santiago.techs_not_used(allSys, techs)) == 1
+@test "Only.for.testing" ∈ Santiago.techs_not_used(allSys, techs)
+
+@test length(Santiago.techs_not_used(allSys[1:2], techs)) > 1
