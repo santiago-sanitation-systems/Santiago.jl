@@ -10,11 +10,11 @@ export build_systems
 Returns the *names* of the `techs` that are not used in any of the `systems`
 """
 function techs_not_used(systems::Vector{System}, techs::Vector{<:AbstractTech})
-    tech_names = unique(Santiago.simplifytechname.(t.name) for t in techs)
+    tech_names = unique(Santiago.simplifytechname(t.name) for t in techs)
     techs_not_used_idx = fill(true, length(tech_names))
     for (i,t) in enumerate(tech_names)
         for s in systems
-            techs_sys = (simplifytechname.(ts.name) for ts in s.techs)
+            techs_sys = (simplifytechname(ts.name) for ts in s.techs)
             if t ∈ techs_sys
                 techs_not_used_idx[i] = false
                 break
