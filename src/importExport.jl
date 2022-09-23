@@ -241,13 +241,14 @@ function import_technologies(techFile::String; sourceGroup::String="U",
     ## separate sources, sourcesAdd, and Technologies
     sources = filter(t -> t.functional_group == Symbol(sourceGroup), subTechFiltered)
     sourcesAdd = filter(t -> t.functional_group == Symbol(sourceAddGroup), subTechFiltered)
-    techs = filter(t -> (t.functional_group != Symbol(sourceGroup) && t.functional_group != Symbol(sourceAddGroup)), subTechFiltered)
+    techs = filter(t -> (t.functional_group != Symbol(sourceGroup) && t.functional_group != Symbol(sourceAddGroup)),
+                   subTechFiltered)
 
-    @info "sources imported:\t\t $(lpad(length(sources), 4))"
-    @info "additional sources imported:\t $(lpad(length(sourcesAdd), 4))"
-    @info "technologies imported:\t\t $(lpad(length(rawtechs)-n_nonimport, 4))"
+    @info "sources imported:\t\t $(lpad(length(sources), 5))"
+    @info "additional sources imported:\t $(lpad(length(sourcesAdd), 5))"
+    @info "technologies imported:\t\t $(lpad(length(rawtechs)-n_nonimport-length(sources), 5))"
     n_derived_techs = length(sources) + length(sourcesAdd) + length(techs) - length(rawtechs) - n_nonimport
-    @info "additional derived technologies: $(lpad((n_derived_techs), 4))"
+    @info "additional derived technologies: $(lpad((n_derived_techs), 5))"
 
     return sources, sourcesAdd, techs
 
