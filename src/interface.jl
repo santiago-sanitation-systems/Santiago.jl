@@ -145,7 +145,7 @@ function build_systems(sources::Array{T},
     if length(t_no_used) == 0
         @info "All technologies have been used in at least one system"
     else
-        msg_str = "The following technologies were not uses in any system:\n"
+        msg_str = "The following technologies were not used in any system:\n"
         for t in t_no_used
             msg_str = msg_str * "- $(t)\n"
         end
