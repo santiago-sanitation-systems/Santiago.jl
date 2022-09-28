@@ -328,8 +328,7 @@ function get_candidates(techs, outs, k) where T <: AbstractTech
     n_out = length(outs)
     n_in_max = n_out - k + 1
     function condi(t::AbstractTech)
-        issubset(t.inputs, outs) && (t.n_inputs <= n_in_max)
-
+        (t.n_inputs <= n_in_max) && issubset(t.inputs, outs)
     end
 
     filter(condi, techs)
