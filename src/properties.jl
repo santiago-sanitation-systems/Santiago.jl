@@ -344,7 +344,7 @@ function template(s::System)
     end
 
     if dry_material && container && ! has_urinal && ! rapidresponse
-        tt = "ST11. Centralized dry system with biomass production"
+        tt = "ST11. Container-based system"
         template = template == "Not classified" ? tt : multiple_templates_error(s, template, tt)
     end
 
@@ -453,47 +453,47 @@ function template(s::System)
     # Urine
 
     if dry_material && ! blackwater && ! transported_blackwater &&
-        urine && fg_s && ! fg_t_notrans && ! fg_t_trans &&  ! has_urinal && ! rapidresponse
+        urine && fg_s && ! fg_t_notrans && ! fg_t_trans &&  ! has_urinal && ! rapidresponse && ! container
         tt = "ST28. Onsite dry system with urine diversion without effluent transport"
         template = template == "Not classified" ? tt : multiple_templates_error(s, template, tt)
     end
 
     if ! dry_material && blackwater && ! transported_blackwater &&
-        urine && fg_s && ! fg_t_notrans && ! fg_t_trans &&  ! has_urinal && ! rapidresponse
+        urine && fg_s && ! fg_t_notrans && ! fg_t_trans &&  ! has_urinal && ! rapidresponse && ! container
         tt = "ST29. Onsite blackwater system with urine diversion system without effluent transport"
         template = template == "Not classified" ? tt : multiple_templates_error(s, template, tt)
     end
 
     if dry_material && ! blackwater && ! transported_blackwater &&
-        urine && fg_t_notrans && ! fg_t_trans && ! has_urinal && ! rapidresponse
+        urine && fg_t_notrans && ! fg_t_trans && ! has_urinal && ! rapidresponse && ! container
         tt = "ST30. Decentralized dry system with urine diversion with or without effluent transport"
         template = template == "Not classified" ? tt : multiple_templates_error(s, template, tt)
     end
 
     if ! dry_material && blackwater &&
-        urine && fg_t_notrans && ! fg_t_trans && ! has_urinal && ! rapidresponse
+        urine && fg_t_notrans && ! fg_t_trans && ! has_urinal && ! rapidresponse && ! container
         tt = "ST31. Decentralized blackwater system with urine diversion with or without effluent transport"
         template = template == "Not classified" ? tt : multiple_templates_error(s, template, tt)
     end
 
     if dry_material && ! blackwater && ! transported_blackwater &&
-        urine && (fg_s || fg_t_notrans) && fg_t_trans && ! has_urinal && ! rapidresponse
+        urine && (fg_s || fg_t_notrans) && fg_t_trans && ! has_urinal && ! rapidresponse && ! container
         tt = "ST32. Hybrid dry system with urine diversion"
         template = template == "Not classified" ? tt : multiple_templates_error(s, template, tt)
     end
     if dry_material && ! blackwater && ! transported_blackwater &&
-        urine && ! fg_s && ! fg_t_notrans && fg_t_trans &&! has_urinal && ! rapidresponse
+        urine && ! fg_s && ! fg_t_notrans && fg_t_trans &&! has_urinal && ! rapidresponse && ! container
         tt = "ST33. Centralized dry system with urine diversion"
         template = template == "Not classified" ? tt : multiple_templates_error(s, template, tt)
     end
 
     if ! dry_material && blackwater &&
-        urine && (fg_s || fg_t_notrans) && fg_t_trans && ! has_urinal && ! rapidresponse
+        urine && (fg_s || fg_t_notrans) && fg_t_trans && ! has_urinal && ! rapidresponse && ! container
         tt = "ST34. Hybrid blackwater system with urine diversion"
         template = template == "Not classified" ? tt : multiple_templates_error(s, template, tt)
     end
     if ! dry_material && blackwater &&
-        urine && ! fg_s && ! fg_t_notrans && fg_t_trans && ! has_urinal && ! rapidresponse
+        urine && ! fg_s && ! fg_t_notrans && fg_t_trans && ! has_urinal && ! rapidresponse && ! container
         tt = "ST35. Centralized blackwater system with urine diversion"
         template = template == "Not classified" ? tt : multiple_templates_error(s, template, tt)
     end
