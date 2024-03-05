@@ -15,6 +15,9 @@ Status](https://github.com/santiago-sanitation-systems/Santiago.jl/workflows/CI/
 
 For non-research applications we recommend to use `Santiago` via the web app [sanichoice.net](https://www.sanichoice.net/).
 
+# Citation
+Spuhler, D., Scheidegger, A., Maurer, M., 2021. Ex-ante quantification of nutrient, total solids, and water flows in sanitation systems. Journal of Environmental Management 280, 111785. https://doi.org/10.1016/j.jenvman.2020.111785
+
 # Installation
 
 1. Install [Julia](https://julialang.org/) version >= 1.4.
