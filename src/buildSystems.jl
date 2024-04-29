@@ -315,7 +315,7 @@ function get_openin_techs(sys::System, prod::Product)
 end
 
 # pre filter the tech list
-function get_candidates(techs, outs, k) where T <: AbstractTech
+function get_candidates(techs, outs, k)
     # Limitation!
     # This function guaranties, that we never add a techs, which leads to new open inputs.
     # However, this banns not only loops, but also "triangles". E.g if only "A is given"
