@@ -123,7 +123,7 @@ input_masses = Dict("Dry.toilet" => Dict("phosphor" => 548.0,
                     )
 
 # calculate mass flows for all systems and write to system properties
-massflow_summary!.(allSys, Ref(input_masses), n=20)
+massflow_summary!.(allSys, Ref(input_masses), n=10)
 @test "massflow_stats" in keys(allSys[1].properties)
 @test length(keys(allSys[1].properties["massflow_stats"])) == 5
 

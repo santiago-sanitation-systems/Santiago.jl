@@ -31,7 +31,11 @@ end
 # Compute Kmeans clusters (Euclidian distance is used)
 function getClusters(sysProperties::AbstractArray,  ncluster::Int)
     for i in 1:size(sysProperties,2)
-        sysProperties[:,i] = (sysProperties[:,i] .- mean(sysProperties[:,i])) ./ std(Float64.(sysProperties[:,i]))
+        Z = std(Float64.(sysProperties[:,i]))
+        sysProperties[:,i] .= sysProperties[:,i] .- mean(sysProperties[:,i])
+        if Z > 0
+            sysProperties[:,i] .= sysProperties[:,i] ./ Z
+        end
     end
     km = kmeans(Float64.(sysProperties)', ncluster)
     return km
