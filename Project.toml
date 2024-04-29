@@ -1,7 +1,7 @@
 name = "Santiago"
 uuid = "4c14ae50-faa6-54c0-b22f-5cc2de459edf"
 authors = ["Andreas Scheidegger <andreas.scheidegger@eawag.ch>", "Dorothee Spuhler  <dorothee.spuhler@eawag.ch>"]
-version = "0.10.1"
+version = "0.10.2"
 
 [deps]
 Clustering = "aaaa29a8-35af-508c-8bc3-b662a17a0fe5"
@@ -40,4 +40,4 @@ QuadGK = "^2.4.0"
 Reexport = "^0.2.0, 1.0"
 StatsBase = "^0.33.0, 0.34"
 StructTypes = "^1.1.0"
-julia = "^1.4"
+julia = "^1.6"

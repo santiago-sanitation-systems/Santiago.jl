@@ -20,7 +20,7 @@ Spuhler, D., Scheidegger, A., Maurer, M., 2021. Ex-ante quantification of nutrie
 
 # Installation
 
-1. Install [Julia](https://julialang.org/) version >= 1.4.
+1. Install [Julia](https://julialang.org/) version >= 1.6.
 
 2. Install the `Santiago` package from the Julia prompt:
 ```Julia
